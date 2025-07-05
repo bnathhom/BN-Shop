@@ -206,21 +206,32 @@
     }
 
     function addOrder() {
-      const customer = document.getElementById('customerData').value.trim();
-      const courier = document.getElementById('courier').value;
-      const shopPhone = document.getElementById('shopPhone').value;
-      
-      if (!customer) return alert('กรุณากรอกข้อมูลลูกค้า');
+  const customer = document.getElementById('customerData').value.trim();
+  const courier = document.getElementById('courier').value;
+  const shopPhone = document.getElementById('shopPhone').value;
 
-      const id = generateId();
-      const date = new Date();
-      const barcode = Math.floor(100000000000 + Math.random() * 900000000000);
-      const order = { id, customer, courier, date, barcode, shopPhone };
-      orderList.push(order);
-      saveToLocalStorage();
-      document.getElementById('customerData').value = '';
-      renderOrders();
-    }
+  if (!customer) return alert('กรุณากรอกข้อมูลลูกค้า');
+
+  const id = generateId();
+  const date = new Date();
+  const barcode = Math.floor(100000000000 + Math.random() * 900000000000);
+  const order = { id, customer, courier, date: date.toISOString(), barcode, shopPhone };
+
+  // ✅ เพิ่มบันทึกเข้า Firestore
+  db.collection("orders").add(order)
+    .then(() => {
+      console.log("✅ บันทึก Firebase สำเร็จ");
+    })
+    .catch((error) => {
+      console.error("❌ Firebase ผิดพลาด:", error);
+    });
+
+  // ยังคงเก็บใน localStorage เพื่อแสดงทันที
+  orderList.push(order);
+  saveToLocalStorage();
+  document.getElementById('customerData').value = '';
+  renderOrders();
+}
 
     function renderOrders() {
       const container = document.getElementById('orders');
@@ -377,5 +388,25 @@
       }, 500);
     }
   </script>
+  function loadOrdersFromFirebase() {
+  db.collection("orders").get().then((snapshot) => {
+    orderList = [];
+    snapshot.forEach((doc) => {
+      const data = doc.data();
+      data.date = new Date(data.date); // แปลงจาก string เป็น Date object
+      orderList.push(data);
+    });
+    renderOrders();
+  }).catch((error) => {
+    console.error("❌ โหลดข้อมูล Firebase ผิดพลาด:", error);
+  });
+}
+
+  window.onload = () => {
+  loadOrdersFromFirebase(); // ✅ โหลดจาก Firebase แทน localStorage
+  updatePhoneByCourier();
+};
+ </script>
+
 </body>
 </html>
