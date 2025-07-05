@@ -387,7 +387,6 @@
         printWindow.print();
       }, 500);
     }
-  </script>
   function loadOrdersFromFirebase() {
   db.collection("orders").get().then((snapshot) => {
     orderList = [];
@@ -406,7 +405,7 @@
   loadOrdersFromFirebase(); // ✅ โหลดจาก Firebase แทน localStorage
   updatePhoneByCourier();
 };
- </script>
+  </script>
 
 </body>
 </html>
