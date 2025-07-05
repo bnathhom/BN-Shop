@@ -387,24 +387,7 @@
         printWindow.print();
       }, 500);
     }
-  function loadOrdersFromFirebase() {
-  db.collection("orders").get().then((snapshot) => {
-    orderList = [];
-    snapshot.forEach((doc) => {
-      const data = doc.data();
-      data.date = new Date(data.date); // แปลงจาก string เป็น Date object
-      orderList.push(data);
-    });
-    renderOrders();
-  }).catch((error) => {
-    console.error("❌ โหลดข้อมูล Firebase ผิดพลาด:", error);
-  });
-}
-
-  window.onload = () => {
-  loadOrdersFromFirebase(); // ✅ โหลดจาก Firebase แทน localStorage
-  updatePhoneByCourier();
-};
+  
   </script>
 
 </body>
