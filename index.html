@@ -74,24 +74,19 @@
     });
   }
 
-  auth.onAuthStateChanged(user => {
-    if (user) {
-      document.getElementById("auth-section").style.display = "none";
-      document.getElementById("user-info").style.display = "block";
-      document.getElementById("user-email").innerText = user.email;
+  auth.onAuthStateChanged(u => {
+  if (u) {
+    document.getElementById('auth').style.display = 'none';
+    document.getElementById('mainApp').style.display = 'block';
+    document.getElementById('userEmail').textContent = u.email;
 
-      // ให้ใช้งานระบบออเดอร์ได้
-      document.querySelectorAll('.order-form, .order-list').forEach(el => el.style.display = "block");
-    } else {
-      document.getElementById("auth-section").style.display = "block";
-      document.getElementById("user-info").style.display = "none";
+    initializeApp();  // ✅ โหลดออเดอร์จาก Firestore หลังล็อกอิน
 
-      // ซ่อนระบบออเดอร์เมื่อไม่ได้ล็อกอิน
-      document.querySelectorAll('.order-form, .order-list').forEach(el => {
-        if (!el.id.includes('auth') && !el.id.includes('user-info')) {
-          el.style.display = "none";
-        }
-      });
+  } else {
+    document.getElementById('auth').style.display = 'block';
+    document.getElementById('mainApp').style.display = 'none';
+  }
+});
     }
   });
 </script>
@@ -218,6 +213,13 @@
       const order = { id, customer, courier, date, barcode, shopPhone };
       orderList.push(order);
       saveToLocalStorage();
+      db.collection("orders").add(order)
+  .then(() => {
+    console.log("Order saved to Firestore");
+  })
+  .catch((error) => {
+    console.error("Error writing order to Firestore: ", error);
+  });
       document.getElementById('customerData').value = '';
       renderOrders();
     }
@@ -376,6 +378,21 @@
       }, 500);
     }
   
+  function initializeApp() {
+  orderList = []; // ล้างรายการเก่าก่อนโหลดใหม่
+  db.collection("orders").get()
+    .then(snapshot => {
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        data.date = data.date?.toDate ? data.date.toDate() : new Date(); // แปลง timestamp
+        orderList.push(data);
+      });
+      renderOrders(); // แสดงผลในหน้าเว็บ
+    })
+    .catch(error => {
+      console.error("โหลดข้อมูลจาก Firestore ไม่สำเร็จ:", error);
+    });
+}
   </script>
 
 </body>
