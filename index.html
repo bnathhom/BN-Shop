@@ -23,13 +23,7 @@
     .barcode-container { text-align: center; margin: 15px 0; }
     .barcode-number { text-align: center; font-family: monospace; font-size: 12px; margin-top: 5px; }
     .thankyou { text-align: center; margin-top: 20px; font-weight: bold; }
-    .customer-pre, .bill pre {
-      white-space: pre-wrap;
-      word-wrap: break-word;
-      font-family: 'Noto Sans Lao', sans-serif;
-      margin: 0;
-      line-height: 1.4;
-    }
+    .customer-pre, .bill pre { white-space: pre-wrap; word-wrap: break-word; font-family: 'Noto Sans Lao', sans-serif; margin: 0; line-height: 1.4; }
   </style>
 </head>
 <body>
@@ -62,10 +56,7 @@
       <button class="btn" onclick="printSelected()">พิมพ์ที่เลือก</button>
       <button class="btn" onclick="printAll()">พิมพ์ทั้งหมด</button>
     </div>
-  </div>  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-    import { getDatabase, ref, push, set, onValue, remove, update } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
-
+  </div>  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>  <script>
     const firebaseConfig = {
       apiKey: "AIzaSyAR4ZN_J3u4nTl2dLpF6eXqE3txaUoYrMY",
       authDomain: "bnchen-93d9d.firebaseapp.com",
@@ -77,14 +68,14 @@
       measurementId: "G-WK259X0ZQ1"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const ordersRef = db.ref('orders');
 
     let orderList = [];
 
     window.onload = () => {
-      const ordersRef = ref(db, 'orders');
-      onValue(ordersRef, (snapshot) => {
+      ordersRef.on('value', snapshot => {
         const data = snapshot.val();
         orderList = [];
         for (let key in data) {
@@ -92,14 +83,17 @@
         }
         renderOrders();
       });
-
       updatePhoneByCourier();
     };
 
     function updatePhoneByCourier() {
       const courier = document.getElementById('courier').value;
       const phoneSelect = document.getElementById('shopPhone');
-      phoneSelect.value = (courier === 'Anousith Express') ? '020 94036226' : '020 98052744';
+      if (courier === 'Anousith Express') {
+        phoneSelect.value = '020 94036226';
+      } else {
+        phoneSelect.value = '020 98052744';
+      }
     }
 
     document.getElementById('courier').addEventListener('change', updatePhoneByCourier);
@@ -108,41 +102,20 @@
       return 'BN' + Math.floor(Math.random() * 100000);
     }
 
-    function saveToFirebase(order) {
-      const newRef = push(ref(db, 'orders'));
-      set(newRef, order);
-    }
-
-    window.addOrder = function () {
+    function addOrder() {
       const customer = document.getElementById('customerData').value.trim();
       const courier = document.getElementById('courier').value;
       const shopPhone = document.getElementById('shopPhone').value;
       if (!customer) return alert('กรุณากรอกข้อมูลลูกค้า');
-
       const id = generateId();
       const date = new Date().toISOString();
       const barcode = Math.floor(100000000000 + Math.random() * 900000000000);
       const order = { id, customer, courier, date, barcode, shopPhone };
-      saveToFirebase(order);
+      ordersRef.push(order);
       document.getElementById('customerData').value = '';
-    };
+    }
 
-    window.deleteOrder = function (key) {
-      if (confirm('ลบออเดอร์นี้ใช่ไหม?')) {
-        remove(ref(db, 'orders/' + key));
-      }
-    };
-
-    window.editOrder = function (index) {
-      const order = orderList[index];
-      const updated = prompt('แก้ไขข้อมูลลูกค้า:', order.customer);
-      if (updated !== null) {
-        order.customer = updated.trim();
-        update(ref(db, 'orders/' + order.key), order);
-      }
-    };
-
-    window.renderOrders = function () {
+    function renderOrders() {
       const container = document.getElementById('orders');
       container.innerHTML = '';
       orderList.forEach((order, index) => {
@@ -158,7 +131,21 @@
     `;
     container.appendChild(div);
   });
-};
+}
+
+function deleteOrder(key) {
+  if (confirm('ลบออเดอร์นี้ใช่ไหม?')) {
+    db.ref('orders/' + key).remove();
+  }
+}
+
+function editOrder(index) {
+  const order = orderList[index];
+  const updated = prompt('แก้ไขข้อมูลลูกค้า:', order.customer);
+  if (updated !== null) {
+    db.ref('orders/' + order.key).update({ customer: updated.trim() });
+  }
+}
 
   </script>
 </body>
