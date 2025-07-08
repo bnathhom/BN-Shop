@@ -10,243 +10,239 @@
     .btn{padding:8px 16px;margin:2px;border:none;border-radius:4px;color:white;background:#007BFF;cursor:pointer;}
     .btn-danger{background:#dc3545;}
     .order{border:1px dashed #aaa;padding:10px;margin:5px;position:relative;}
-    .order input[type=checkbox]{position:absolute;right:10px;top:10px;}
+    .order input[type=checkbox]{position:absolute;top:10px;right:10px;}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 </head>
 <body>
 
-<!-- LOGIN & SIGNUP -->
-<div id="auth-view">
-  <h2>เข้าสู่ระบบ / สมัคร</h2>
-  <input type="email" id="email" placeholder="Email"><br><br>
-  <input type="password" id="password" placeholder="Password"><br><br>
-  <button class="btn" onclick="signup()">สมัคร</button>
-  <button class="btn" onclick="login()">ล็อกอิน</button>
-  <p id="auth-error" style="color:red;"></p>
-</div>
-
-<!-- MAIN DASHBOARD -->
-<div id="app-view" class="hidden">
-  <div class="topbar">
-    <button class="btn" onclick="showWarehouse()">คลัง</button>
-    <button class="btn btn-danger" onclick="logout()">Logout</button>
+  <!-- Login/Signup -->
+  <div id="auth-view">
+    <h2>เข้าสู่ระบบ / สมัคร</h2>
+    <input type="email" id="email" placeholder="Email"><br><br>
+    <input type="password" id="password" placeholder="Password"><br><br>
+    <button class="btn" id="signup-btn">สมัคร</button>
+    <button class="btn" id="login-btn">ล็อกอิน</button>
+    <p id="auth-error" style="color: red;"></p>
   </div>
 
-  <h2>เพิ่มออเดอร์</h2>
-  <textarea id="customerData" rows="3" placeholder="ข้อมูลลูกค้า"></textarea><br>
-  <select id="courier">
-    <option>HAL LOGISTICS</option>
-    <option>Anousith Express</option>
-    <option>Mixay Express</option>
-  </select>
-  <input type="text" id="shopPhone" disabled><br><br>
-  <button class="btn" onclick="addOrder()">ยืนยันออเดอร์</button>
+  <!-- Dashboard -->
+  <div id="app-view" class="hidden">
+    <div class="topbar">
+      <button class="btn" onclick="showWarehouse()">คลัง</button>
+      <button class="btn btn-danger" onclick="logout()">Logout</button>
+    </div>
 
-  <h2>ออเดอร์ทั้งหมด</h2>
-  <button class="btn" onclick="selectAll(true)">เลือกทั้งหมด</button>
-  <button class="btn" onclick="selectAll(false)">ยกเลิกทั้งหมด</button><br><br>
-  <div id="orders"></div>
-  <button class="btn" onclick="printSelected()">พิมพ์ที่เลือก</button>
-  <button class="btn" onclick="printAll()">พิมพ์ทั้งหมด</button>
-  <button class="btn btn-danger" onclick="deleteSelected()">ลบที่เลือก</button>
-  <button class="btn" onclick="archiveSelected()">เก็บเข้าคลัง</button>
-</div>
+    <h2>เพิ่มออเดอร์</h2>
+    <textarea id="customerData" rows="3" placeholder="ข้อมูลลูกค้า"></textarea><br>
+    <select id="courier">
+      <option>HAL LOGISTICS</option>
+      <option>Anousith Express</option>
+      <option>Mixay Express</option>
+    </select>
+    <input type="text" id="shopPhone" disabled><br><br>
+    <button class="btn" onclick="addOrder()">ยืนยันออเดอร์</button>
 
-<!-- Warehouse -->
-<div id="warehouse-view" class="hidden">
-  <div class="topbar">
-    <button class="btn" onclick="showApp()">กลับ</button>
-    <button class="btn btn-danger" onclick="logout()">Logout</button>
+    <h2>ออเดอร์ทั้งหมด</h2>
+    <button class="btn" onclick="selectAll(true)">เลือกทั้งหมด</button>
+    <button class="btn" onclick="selectAll(false)">ยกเลิกทั้งหมด</button><br><br>
+    <div id="orders"></div>
+    <button class="btn" onclick="printSelected()">พิมพ์ที่เลือก</button>
+    <button class="btn" onclick="printAll()">พิมพ์ทั้งหมด</button>
+    <button class="btn btn-danger" onclick="deleteSelected()">ลบที่เลือก</button>
+    <button class="btn" onclick="archiveSelected()">เก็บเข้าคลัง</button>
   </div>
-  <h2>ออเดอร์ในคลัง</h2>
-  <div id="warehouse"></div>
-</div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  <!-- Warehouse -->
+  <div id="warehouse-view" class="hidden">
+    <div class="topbar">
+      <button class="btn" onclick="showApp()">กลับ</button>
+      <button class="btn btn-danger" onclick="logout()">Logout</button>
+    </div>
+    <h2>ออเดอร์ในคลัง</h2>
+    <div id="warehouse"></div>
+  </div>
 
-// TODO: แทนค่า config ให้ตรงกับของจริง
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID"
-};
-initializeApp(firebaseConfig);
-const db = getFirestore(), auth = getAuth();
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-let orderList = [], warehouseList = [];
+    // เปลี่ยนให้ตรงกับ Firebase ของคุณ
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_AUTH_DOMAIN",
+      projectId: "YOUR_PROJECT_ID"
+    };
+    initializeApp(firebaseConfig);
+    const auth = getAuth();
+    const db = getFirestore();
 
-function signup(){
-  const e=document.getElementById('email').value, p=document.getElementById('password').value;
-  createUserWithEmailAndPassword(auth, e, p)
-    .then(() => console.log('Signup success'))
-    .catch(err => document.getElementById('auth-error').innerText = err.message);
-}
+    window.signup = function() {
+      const email = document.getElementById('email').value;
+      const pwd = document.getElementById('password').value;
+      createUserWithEmailAndPassword(auth, email, pwd)
+        .then(() => { document.getElementById('auth-error').innerText = 'สมัครสำเร็จ!'; })
+        .catch(err => document.getElementById('auth-error').innerText = err.message);
+    };
 
-function login(){
-  const e=document.getElementById('email').value, p=document.getElementById('password').value;
-  signInWithEmailAndPassword(auth, e, p)
-    .then(() => console.log('Login success'))
-    .catch(err => document.getElementById('auth-error').innerText = err.message);
-}
+    window.login = function() {
+      const email = document.getElementById('email').value;
+      const pwd = document.getElementById('password').value;
+      signInWithEmailAndPassword(auth, email, pwd)
+        .then(() => { document.getElementById('auth-error').innerText = ''; })
+        .catch(err => document.getElementById('auth-error').innerText = err.message);
+    };
 
-function logout(){ signOut(auth); }
+    window.logout = function() {
+      signOut(auth);
+    };
 
-onAuthStateChanged(auth, user => {
-  document.getElementById('auth-view').classList.toggle('hidden', !!user);
-  document.getElementById('app-view').classList.toggle('hidden', !user);
-  document.getElementById('warehouse-view').classList.add('hidden');
-  if (user) {
-    loadOrders();
-    loadWarehouse();
-    updateShopPhone();
-  }
-});
+    onAuthStateChanged(auth, user => {
+      document.getElementById('auth-view').classList.toggle('hidden', !!user);
+      document.getElementById('app-view').classList.toggle('hidden', !user);
+      document.getElementById('warehouse-view').classList.add('hidden');
+      if (user) { loadOrders(); loadWarehouse(); updateShopPhone(); }
+    });
 
-document.getElementById('courier').addEventListener('change', updateShopPhone);
+    document.getElementById('courier').addEventListener('change', updateShopPhone);
+    function updateShopPhone() {
+      const courier = document.getElementById('courier').value;
+      document.getElementById('shopPhone').value = courier === 'Anousith Express' ? '020 94036226' : '020 98052744';
+    }
 
-function updateShopPhone(){
-  const courier = document.getElementById('courier').value;
-  document.getElementById('shopPhone').value = courier === 'Anousith Express' ? '020 94036226' : '020 98052744';
-}
+    let orderList = [], warehouseList = [];
 
-async function loadOrders(){
-  const qs = await getDocs(collection(db,'orders'));
-  orderList = [];
-  qs.forEach(s => orderList.push({...s.data(), idDoc: s.id}));
-  renderOrders();
-}
+    async function loadOrders() {
+      const qs = await getDocs(collection(db, 'orders'));
+      orderList = [];
+      qs.forEach(docSnap => orderList.push({ ...docSnap.data(), idDoc: docSnap.id }));
+      renderOrders();
+    }
 
-async function loadWarehouse(){
-  const q = query(collection(db,'orders'), where('archived','==', true));
-  const qs = await getDocs(q);
-  warehouseList = [];
-  qs.forEach(s => warehouseList.push({...s.data(), idDoc: s.id}));
-  renderWarehouse();
-}
+    async function loadWarehouse() {
+      const q = query(collection(db, 'orders'), where('archived', '==', true));
+      const qs = await getDocs(q);
+      warehouseList = [];
+      qs.forEach(docSnap => warehouseList.push({ ...docSnap.data(), idDoc: docSnap.id }));
+      renderWarehouse();
+    }
 
-function renderOrders(){
-  const c = document.getElementById('orders'); c.innerHTML = '';
-  orderList.filter(o => !o.archived).forEach((o, i) => {
-    const d = document.createElement('div'); d.className = 'order';
-    d.innerHTML = `
-      <input type="checkbox" data-index="${i}">
-      <b>ID:</b> ${o.id} <b>${o.courier}</b><br>
-      <pre>${o.customer}</pre>
-      <button class="btn" onclick="editOrder(${i})">แก้ไข</button>
-    `;
-    c.appendChild(d);
-  });
-}
+    function renderOrders() {
+      const container = document.getElementById('orders');
+      container.innerHTML = '';
+      orderList.filter(o => !o.archived).forEach((o, i) => {
+        const d = document.createElement('div'); d.className = 'order';
+        d.innerHTML = `
+          <input type="checkbox" data-index="${i}">
+          <b>ID:</b> ${o.id} <b>${o.courier}</b><br><pre>${o.customer}</pre>
+          <button class="btn" onclick="editOrder(${i})">แก้ไข</button>
+        `;
+        container.appendChild(d);
+      });
+    }
 
-function renderWarehouse(){
-  const c = document.getElementById('warehouse'); c.innerHTML = '';
-  warehouseList.forEach((o, i) => {
-    const d = document.createElement('div'); d.className = 'order';
-    d.innerHTML = `
-      <b>ID:</b> ${o.id} (คลัง)<br><pre>${o.customer}</pre>
-      <button class="btn" onclick="restoreOrder(${i})">คืน</button>
-      <button class="btn btn-danger" onclick="delOrder(${i}, true)">ลบถาวร</button>
-    `;
-    c.appendChild(d);
-  });
-}
+    function renderWarehouse() {
+      const container = document.getElementById('warehouse');
+      container.innerHTML = '';
+      warehouseList.forEach((o, i) => {
+        const d = document.createElement('div'); d.className = 'order';
+        d.innerHTML = `
+          <b>ID:</b> ${o.id} (คลัง)<br><pre>${o.customer}</pre>
+          <button class="btn" onclick="restoreOrder(${i})">คืน</button>
+          <button class="btn btn-danger" onclick="delOrder(${i}, true)">ลบถาวร</button>
+        `;
+        container.appendChild(d);
+      });
+    }
 
-function selectAll(flag){
-  document.querySelectorAll('#orders input[type=checkbox]').forEach(c=>c.checked = flag);
-}
+    window.selectAll = function(flag) {
+      document.querySelectorAll('#orders input[type=checkbox]').forEach(cb => cb.checked = flag);
+    };
 
-async function addOrder(){
-  const cust = document.getElementById('customerData').value.trim();
-  if (!cust) return alert('กรอกข้อมูลลูกค้าก่อน');
-  const cour = document.getElementById('courier').value;
-  const phone = document.getElementById('shopPhone').value;
-  const ts = Date.now().toString();
-  await addDoc(collection(db,'orders'),{
-    id: 'BN' + ts,
-    customer: cust,
-    courier: cour,
-    shopPhone: phone,
-    date: Date.now(),
-    barcode: ts,
-    archived: false
-  });
-  document.getElementById('customerData').value = '';
-  loadOrders();
-}
+    window.addOrder = async function() {
+      const cust = document.getElementById('customerData').value.trim();
+      if (!cust) return alert('กรอกข้อมูลลูกค้าก่อน');
+      const cour = document.getElementById('courier').value;
+      const phone = document.getElementById('shopPhone').value;
+      const ts = Date.now().toString();
+      await addDoc(collection(db, 'orders'), {
+        id: 'BN' + ts,
+        customer: cust,
+        courier: cour,
+        shopPhone: phone,
+        date: Date.now(),
+        barcode: ts,
+        archived: false
+      });
+      document.getElementById('customerData').value = '';
+      loadOrders();
+    };
 
-function editOrder(i){
-  const o = orderList[i];
-  const cust = prompt('แก้ไขข้อมูลลูกค้า', o.customer);
-  if (cust !== null) {
-    updateDoc(doc(db,'orders',o.idDoc), {customer: cust}).then(loadOrders);
-  }
-}
+    window.editOrder = function(i) {
+      const o = orderList[i];
+      const newCust = prompt('แก้ไขลูกค้า', o.customer);
+      if (newCust !== null) {
+        updateDoc(doc(db, 'orders', o.idDoc), { customer: newCust }).then(loadOrders);
+      }
+    };
 
-async function deleteSelected(){
-  const boxes = document.querySelectorAll('#orders input[type=checkbox]');
-  for (const b of boxes) {
-    if (b.checked) await deleteDoc(doc(db,'orders',orderList[b.dataset.index].idDoc));
-  }
-  loadOrders();
-  loadWarehouse();
-}
+    window.deleteSelected = async function() {
+      document.querySelectorAll('#orders input[type=checkbox]').forEach(async cb => {
+        if (cb.checked) await deleteDoc(doc(db, 'orders', orderList[cb.dataset.index].idDoc));
+      });
+      loadOrders(); loadWarehouse();
+    };
 
-async function archiveSelected(){
-  const boxes = document.querySelectorAll('#orders input[type=checkbox]');
-  for (const b of boxes) {
-    if (b.checked) await updateDoc(doc(db,'orders',orderList[b.dataset.index].idDoc), {archived: true});
-  }
-  loadOrders();
-  loadWarehouse();
-}
+    window.archiveSelected = async function() {
+      document.querySelectorAll('#orders input[type=checkbox]').forEach(async cb => {
+        if (cb.checked) await updateDoc(doc(db, 'orders', orderList[cb.dataset.index].idDoc), { archived: true });
+      });
+      loadOrders(); loadWarehouse();
+    };
 
-async function restoreOrder(i){
-  await updateDoc(doc(db,'orders',warehouseList[i].idDoc), {archived: false});
-  loadOrders();
-  loadWarehouse();
-}
+    window.restoreOrder = async function(i) {
+      await updateDoc(doc(db, 'orders', warehouseList[i].idDoc), { archived: false });
+      loadOrders(); loadWarehouse();
+    };
 
-async function delOrder(i, isWare){
-  const list = isWare ? warehouseList : orderList;
-  await deleteDoc(doc(db,'orders', list[i].idDoc));
-  loadOrders();
-  loadWarehouse();
-}
+    window.delOrder = async function(i, isWare) {
+      const list = isWare ? warehouseList : orderList;
+      await deleteDoc(doc(db, 'orders', list[i].idDoc));
+      loadOrders(); loadWarehouse();
+    };
 
-function printSelected(){
-  const boxes = document.querySelectorAll('#orders input[type=checkbox]');
-  const arr = Array.from(boxes).map((b,i)=> b.checked ? orderList[b.dataset.index] : null).filter(x=>x);
-  printBills(arr);
-}
+    window.printSelected = function() {
+      const arr = Array.from(document.querySelectorAll('#orders input[type=checkbox]'))
+        .map(cb => cb.checked ? orderList[cb.dataset.index] : null).filter(x => x);
+      printBills(arr);
+    };
 
-function printAll(){
-  printBills(orderList.filter(o=>!o.archived));
-}
+    window.printAll = function() {
+      printBills(orderList.filter(o => !o.archived));
+    };
 
-function printBills(list){
-  if (!list.length) return alert('ไม่มีออเดอร์ที่เลือก');
-  const w = window.open(); w.document.write('<html><body>');
-  list.forEach(o=>{
-    const svg = document.createElementNS("http://www.w3.org/2000/svg","svg");
-    JsBarcode(svg, o.barcode, {format:"CODE128", width:2, height:50, displayValue:false});
-    w.document.write(`<div style="page-break-after:always;"><b>ID:</b>${o.id}<br>${svg.outerHTML}<br><pre>${o.customer}</pre></div>`);
-  });
-  w.document.write('</body></html>'); w.document.close();
-  setTimeout(()=>w.print(),500);
-}
+    function printBills(arr) {
+      if (!arr.length) return alert('ไม่มีออเดอร์ที่เลือก');
+      const w = window.open(); w.document.write('<html><body>');
+      arr.forEach(o => {
+        const svg = document.createElementNS("http://www.w3.org/2000/svg","svg");
+        JsBarcode(svg, o.barcode, { format:"CODE128", width:2, height:50, displayValue:false });
+        w.document.write(`<div style="page-break-after:always;"><b>ID:</b>${o.id}<br>${svg.outerHTML}<br><pre>${o.customer}</pre></div>`);
+      });
+      w.document.write('</body></html>'); w.document.close();
+      setTimeout(() => w.print(), 500);
+    }
 
-function showWarehouse(){
-  document.getElementById('app-view').classList.add('hidden');
-  document.getElementById('warehouse-view').classList.remove('hidden');
-}
-function showApp(){
-  document.getElementById('warehouse-view').classList.add('hidden');
-  document.getElementById('app-view').classList.remove('hidden');
-}
-</script>
+    window.showWarehouse = function() {
+      document.getElementById('app-view').classList.add('hidden');
+      document.getElementById('warehouse-view').classList.remove('hidden');
+    };
+
+    window.showApp = function() {
+      document.getElementById('warehouse-view').classList.add('hidden');
+      document.getElementById('app-view').classList.remove('hidden');
+    };
+  </script>
 </body>
 </html>
