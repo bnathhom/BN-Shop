@@ -79,7 +79,11 @@
         const data = snapshot.val();
         orderList = [];
         for (let key in data) {
-          orderList.push({ ...data[key], key });
+          const order = { ...data[key], key };
+          if (typeof order.date === 'string') {
+            order.date = new Date(order.date);
+          }
+          orderList.push(order);
         }
         renderOrders();
       });
@@ -145,6 +149,119 @@ function editOrder(index) {
   if (updated !== null) {
     db.ref('orders/' + order.key).update({ customer: updated.trim() });
   }
+}
+
+function generateBarcodeSVG(barcodeNumber) {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  JsBarcode(svg, barcodeNumber.toString(), {
+    format: "CODE128",
+    lineColor: "#000",
+    width: 2,
+    height: 50,
+    displayValue: false
+  });
+  return svg.outerHTML;
+}
+
+function printBill(order) {
+  const dateStr = order.date.toLocaleString();
+  const barcodeSVG = generateBarcodeSVG(order.barcode);
+  return `
+    <div class="bill">
+      <div class="header">
+        <div class="logo">BN</div>
+        <div class="shop-info">
+          ຮ້ານ : BN Shop<br>
+          ເບີໂທ : ${order.shopPhone}
+        </div>
+      </div>
+      <div class="section">
+        <div><strong>ວັນທີ:</strong> ${dateStr}</div>
+        <div><strong>ລະຫັດອອເດີ:</strong> ${order.id}</div>
+      </div>
+      <div class="barcode-container">
+        ${barcodeSVG}
+        <div class="barcode-number">${order.barcode}</div>
+      </div>
+      <div class="section">
+        <div><strong>ຂົນສົ່ງ:</strong> ${order.courier}</div>
+        <div><strong>ຂໍ້ມູນລູກຄ້າ:</strong><br><pre>${order.customer.replace(/\n/g, '<br>')}</pre></div>
+      </div>
+      <div class="thankyou">ຂໍຂອບໃຈ💗</div>
+    </div>
+  `;
+}
+
+function printSelected() {
+  const checkboxes = document.querySelectorAll('#orders input[type=checkbox]');
+  const selectedOrders = Array.from(checkboxes)
+                           .filter(c => c.checked)
+                           .map(c => orderList[c.dataset.index]);
+
+  if (selectedOrders.length === 0) {
+    return alert('กรุณาเลือกออเดอร์ที่ต้องการพิมพ์');
+  }
+
+  printBills(selectedOrders);
+}
+
+function printAll() {
+  if (orderList.length === 0) {
+    return alert('ไม่มีออเดอร์ที่จะพิมพ์');
+  }
+
+  printBills(orderList);
+}
+
+function printBills(orders) {
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>Print Bills</title>
+        <style>
+          body { margin: 0; padding: 0; }
+          @page { size: 80mm 150mm; margin: 0; }
+          .bill {
+            width: 76mm;
+            height: auto;
+            min-height: 130mm;
+            padding: 10px;
+            font-size: 14px;
+            box-sizing: border-box;
+            border: 1px solid #000;
+            margin: 0 auto 10mm;
+            page-break-after: always;
+            font-family: 'Noto Sans Lao', sans-serif;
+            overflow: hidden;
+          }
+          .logo { font-size: 48px; font-weight: bold; display: inline-block; vertical-align: middle; margin-right: 10px; }
+          .shop-info { display: inline-block; vertical-align: middle; line-height: 1.4; white-space: nowrap; }
+          .header { margin-bottom: 10px; }
+          .section { margin-top: 10px; }
+          .barcode-container { text-align: center; margin: 15px 0; }
+          .barcode-number { text-align: center; font-family: monospace; font-size: 12px; margin-top: 5px; }
+          .thankyou { text-align: center; margin-top: 20px; font-weight: bold; }
+          pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            margin: 0;
+            line-height: 1.4;
+          }
+        </style>
+      </head>
+      <body>
+  `);
+
+  orders.forEach(order => {
+    printWindow.document.write(printBill(order));
+  });
+
+  printWindow.document.write(`</body></html>`);
+  printWindow.document.close();
+  setTimeout(() => {
+    printWindow.print();
+  }, 500);
 }
 
   </script>
