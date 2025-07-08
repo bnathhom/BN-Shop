@@ -23,7 +23,13 @@
     .barcode-container { text-align: center; margin: 15px 0; }
     .barcode-number { text-align: center; font-family: monospace; font-size: 12px; margin-top: 5px; }
     .thankyou { text-align: center; margin-top: 20px; font-weight: bold; }
-    .customer-pre, .bill pre { white-space: pre-wrap; word-wrap: break-word; font-family: 'Noto Sans Lao', sans-serif; margin: 0; line-height: 1.4; }
+    .customer-pre, .bill pre {
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      font-family: 'Noto Sans Lao', sans-serif;
+      margin: 0;
+      line-height: 1.4;
+    }
   </style>
 </head>
 <body>
@@ -56,70 +62,67 @@
       <button class="btn" onclick="printSelected()">พิมพ์ที่เลือก</button>
       <button class="btn" onclick="printAll()">พิมพ์ทั้งหมด</button>
     </div>
-  </div>  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>  <script>
+  </div>  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
     const firebaseConfig = {
       apiKey: "AIzaSyAR4ZN_J3u4nTl2dLpF6eXqE3txaUoYrMY",
       authDomain: "bnchen-93d9d.firebaseapp.com",
-      databaseURL: "https://bnchen-93d9d-default-rtdb.firebaseio.com",
       projectId: "bnchen-93d9d",
-      storageBucket: "bnchen-93d9d.firebasestorage.app",
+      storageBucket: "bnchen-93d9d.appspot.com",
       messagingSenderId: "1047651812089",
       appId: "1:1047651812089:web:6f520fa528059cc43e1828",
       measurementId: "G-WK259X0ZQ1"
     };
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    const ordersRef = db.ref('orders');
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
     let orderList = [];
 
-    window.onload = () => {
-      ordersRef.on('value', snapshot => {
-        const data = snapshot.val();
-        orderList = [];
-        for (let key in data) {
-          const order = { ...data[key], key };
-          if (typeof order.date === 'string') {
-            order.date = new Date(order.date);
-          }
-          orderList.push(order);
-        }
-        renderOrders();
+    async function loadOrdersFromFirebase() {
+      const querySnapshot = await getDocs(collection(db, "orders"));
+      orderList = [];
+      querySnapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        data.date = new Date(data.date);
+        data._docId = docSnap.id;
+        orderList.push(data);
       });
+      renderOrders();
+    }
+
+    window.onload = () => {
+      loadOrdersFromFirebase();
       updatePhoneByCourier();
     };
 
-    function updatePhoneByCourier() {
+    window.updatePhoneByCourier = function() {
       const courier = document.getElementById('courier').value;
       const phoneSelect = document.getElementById('shopPhone');
-      if (courier === 'Anousith Express') {
-        phoneSelect.value = '020 94036226';
-      } else {
-        phoneSelect.value = '020 98052744';
-      }
+      phoneSelect.value = (courier === 'Anousith Express') ? '020 94036226' : '020 98052744';
     }
 
     document.getElementById('courier').addEventListener('change', updatePhoneByCourier);
 
-    function generateId() {
-      return 'BN' + Math.floor(Math.random() * 100000);
-    }
-
-    function addOrder() {
+    window.addOrder = async function() {
       const customer = document.getElementById('customerData').value.trim();
       const courier = document.getElementById('courier').value;
       const shopPhone = document.getElementById('shopPhone').value;
       if (!customer) return alert('กรุณากรอกข้อมูลลูกค้า');
-      const id = generateId();
-      const date = new Date().toISOString();
+
+      const id = 'BN' + Math.floor(Math.random() * 100000);
+      const date = new Date();
       const barcode = Math.floor(100000000000 + Math.random() * 900000000000);
-      const order = { id, customer, courier, date, barcode, shopPhone };
-      ordersRef.push(order);
+      const order = { id, customer, courier, date: date.toISOString(), barcode, shopPhone };
+
+      await addDoc(collection(db, "orders"), order);
+      await loadOrdersFromFirebase();
       document.getElementById('customerData').value = '';
     }
 
-    function renderOrders() {
+    window.renderOrders = function() {
       const container = document.getElementById('orders');
       container.innerHTML = '';
       orderList.forEach((order, index) => {
@@ -130,28 +133,12 @@
           <strong>Order ID:</strong> ${order.id}<br>
           <strong>ขนส่ง:</strong> ${order.courier}<br>
           <strong>เบอร์ร้าน:</strong> ${order.shopPhone}<br>
-          <strong>ลูกค้า:</strong><br> <pre class="customer-pre">${order.customer}</pre><button class="btn btn-danger" onclick="deleteOrder('${order.key}')">ลบ</button>
-      <button class="btn" onclick="editOrder(${index})">แก้ไข</button>
-    `;
+          <strong>ลูกค้า:</strong><br> <pre class="customer-pre">${order.customer}</pre>`;
     container.appendChild(div);
   });
 }
 
-function deleteOrder(key) {
-  if (confirm('ลบออเดอร์นี้ใช่ไหม?')) {
-    db.ref('orders/' + key).remove();
-  }
-}
-
-function editOrder(index) {
-  const order = orderList[index];
-  const updated = prompt('แก้ไขข้อมูลลูกค้า:', order.customer);
-  if (updated !== null) {
-    db.ref('orders/' + order.key).update({ customer: updated.trim() });
-  }
-}
-
-function generateBarcodeSVG(barcodeNumber) {
+window.generateBarcodeSVG = function(barcodeNumber) {
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   JsBarcode(svg, barcodeNumber.toString(), {
     format: "CODE128",
@@ -163,15 +150,15 @@ function generateBarcodeSVG(barcodeNumber) {
   return svg.outerHTML;
 }
 
-function printBill(order) {
-  const dateStr = order.date.toLocaleString();
+window.printBill = function(order) {
+  const dateStr = new Date(order.date).toLocaleString();
   const barcodeSVG = generateBarcodeSVG(order.barcode);
   return `
     <div class="bill">
       <div class="header">
         <div class="logo">BN</div>
         <div class="shop-info">
-          ຮ້ານ : BN Shop<br>
+          ໌າ້ນ : BN Shop<br>
           ເບີໂທ : ${order.shopPhone}
         </div>
       </div>
@@ -184,84 +171,50 @@ function printBill(order) {
         <div class="barcode-number">${order.barcode}</div>
       </div>
       <div class="section">
-        <div><strong>ຂົນສົ່ງ:</strong> ${order.courier}</div>
-        <div><strong>ຂໍ້ມູນລູກຄ້າ:</strong><br><pre>${order.customer.replace(/\n/g, '<br>')}</pre></div>
+        <div><strong>ຂັ້ນສ່່ົງ:</strong> ${order.courier}</div>
+        <div><strong>ຂໍ້ມູນລູກຄູ້า:</strong><br><pre>${order.customer.replace(/\n/g, '<br>')}</pre></div>
       </div>
-      <div class="thankyou">ຂໍຂອບໃຈ💗</div>
+      <div class="thankyou">ຂໍ່ຂໍບ຃າຍ💗</div>
     </div>
   `;
 }
 
-function printSelected() {
-  const checkboxes = document.querySelectorAll('#orders input[type=checkbox]');
-  const selectedOrders = Array.from(checkboxes)
-                           .filter(c => c.checked)
-                           .map(c => orderList[c.dataset.index]);
-
-  if (selectedOrders.length === 0) {
-    return alert('กรุณาเลือกออเดอร์ที่ต้องการพิมพ์');
-  }
-
-  printBills(selectedOrders);
-}
-
-function printAll() {
-  if (orderList.length === 0) {
-    return alert('ไม่มีออเดอร์ที่จะพิมพ์');
-  }
-
-  printBills(orderList);
-}
-
-function printBills(orders) {
+window.printBills = function(orders) {
   const printWindow = window.open('', '_blank');
   printWindow.document.write(`
     <html>
-      <head>
-        <title>Print Bills</title>
-        <style>
-          body { margin: 0; padding: 0; }
-          @page { size: 80mm 150mm; margin: 0; }
-          .bill {
-            width: 76mm;
-            height: auto;
-            min-height: 130mm;
-            padding: 10px;
-            font-size: 14px;
-            box-sizing: border-box;
-            border: 1px solid #000;
-            margin: 0 auto 10mm;
-            page-break-after: always;
-            font-family: 'Noto Sans Lao', sans-serif;
-            overflow: hidden;
-          }
-          .logo { font-size: 48px; font-weight: bold; display: inline-block; vertical-align: middle; margin-right: 10px; }
-          .shop-info { display: inline-block; vertical-align: middle; line-height: 1.4; white-space: nowrap; }
-          .header { margin-bottom: 10px; }
-          .section { margin-top: 10px; }
-          .barcode-container { text-align: center; margin: 15px 0; }
-          .barcode-number { text-align: center; font-family: monospace; font-size: 12px; margin-top: 5px; }
-          .thankyou { text-align: center; margin-top: 20px; font-weight: bold; }
-          pre {
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            margin: 0;
-            line-height: 1.4;
-          }
-        </style>
-      </head>
-      <body>
+    <head><title>Print Bills</title>
+    <style>
+      body { margin: 0; padding: 0; }
+      @page { size: 80mm 150mm; margin: 0; }
+      .bill { width: 76mm; min-height: 130mm; padding: 10px; font-size: 14px; border: 1px solid #000; page-break-after: always; font-family: 'Noto Sans Lao', sans-serif; }
+      .logo { font-size: 48px; font-weight: bold; display: inline-block; vertical-align: middle; margin-right: 10px; }
+      .shop-info { display: inline-block; vertical-align: middle; line-height: 1.4; white-space: nowrap; }
+      .header { margin-bottom: 10px; }
+      .section { margin-top: 10px; }
+      .barcode-container { text-align: center; margin: 15px 0; }
+      .barcode-number { text-align: center; font-family: monospace; font-size: 12px; margin-top: 5px; }
+      .thankyou { text-align: center; margin-top: 20px; font-weight: bold; }
+      pre { white-space: pre-wrap; word-wrap: break-word; margin: 0; line-height: 1.4; }
+    </style></head>
+    <body>
   `);
-
-  orders.forEach(order => {
-    printWindow.document.write(printBill(order));
-  });
-
-  printWindow.document.write(`</body></html>`);
+  orders.forEach(order => printWindow.document.write(printBill(order)));
+  printWindow.document.write('</body></html>');
   printWindow.document.close();
-  setTimeout(() => {
-    printWindow.print();
-  }, 500);
+  setTimeout(() => printWindow.print(), 500);
+}
+
+window.printSelected = function() {
+  const checkboxes = document.querySelectorAll('#orders input[type=checkbox]');
+  const selectedOrders = Array.from(checkboxes).filter(c => c.checked).map(c => orderList[c.dataset.index]);
+  if (selectedOrders.length === 0) return alert('กรุณาเลือกออเดอร์ที่ต้องการพิมพ์');
+  printBills(selectedOrders);
+}
+
+window.printAll = function() {
+  if (orderList.length === 0) return alert('ไม่มีออเดอร์ที่จะพิมพ์');
+  printBills(orderList);
 }
 
   </script>
