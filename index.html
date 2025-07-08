@@ -1,95 +1,6 @@
-<!-- Firebase CDN Scripts -->
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-
-<script>
-  // Firebase config จากคุณ
-  const firebaseConfig = {
-    apiKey: "AIzaSyAR4ZN_J3u4nTl2dLpF6eXqE3txaUoYrMY",
-    authDomain: "bnchen-93d9d.firebaseapp.com",
-    projectId: "bnchen-93d9d",
-    storageBucket: "bnchen-93d9d.firebasestorage.app",
-    messagingSenderId: "1047651812089",
-    appId: "1:1047651812089:web:6f520fa528059cc43e1828",
-    measurementId: "G-WK259X0ZQ1"
-  };
-
-  // Initialize Firebase
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-</script>
-
-<!-- แบบฟอร์มเข้าสู่ระบบ -->
-<div class="order-form" id="auth-section">
-  <h2>เข้าสู่ระบบ / สมัครสมาชิก</h2>
-  <div class="form-control">
-    <label>อีเมล</label>
-    <input type="email" id="email" placeholder="example@email.com">
-  </div>
-  <div class="form-control">
-    <label>รหัสผ่าน</label>
-    <input type="password" id="password" placeholder="อย่างน้อย 6 ตัวอักษร">
-  </div>
-  <button class="btn" onclick="signIn()">เข้าสู่ระบบ</button>
-  <button class="btn" onclick="signUp()">สมัครสมาชิก</button>
-</div>
-
-<div id="user-info" class="order-form" style="display: none;">
-  <p>👤 เข้าสู่ระบบโดย: <span id="user-email"></span></p >
-  <button class="btn btn-danger" onclick="signOut()">ออกจากระบบ</button>
-</div>
-
-<script>
-  function signUp() {
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value.trim();
-    if (!email || !password) return alert("กรอกข้อมูลให้ครบ");
-
-    auth.createUserWithEmailAndPassword(email, password)
-      .then(userCredential => {
-        alert("สมัครสมาชิกสำเร็จ");
-      })
-      .catch(error => {
-        alert("เกิดข้อผิดพลาด: " + error.message);
-      });
-  }
-
-  function signIn() {
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value.trim();
-    if (!email || !password) return alert("กรอกข้อมูลให้ครบ");
-
-    auth.signInWithEmailAndPassword(email, password)
-      .then(userCredential => {
-        alert("เข้าสู่ระบบสำเร็จ");
-      })
-      .catch(error => {
-        alert("เข้าสู่ระบบไม่สำเร็จ: " + error.message);
-      });
-  }
-
-  function signOut() {
-    auth.signOut().then(() => {
-      alert("ออกจากระบบแล้ว");
-    });
-  }
-
-  auth.onAuthStateChanged(u => {
-  if (u) {
-    document.getElementById('auth').style.display = 'none';
-    document.getElementById('mainApp').style.display = 'block';
-    document.getElementById('userEmail').textContent = u.email;
-
-    initializeApp();  // ✅ โหลดออเดอร์จาก Firestore หลังล็อกอิน
-
-  } else {
-    document.getElementById('auth').style.display = 'block';
-    document.getElementById('mainApp').style.display = 'none';
-  }
-});
-</script>
 <!DOCTYPE html>
 <html lang="lo">
+<head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BN Shop Order System</title>
@@ -211,16 +122,10 @@
       const order = { id, customer, courier, date, barcode, shopPhone };
       orderList.push(order);
       saveToLocalStorage();
-      db.collection("orders").add(order)
-  .then(() => {
-    console.log("Order saved to Firestore");
-  })
-  .catch((error) => {
-    console.error("Error writing order to Firestore: ", error);
-  });
       document.getElementById('customerData').value = '';
       renderOrders();
     }
+
     function renderOrders() {
       const container = document.getElementById('orders');
       container.innerHTML = '';
@@ -375,23 +280,6 @@
         printWindow.print();
       }, 500);
     }
-  
-  function initializeApp() {
-  orderList = []; // ล้างรายการเก่าก่อนโหลดใหม่
-  db.collection("orders").get()
-    .then(snapshot => {
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        data.date = data.date?.toDate ? data.date.toDate() : new Date(); // แปลง timestamp
-        orderList.push(data);
-      });
-      renderOrders(); // แสดงผลในหน้าเว็บ
-    })
-    .catch(error => {
-      console.error("โหลดข้อมูลจาก Firestore ไม่สำเร็จ:", error);
-    });
-}
   </script>
-
 </body>
 </html>
