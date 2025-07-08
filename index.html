@@ -36,8 +36,15 @@
   <!-- สร้างออเดอร์ -->
   <h2>เพิ่มออเดอร์</h2>
   <textarea id="customerData" rows="3" placeholder="ข้อมูลลูกค้า"></textarea><br>
-  <select id="courier"><option>HAL LOGISTICS</option><option>Anousith Express</option><option>Mixay Express</option></select>
-  <select id="shopPhone" disabled><option>020 94036226</option><option>020 98052744</option></select>
+  <select id="courier">
+    <option>HAL LOGISTICS</option>
+    <option>Anousith Express</option>
+    <option>Mixay Express</option>
+  </select>
+  <select id="shopPhone" disabled>
+    <option>020 94036226</option>
+    <option>020 98052744</option>
+  </select>
   <button class="btn" onclick="addOrder()">ยืนยันออเดอร์</button>
 
   <!-- รายการออเดอร์หลัก -->
@@ -113,91 +120,137 @@ async function loadWarehouse(){
 }
 
 function renderOrders(){
-  const c = document.getElementById('orders'); c.innerHTML='';
-  orderList.filter(o=>!o.archived).forEach((o,i)=>{
-    const d=document.createElement('div'); d.className='order';
+  const c = document.getElementById('orders'); 
+  c.innerHTML='';
+  orderList.filter(o=>!o.archived).forEach((o)=>{
+    const d=document.createElement('div'); 
+    d.className='order';
     d.innerHTML=`
-    <input type="checkbox" data-index="${i}" checked>
-    <b>ID:</b> ${o.id} <b>${o.courier}</b><br>
-    <pre>${o.customer}</pre>
-    <button class="btn" onclick="editOrder(${i})">แก้ไข</button>
+      <input type="checkbox" data-id="${o.idDoc}" checked style="position:absolute;right:10px;top:10px;">
+      <b>ID:</b> ${o.id} <b>${o.courier}</b><br>
+      <pre>${o.customer}</pre>
+      <button class="btn btn-edit" data-id="${o.idDoc}">แก้ไข</button>
     `;
     c.appendChild(d);
   });
 }
+
+// แสดงออเดอร์ในคลัง
 function renderWarehouse(){
   const c=document.getElementById('warehouse'); c.innerHTML='';
-  warehouseList.forEach((o,i)=>{
+  warehouseList.forEach((o)=>{
     const d=document.createElement('div'); d.className='order';
     d.innerHTML=`
-    <b>ID:</b> ${o.id} (คลัง)<br><pre>${o.customer}</pre>
-    <button class="btn" onclick="restoreOrder(${i})">คืน</button>
-    <button class="btn btn-danger" onclick="delOrder(${i},true)">ลบถาวร</button>
+      <b>ID:</b> ${o.id} (คลัง)<br><pre>${o.customer}</pre>
+      <button class="btn btn-restore" data-id="${o.idDoc}">คืน</button>
+      <button class="btn btn-danger btn-delete" data-id="${o.idDoc}">ลบถาวร</button>
     `;
     c.appendChild(d);
   });
 }
+
+// เลือก / ยกเลิก checkbox ทั้งหมด
 function selectAll(b){
   document.querySelectorAll('#orders input[type=checkbox]').forEach(c=>c.checked=b);
 }
 
 async function addOrder(){
-  const cust=document.getElementById('customerData').value.trim(), cour=document.getElementById('courier').value, phone=document.getElementById('shopPhone').value;
+  const cust=document.getElementById('customerData').value.trim(),
+        cour=document.getElementById('courier').value,
+        phone=document.getElementById('shopPhone').value;
   if(!cust) return alert('กรอกลูกค้า');
-  await addDoc(collection(db,'orders'),{id:'BN'+Date.now(),customer:cust,courier:cour,shopPhone:phone,date:Date.now(),barcode:String(Date.now()),archived:false});
+  await addDoc(collection(db,'orders'),{
+    id:'BN'+Date.now(),
+    customer:cust,
+    courier:cour,
+    shopPhone:phone,
+    date:Date.now(),
+    barcode:String(Date.now()),
+    archived:false
+  });
   document.getElementById('customerData').value='';
   loadOrders();
 }
-function editOrder(i){
-  const o=orderList[i];
-  const cust=prompt('แก้ไขลูกค้า',o.customer);
-  if(cust!==null){
-    updateDoc(doc(db,'orders',o.idDoc),{customer:cust}).then(loadOrders);
+
+// Event delegation สำหรับปุ่มแก้ไข, คืน, ลบ, ฯลฯ
+document.getElementById('orders').addEventListener('click', async e=>{
+  if(e.target.classList.contains('btn-edit')){
+    const id = e.target.dataset.id;
+    const o = orderList.find(x=>x.idDoc === id);
+    if(!o) return alert('ไม่พบออเดอร์นี้');
+    const cust = prompt('แก้ไขลูกค้า', o.customer);
+    if(cust !== null){
+      await updateDoc(doc(db,'orders',id), { customer: cust });
+      loadOrders();
+    }
   }
-}
+});
+
+document.getElementById('warehouse').addEventListener('click', async e=>{
+  const id = e.target.dataset.id;
+  if(!id) return;
+  if(e.target.classList.contains('btn-restore')){
+    await updateDoc(doc(db,'orders',id), { archived: false });
+    loadOrders(); loadWarehouse();
+  } else if(e.target.classList.contains('btn-delete')){
+    if(confirm('ต้องการลบถาวรออเดอร์นี้?')){
+      await deleteDoc(doc(db,'orders',id));
+      loadOrders(); loadWarehouse();
+    }
+  }
+});
+
+// ลบออเดอร์ที่เลือก
 async function deleteSelected(){
-  const ch=document.querySelectorAll('#orders input[type=checkbox]');
-  for(const c of ch) if(c.checked){
-    const o=orderList[c.dataset.index];
-    await deleteDoc(doc(db,'orders',o.idDoc));
+  const checked = Array.from(document.querySelectorAll('#orders input[type=checkbox]:checked'));
+  for(const c of checked){
+    const id = c.dataset.id;
+    await deleteDoc(doc(db,'orders',id));
   }
   loadOrders(); loadWarehouse();
 }
+
+// เก็บออเดอร์ที่เลือกเข้าคลัง
 async function archiveSelected(){
-  const ch=document.querySelectorAll('#orders input[type=checkbox]');
-  for(const c of ch) if(c.checked){
-    const o=orderList[c.dataset.index];
-    await updateDoc(doc(db,'orders',o.idDoc),{archived:true});
+  const checked = Array.from(document.querySelectorAll('#orders input[type=checkbox]:checked'));
+  for(const c of checked){
+    const id = c.dataset.id;
+    await updateDoc(doc(db,'orders',id), { archived: true });
   }
   loadOrders(); loadWarehouse();
 }
-async function restoreOrder(i){
-  const o=warehouseList[i];
-  await updateDoc(doc(db,'orders',o.idDoc),{archived:false});
-  loadOrders(); loadWarehouse();
-}
-async function delOrder(i,isWare){
-  const o = isWare ? warehouseList[i] : orderList[i];
-  await deleteDoc(doc(db,'orders',o.idDoc));
-  loadOrders(); loadWarehouse();
-}
 
-function printSelected(){ printBills(orderList.filter((_,i)=>document.querySelectorAll('#orders input')[i].checked)); }
-function printAll(){ printBills(orderList); }
-
+// ฟังก์ชันพิมพ์บิล
+function printSelected(){
+  const checkedIds = Array.from(document.querySelectorAll('#orders input[type=checkbox]:checked')).map(i=>i.dataset.id);
+  const arr = orderList.filter(o => checkedIds.includes(o.idDoc));
+  printBills(arr);
+}
+function printAll(){
+  printBills(orderList.filter(o=>!o.archived));
+}
 function printBills(arr){
   if(!arr.length) return alert('ไม่มีออเดอร์');
-  const w = window.open(); w.document.write('<html><body>');
+  const w = window.open(); 
+  w.document.write('<html><body>');
   arr.forEach(o=>{
     const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
     JsBarcode(svg,o.barcode,{format:"CODE128",width:2,height:50,displayValue:false});
     w.document.write(`<div style="page-break-after:always;"><b>ID:</b>${o.id}<br>${svg.outerHTML}<br><pre>${o.customer}</pre></div>`);
   });
-  w.document.write('</body></html>'); w.document.close(); setTimeout(()=>w.print(),500);
+  w.document.write('</body></html>'); 
+  w.document.close(); 
+  setTimeout(()=>w.print(),500);
 }
 
-function showWarehouse(){document.getElementById('app-view').classList.add('hidden');document.getElementById('warehouse-view').classList.remove('hidden');}
-function showApp(){document.getElementById('warehouse-view').classList.add('hidden');document.getElementById('app-view').classList.remove('hidden');}
+function showWarehouse(){
+  document.getElementById('app-view').classList.add('hidden');
+  document.getElementById('warehouse-view').classList.remove('hidden');
+}
+function showApp(){
+  document.getElementById('warehouse-view').classList.add('hidden');
+  document.getElementById('app-view').classList.remove('hidden');
+}
 </script>
 </body>
 </html>
