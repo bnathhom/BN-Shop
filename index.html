@@ -1,243 +1,203 @@
 <!DOCTYPE html>
 <html lang="lo">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>BN Shop Order System</title>
   <style>
-    body { font-family: 'Noto Sans Lao', sans-serif; padding: 20px; }
-    h1 { text-align: center; }
-    .order-form, .order-list { margin: 20px auto; max-width: 500px; border: 1px solid #ccc; padding: 20px; border-radius: 8px; }
-    .form-control { margin-bottom: 10px; }
-    .form-control label { display: block; margin-bottom: 5px; }
-    .form-control input, .form-control textarea, .form-control select { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ccc; }
-    .btn { padding: 10px 20px; border: none; border-radius: 5px; background-color: #007BFF; color: white; cursor: pointer; margin: 2px; }
-    .btn-danger { background-color: #dc3545; }
-    .order { border: 1px dashed #aaa; padding: 10px; margin: 10px 0; position: relative; }
-    .order input[type=checkbox] { position: absolute; right: 10px; top: 10px; }
-    .print-btns { margin-top: 20px; text-align: center; }
-    .bill {
-      width: 76mm; height: auto; min-height: 130mm;
-      padding: 10px; font-size: 14px; box-sizing: border-box;
-      border: 1px solid #000; margin: 0 auto; overflow: hidden;
-      font-family: 'Noto Sans Lao', sans-serif;
-    }
-    .logo { font-size: 48px; font-weight: bold; display: inline-block; vertical-align: middle; margin-right: 10px; }
-    .shop-info { display: inline-block; vertical-align: middle; line-height: 1.4; white-space: nowrap; }
-    .header { margin-bottom: 10px; }
-    .section { margin-top: 10px; }
-    .barcode-container { text-align: center; margin: 15px 0; }
-    .barcode-number { text-align: center; font-family: monospace; font-size: 12px; margin-top: 5px; }
-    .thankyou { text-align: center; margin-top: 20px; font-weight: bold; }
-    pre { white-space: pre-wrap; word-wrap: break-word; margin: 0; line-height: 1.4; }
+    body{font-family:'Noto Sans Lao',sans-serif;padding:20px;}
+    .hidden{display:none;}
+    .topbar{display:flex;justify-content:flex-end;margin-bottom:10px;}
+    .btn{padding:8px 16px;margin:2px;border:none;border-radius:4px;color:white;background:#007BFF;cursor:pointer;}
+    .btn-danger{background:#dc3545;}
+    .order{border:1px dashed #aaa;padding:10px;margin:5px;position:relative;}
+    .order input[type=checkbox]{position:absolute;right:10px;top:10px;}
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 </head>
 <body>
 
-  <h1>BN Shop Order System</h1>
+<!-- LOGIN & SIGNUP -->
+<div id="auth-view">
+  <h2>เข้าสู่ระบบ / สมัคร</h2>
+  <input type="email" id="email" placeholder="Email"><br><br>
+  <input type="password" id="password" placeholder="Password"><br><br>
+  <button class="btn" onclick="signup()">สมัคร</button>
+  <button class="btn" onclick="login()">ล็อกอิน</button>
+  <p id="auth-error" style="color:red;"></p>
+</div>
 
-  <div class="order-form">
-    <div class="form-control">
-      <label>ข้อมูลลูกค้า</label>
-      <textarea id="customerData" rows="4"></textarea>
-    </div>
-    <div class="form-control">
-      <label>เลือกขนส่ง</label>
-      <select id="courier">
-        <option value="HAL LOGISTICS">HAL LOGISTICS</option>
-        <option value="Anousith Express">Anousith Express</option>
-        <option value="Mixay Express">Mixay Express</option>
-      </select>
-    </div>
-    <div class="form-control">
-      <label>เบอร์โทรร้าน (เปลี่ยนอัตโนมัติตามขนส่ง)</label>
-      <select id="shopPhone" disabled>
-        <option value="020 94036226">020 94036226</option>
-        <option value="020 98052744">020 98052744</option>
-      </select>
-    </div>
-    <button class="btn" onclick="addOrder()">ยืนยันออเดอร์</button>
+<!-- MAIN DASHBOARD -->
+<div id="app-view" class="hidden">
+  <div class="topbar">
+    <button class="btn" onclick="showWarehouse()">คลัง</button>
+    <button class="btn btn-danger" onclick="logout()">Logout</button>
   </div>
 
-  <div class="order-list">
-    <h2>ออเดอร์ทั้งหมด</h2>
-    <div style="text-align:center;">
-      <button class="btn" onclick="selectAll(true)">เลือกทั้งหมด</button>
-      <button class="btn" onclick="selectAll(false)">ยกเลิกทั้งหมด</button>
-    </div>
-    <div id="orders"></div>
-    <div class="print-btns">
-      <button class="btn" onclick="printSelected()">พิมพ์ที่เลือก</button>
-      <button class="btn" onclick="printAll()">พิมพ์ทั้งหมด</button>
-      <button class="btn btn-danger" onclick="deleteSelected()">ลบที่เลือก</button>
-    </div>
+  <!-- สร้างออเดอร์ -->
+  <h2>เพิ่มออเดอร์</h2>
+  <textarea id="customerData" rows="3" placeholder="ข้อมูลลูกค้า"></textarea><br>
+  <select id="courier"><option>HAL LOGISTICS</option><option>Anousith Express</option><option>Mixay Express</option></select>
+  <select id="shopPhone" disabled><option>020 94036226</option><option>020 98052744</option></select>
+  <button class="btn" onclick="addOrder()">ยืนยันออเดอร์</button>
+
+  <!-- รายการออเดอร์หลัก -->
+  <h2>ออเดอร์ทั้งหมด</h2>
+  <button class="btn" onclick="selectAll(true)">เลือกทั้งหมด</button>
+  <button class="btn" onclick="selectAll(false)">ยกเลิกทั้งหมด</button><br>
+  <div id="orders"></div>
+  <button class="btn" onclick="printSelected()">พิมพ์ที่เลือก</button>
+  <button class="btn" onclick="printAll()">พิมพ์ทั้งหมด</button>
+  <button class="btn btn-danger" onclick="deleteSelected()">ลบที่เลือก</button>
+  <button class="btn" onclick="archiveSelected()">เก็บเข้าคลัง</button>
+</div>
+
+<!-- คลัง -->
+<div id="warehouse-view" class="hidden">
+  <div class="topbar">
+    <button class="btn" onclick="showApp()">กลับ</button>
+    <button class="btn btn-danger" onclick="logout()">Logout</button>
   </div>
+  <h2>ออเดอร์ในคลัง</h2>
+  <div id="warehouse"></div>
+</div>
 
-  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyAR4ZN_J3u4nTl2dLpF6eXqE3txaUoYrMY",
-      authDomain: "bnchen-93d9d.firebaseapp.com",
-      projectId: "bnchen-93d9d",
-      storageBucket: "bnchen-93d9d.appspot.com",
-      messagingSenderId: "1047651812089",
-      appId: "1:1047651812089:web:6f520fa528059cc43e1828",
-      measurementId: "G-WK259X0ZQ1"
-    };
+const firebaseConfig = {
+  apiKey: "AIzaSyAR4ZN_J3u4nTl2dLpF6eXqE3txaUoYrMY",
+  authDomain: "bnchen-93d9d.firebaseapp.com",
+  projectId: "bnchen-93d9d"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app), auth = getAuth();
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    let orderList = [];
+let orderList = [], warehouseList = [];
 
-    async function loadOrdersFromFirebase() {
-      const querySnapshot = await getDocs(collection(db, "orders"));
-      orderList = [];
-      querySnapshot.forEach(docSnap => {
-        const data = docSnap.data();
-        data.date = new Date(data.date);
-        data._docId = docSnap.id;
-        orderList.push(data);
-      });
-      renderOrders();
-    }
+function signup(){
+  const e=document.getElementById('email').value, p=document.getElementById('password').value;
+  createUserWithEmailAndPassword(auth,e,p).catch(e=>document.getElementById('auth-error').innerText=e.message);
+}
+function login(){
+  const e=document.getElementById('email').value, p=document.getElementById('password').value;
+  signInWithEmailAndPassword(auth,e,p).catch(e=>document.getElementById('auth-error').innerText=e.message);
+}
+function logout(){ signOut(auth); }
 
-    window.onload = () => {
-      loadOrdersFromFirebase();
-      updatePhoneByCourier();
-    };
+onAuthStateChanged(auth,user=>{
+  document.getElementById('auth-view').classList.toggle('hidden',!!user);
+  document.getElementById('app-view').classList.toggle('hidden',!user);
+  document.getElementById('warehouse-view').classList.add('hidden');
+  if(user){ loadOrders(); loadWarehouse(); }
+});
 
-    window.updatePhoneByCourier = function () {
-      const courier = document.getElementById('courier').value;
-      const phoneSelect = document.getElementById('shopPhone');
-      phoneSelect.value = (courier === 'Anousith Express') ? '020 94036226' : '020 98052744';
-    };
+document.getElementById('courier').addEventListener('change',()=>{
+  document.getElementById('shopPhone').value =
+    document.getElementById('courier').value==='Anousith Express' ? '020 94036226' : '020 98052744';
+});
 
-    document.getElementById('courier').addEventListener('change', updatePhoneByCourier);
+async function loadOrders(){
+  const qs = await getDocs(collection(db,'orders'));
+  orderList = [];
+  qs.forEach(s=> orderList.push({...s.data(), idDoc:s.id}));
+  renderOrders();
+}
+async function loadWarehouse(){
+  const q = query(collection(db,'orders'),where('archived','==',true));
+  const qs = await getDocs(q);
+  warehouseList = [];
+  qs.forEach(s=> warehouseList.push({...s.data(), idDoc:s.id}));
+  renderWarehouse();
+}
 
-    window.addOrder = async function () {
-      const customer = document.getElementById('customerData').value.trim();
-      const courier = document.getElementById('courier').value;
-      const shopPhone = document.getElementById('shopPhone').value;
-      if (!customer) return alert('กรุณากรอกข้อมูลลูกค้า');
-      const id = 'BN' + Math.floor(Math.random() * 100000);
-      const date = new Date();
-      const barcode = Math.floor(100000000000 + Math.random() * 900000000000);
-      const order = { id, customer, courier, date: date.toISOString(), barcode, shopPhone };
-      await addDoc(collection(db, "orders"), order);
-      await loadOrdersFromFirebase();
-      document.getElementById('customerData').value = '';
-    };
+function renderOrders(){
+  const c = document.getElementById('orders'); c.innerHTML='';
+  orderList.filter(o=>!o.archived).forEach((o,i)=>{
+    const d=document.createElement('div'); d.className='order';
+    d.innerHTML=`
+    <input type="checkbox" data-index="${i}" checked>
+    <b>ID:</b> ${o.id} <b>${o.courier}</b><br>
+    <pre>${o.customer}</pre>
+    <button class="btn" onclick="editOrder(${i})">แก้ไข</button>
+    `;
+    c.appendChild(d);
+  });
+}
+function renderWarehouse(){
+  const c=document.getElementById('warehouse'); c.innerHTML='';
+  warehouseList.forEach((o,i)=>{
+    const d=document.createElement('div'); d.className='order';
+    d.innerHTML=`
+    <b>ID:</b> ${o.id} (คลัง)<br><pre>${o.customer}</pre>
+    <button class="btn" onclick="restoreOrder(${i})">คืน</button>
+    <button class="btn btn-danger" onclick="delOrder(${i},true)">ลบถาวร</button>
+    `;
+    c.appendChild(d);
+  });
+}
+function selectAll(b){
+  document.querySelectorAll('#orders input[type=checkbox]').forEach(c=>c.checked=b);
+}
 
-    window.renderOrders = function () {
-      const container = document.getElementById('orders');
-      container.innerHTML = '';
-      orderList.forEach((order, index) => {
-        const div = document.createElement('div');
-        div.className = 'order';
-        div.innerHTML = `
-          <input type="checkbox" data-index="${index}" checked>
-          <strong>Order ID:</strong> ${order.id}<br>
-          <strong>ขนส่ง:</strong> ${order.courier}<br>
-          <strong>เบอร์ร้าน:</strong> ${order.shopPhone}<br>
-          <strong>ลูกค้า:</strong><br> <pre>${order.customer}</pre>
-        `;
-        container.appendChild(div);
-      });
-    };
+async function addOrder(){
+  const cust=document.getElementById('customerData').value.trim(), cour=document.getElementById('courier').value, phone=document.getElementById('shopPhone').value;
+  if(!cust) return alert('กรอกลูกค้า');
+  await addDoc(collection(db,'orders'),{id:'BN'+Date.now(),customer:cust,courier:cour,shopPhone:phone,date:Date.now(),barcode:String(Date.now()),archived:false});
+  document.getElementById('customerData').value='';
+  loadOrders();
+}
+function editOrder(i){
+  const o=orderList[i];
+  const cust=prompt('แก้ไขลูกค้า',o.customer);
+  if(cust!==null){
+    updateDoc(doc(db,'orders',o.idDoc),{customer:cust}).then(loadOrders);
+  }
+}
+async function deleteSelected(){
+  const ch=document.querySelectorAll('#orders input[type=checkbox]');
+  for(const c of ch) if(c.checked){
+    const o=orderList[c.dataset.index];
+    await deleteDoc(doc(db,'orders',o.idDoc));
+  }
+  loadOrders(); loadWarehouse();
+}
+async function archiveSelected(){
+  const ch=document.querySelectorAll('#orders input[type=checkbox]');
+  for(const c of ch) if(c.checked){
+    const o=orderList[c.dataset.index];
+    await updateDoc(doc(db,'orders',o.idDoc),{archived:true});
+  }
+  loadOrders(); loadWarehouse();
+}
+async function restoreOrder(i){
+  const o=warehouseList[i];
+  await updateDoc(doc(db,'orders',o.idDoc),{archived:false});
+  loadOrders(); loadWarehouse();
+}
+async function delOrder(i,isWare){
+  const o = isWare ? warehouseList[i] : orderList[i];
+  await deleteDoc(doc(db,'orders',o.idDoc));
+  loadOrders(); loadWarehouse();
+}
 
-    window.selectAll = function (checked) {
-      document.querySelectorAll('#orders input[type=checkbox]').forEach(c => c.checked = checked);
-    };
+function printSelected(){ printBills(orderList.filter((_,i)=>document.querySelectorAll('#orders input')[i].checked)); }
+function printAll(){ printBills(orderList); }
 
-    window.generateBarcodeSVG = function (barcodeNumber) {
-      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      JsBarcode(svg, barcodeNumber.toString(), {
-        format: "CODE128", lineColor: "#000", width: 2, height: 50, displayValue: false
-      });
-      return svg.outerHTML;
-    };
+function printBills(arr){
+  if(!arr.length) return alert('ไม่มีออเดอร์');
+  const w = window.open(); w.document.write('<html><body>');
+  arr.forEach(o=>{
+    const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
+    JsBarcode(svg,o.barcode,{format:"CODE128",width:2,height:50,displayValue:false});
+    w.document.write(`<div style="page-break-after:always;"><b>ID:</b>${o.id}<br>${svg.outerHTML}<br><pre>${o.customer}</pre></div>`);
+  });
+  w.document.write('</body></html>'); w.document.close(); setTimeout(()=>w.print(),500);
+}
 
-    window.printBill = function (order) {
-      const dateStr = new Date(order.date).toLocaleString();
-      const barcodeSVG = generateBarcodeSVG(order.barcode);
-      return `
-        <div class="bill">
-          <div class="header">
-            <div class="logo">BN</div>
-            <div class="shop-info">
-              ຮ້ານ : BN Shop<br>ເບີໂທ : ${order.shopPhone}
-            </div>
-          </div>
-          <div class="section">
-            <strong>ວັນທີ:</strong> ${dateStr}<br>
-            <strong>ລະຫັດອອເດີ:</strong> ${order.id}
-          </div>
-          <div class="barcode-container">
-            ${barcodeSVG}
-            <div class="barcode-number">${order.barcode}</div>
-          </div>
-          <div class="section">
-            <strong>ຂົນສົ່ງ:</strong> ${order.courier}<br>
-            <strong>ຂໍ້ມູນລູກຄ້າ:</strong><br><pre>${order.customer.replace(/\n/g, '<br>')}</pre>
-          </div>
-          <div class="thankyou">ຂອບໃຈ💗</div>
-        </div>
-      `;
-    };
-
-    window.printBills = function (orders) {
-      const win = window.open('', '_blank');
-      win.document.write(`
-        <html><head><title>Print Bills</title><style>
-          @page { size: 80mm 150mm; margin: 0; }
-          body { margin: 0; padding: 0; font-family: 'Noto Sans Lao', sans-serif; }
-          .bill { width: 76mm; min-height: 130mm; padding: 10px; font-size: 14px; border: 1px solid #000; page-break-after: always; }
-          .logo { font-size: 48px; font-weight: bold; display: inline-block; margin-right: 10px; }
-          .shop-info { display: inline-block; vertical-align: middle; line-height: 1.4; white-space: nowrap; }
-          .header { margin-bottom: 10px; }
-          .section { margin-top: 10px; }
-          .barcode-container { text-align: center; margin: 15px 0; }
-          .barcode-number { text-align: center; font-family: monospace; font-size: 12px; margin-top: 5px; }
-          .thankyou { text-align: center; margin-top: 20px; font-weight: bold; }
-          pre { white-space: pre-wrap; word-wrap: break-word; margin: 0; line-height: 1.4; }
-        </style></head><body>
-      `);
-      orders.forEach(order => win.document.write(printBill(order)));
-      win.document.write('</body></html>');
-      win.document.close();
-      setTimeout(() => win.print(), 500);
-    };
-
-    window.printSelected = function () {
-      const checkboxes = document.querySelectorAll('#orders input[type=checkbox]');
-      const selected = Array.from(checkboxes).filter(c => c.checked).map(c => orderList[c.dataset.index]);
-      if (!selected.length) return alert('กรุณาเลือกออเดอร์');
-      printBills(selected);
-    };
-
-    window.printAll = function () {
-      if (!orderList.length) return alert('ไม่มีออเดอร์');
-      printBills(orderList);
-    };
-
-    window.deleteSelected = async function () {
-      const checkboxes = document.querySelectorAll('#orders input[type=checkbox]');
-      const selected = Array.from(checkboxes).filter(c => c.checked);
-      if (!selected.length) return alert('กรุณาเลือกออเดอร์ที่จะลบ');
-
-      const confirmDelete = confirm('คุณแน่ใจว่าจะลบออเดอร์ที่เลือก?');
-      if (!confirmDelete) return;
-
-      for (const c of selected) {
-        const index = c.dataset.index;
-        const docId = orderList[index]._docId;
-        await deleteDoc(doc(db, "orders", docId));
-      }
-      await loadOrdersFromFirebase();
-    };
-  </script>
+function showWarehouse(){document.getElementById('app-view').classList.add('hidden');document.getElementById('warehouse-view').classList.remove('hidden');}
+function showApp(){document.getElementById('warehouse-view').classList.add('hidden');document.getElementById('app-view').classList.remove('hidden');}
+</script>
 </body>
 </html>
