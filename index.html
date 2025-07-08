@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="lo">
 <head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BN Shop Order System</title>
   <style>
     body{font-family:'Noto Sans Lao',sans-serif;padding:20px;}
@@ -53,7 +53,7 @@
   <button class="btn" onclick="archiveSelected()">เก็บเข้าคลัง</button>
 </div>
 
-<!-- คลัง -->
+<!-- Warehouse -->
 <div id="warehouse-view" class="hidden">
   <div class="topbar">
     <button class="btn" onclick="showApp()">กลับ</button>
@@ -68,61 +68,71 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
+// TODO: แทนค่า config ให้ตรงกับของจริง
 const firebaseConfig = {
-  apiKey: "...",
-  authDomain: "...",
-  projectId: "..."
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_AUTH_DOMAIN",
+  projectId: "YOUR_PROJECT_ID"
 };
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app), auth = getAuth();
+initializeApp(firebaseConfig);
+const db = getFirestore(), auth = getAuth();
 
 let orderList = [], warehouseList = [];
 
 function signup(){
   const e=document.getElementById('email').value, p=document.getElementById('password').value;
-  createUserWithEmailAndPassword(auth,e,p).catch(e=>document.getElementById('auth-error').innerText=e.message);
+  createUserWithEmailAndPassword(auth, e, p)
+    .then(() => console.log('Signup success'))
+    .catch(err => document.getElementById('auth-error').innerText = err.message);
 }
+
 function login(){
   const e=document.getElementById('email').value, p=document.getElementById('password').value;
-  signInWithEmailAndPassword(auth,e,p).catch(e=>document.getElementById('auth-error').innerText=e.message);
+  signInWithEmailAndPassword(auth, e, p)
+    .then(() => console.log('Login success'))
+    .catch(err => document.getElementById('auth-error').innerText = err.message);
 }
+
 function logout(){ signOut(auth); }
 
-onAuthStateChanged(auth,user=>{
-  document.getElementById('auth-view').classList.toggle('hidden',!!user);
-  document.getElementById('app-view').classList.toggle('hidden',!user);
+onAuthStateChanged(auth, user => {
+  document.getElementById('auth-view').classList.toggle('hidden', !!user);
+  document.getElementById('app-view').classList.toggle('hidden', !user);
   document.getElementById('warehouse-view').classList.add('hidden');
-  if(user){ loadOrders(); loadWarehouse(); updateShopPhone(); }
+  if (user) {
+    loadOrders();
+    loadWarehouse();
+    updateShopPhone();
+  }
 });
 
 document.getElementById('courier').addEventListener('change', updateShopPhone);
 
 function updateShopPhone(){
   const courier = document.getElementById('courier').value;
-  document.getElementById('shopPhone').value =
-    courier==='Anousith Express' ? '020 94036226' : '020 98052744';
+  document.getElementById('shopPhone').value = courier === 'Anousith Express' ? '020 94036226' : '020 98052744';
 }
 
 async function loadOrders(){
   const qs = await getDocs(collection(db,'orders'));
   orderList = [];
-  qs.forEach(s=> orderList.push({...s.data(), idDoc:s.id}));
+  qs.forEach(s => orderList.push({...s.data(), idDoc: s.id}));
   renderOrders();
 }
 
 async function loadWarehouse(){
-  const q = query(collection(db,'orders'), where('archived','==',true));
+  const q = query(collection(db,'orders'), where('archived','==', true));
   const qs = await getDocs(q);
   warehouseList = [];
-  qs.forEach(s=> warehouseList.push({...s.data(), idDoc:s.id}));
+  qs.forEach(s => warehouseList.push({...s.data(), idDoc: s.id}));
   renderWarehouse();
 }
 
 function renderOrders(){
-  const c = document.getElementById('orders'); c.innerHTML='';
-  orderList.filter(o=>!o.archived).forEach((o,i)=>{
-    const d=document.createElement('div'); d.className='order';
-    d.innerHTML=`
+  const c = document.getElementById('orders'); c.innerHTML = '';
+  orderList.filter(o => !o.archived).forEach((o, i) => {
+    const d = document.createElement('div'); d.className = 'order';
+    d.innerHTML = `
       <input type="checkbox" data-index="${i}">
       <b>ID:</b> ${o.id} <b>${o.courier}</b><br>
       <pre>${o.customer}</pre>
@@ -133,13 +143,13 @@ function renderOrders(){
 }
 
 function renderWarehouse(){
-  const c=document.getElementById('warehouse'); c.innerHTML='';
-  warehouseList.forEach((o,i)=>{
-    const d=document.createElement('div'); d.className='order';
-    d.innerHTML=`
+  const c = document.getElementById('warehouse'); c.innerHTML = '';
+  warehouseList.forEach((o, i) => {
+    const d = document.createElement('div'); d.className = 'order';
+    d.innerHTML = `
       <b>ID:</b> ${o.id} (คลัง)<br><pre>${o.customer}</pre>
       <button class="btn" onclick="restoreOrder(${i})">คืน</button>
-      <button class="btn btn-danger" onclick="delOrder(${i},true)">ลบถาวร</button>
+      <button class="btn btn-danger" onclick="delOrder(${i}, true)">ลบถาวร</button>
     `;
     c.appendChild(d);
   });
@@ -151,18 +161,18 @@ function selectAll(flag){
 
 async function addOrder(){
   const cust = document.getElementById('customerData').value.trim();
-  if(!cust){ return alert('กรอกข้อมูลลูกค้าก่อน'); }
+  if (!cust) return alert('กรอกข้อมูลลูกค้าก่อน');
   const cour = document.getElementById('courier').value;
   const phone = document.getElementById('shopPhone').value;
-  const timestamp = Date.now().toString();
+  const ts = Date.now().toString();
   await addDoc(collection(db,'orders'),{
-    id:'BN'+timestamp,
-    customer:cust,
-    courier:cour,
-    shopPhone:phone,
-    date:Date.now(),
-    barcode:timestamp,
-    archived:false
+    id: 'BN' + ts,
+    customer: cust,
+    courier: cour,
+    shopPhone: phone,
+    date: Date.now(),
+    barcode: ts,
+    archived: false
   });
   document.getElementById('customerData').value = '';
   loadOrders();
@@ -171,74 +181,68 @@ async function addOrder(){
 function editOrder(i){
   const o = orderList[i];
   const cust = prompt('แก้ไขข้อมูลลูกค้า', o.customer);
-  if(cust !== null){
-    updateDoc(doc(db,'orders',o.idDoc),{customer:cust}).then(loadOrders);
+  if (cust !== null) {
+    updateDoc(doc(db,'orders',o.idDoc), {customer: cust}).then(loadOrders);
   }
 }
 
 async function deleteSelected(){
   const boxes = document.querySelectorAll('#orders input[type=checkbox]');
-  for(const box of boxes){
-    if(box.checked){
-      const o = orderList[box.dataset.index];
-      await deleteDoc(doc(db,'orders',o.idDoc));
-    }
+  for (const b of boxes) {
+    if (b.checked) await deleteDoc(doc(db,'orders',orderList[b.dataset.index].idDoc));
   }
-  loadOrders(); loadWarehouse();
+  loadOrders();
+  loadWarehouse();
 }
 
 async function archiveSelected(){
   const boxes = document.querySelectorAll('#orders input[type=checkbox]');
-  for(const box of boxes){
-    if(box.checked){
-      const o = orderList[box.dataset.index];
-      await updateDoc(doc(db,'orders',o.idDoc),{archived:true});
-    }
+  for (const b of boxes) {
+    if (b.checked) await updateDoc(doc(db,'orders',orderList[b.dataset.index].idDoc), {archived: true});
   }
-  loadOrders(); loadWarehouse();
+  loadOrders();
+  loadWarehouse();
 }
 
 async function restoreOrder(i){
-  const o = warehouseList[i];
-  await updateDoc(doc(db,'orders',o.idDoc),{archived:false});
-  loadOrders(); loadWarehouse();
+  await updateDoc(doc(db,'orders',warehouseList[i].idDoc), {archived: false});
+  loadOrders();
+  loadWarehouse();
 }
 
 async function delOrder(i, isWare){
-  const o = isWare ? warehouseList[i] : orderList[i];
-  await deleteDoc(doc(db,'orders',o.idDoc));
-  loadOrders(); loadWarehouse();
+  const list = isWare ? warehouseList : orderList;
+  await deleteDoc(doc(db,'orders', list[i].idDoc));
+  loadOrders();
+  loadWarehouse();
 }
 
 function printSelected(){
   const boxes = document.querySelectorAll('#orders input[type=checkbox]');
-  const arr = Array.from(boxes).map((b,i)=>b.checked ? orderList[b.dataset.index] : null).filter(x=>x);
+  const arr = Array.from(boxes).map((b,i)=> b.checked ? orderList[b.dataset.index] : null).filter(x=>x);
   printBills(arr);
 }
 
 function printAll(){
-  printBills(orderList.filter(o => !o.archived));
+  printBills(orderList.filter(o=>!o.archived));
 }
 
-function printBills(arr){
-  if(!arr.length) return alert('ไม่มีออเดอร์ที่เลือก');
-  const w = window.open();
-  w.document.write('<html><body>');
-  arr.forEach(o=>{
+function printBills(list){
+  if (!list.length) return alert('ไม่มีออเดอร์ที่เลือก');
+  const w = window.open(); w.document.write('<html><body>');
+  list.forEach(o=>{
     const svg = document.createElementNS("http://www.w3.org/2000/svg","svg");
-    JsBarcode(svg, o.barcode, {format:"CODE128",width:2,height:50,displayValue:false});
+    JsBarcode(svg, o.barcode, {format:"CODE128", width:2, height:50, displayValue:false});
     w.document.write(`<div style="page-break-after:always;"><b>ID:</b>${o.id}<br>${svg.outerHTML}<br><pre>${o.customer}</pre></div>`);
   });
-  w.document.write('</body></html>');
-  w.document.close();
-  setTimeout(() => w.print(), 500);
+  w.document.write('</body></html>'); w.document.close();
+  setTimeout(()=>w.print(),500);
 }
 
 function showWarehouse(){
   document.getElementById('app-view').classList.add('hidden');
   document.getElementById('warehouse-view').classList.remove('hidden');
 }
-
 function showApp(){
   document.getElementById('warehouse-view').classList.add('hidden');
   document.getElementById('app-view').classList.remove('hidden');
