@@ -33,7 +33,6 @@
     <button class="btn btn-danger" onclick="logout()">Logout</button>
   </div>
 
-  <!-- สร้างออเดอร์ -->
   <h2>เพิ่มออเดอร์</h2>
   <textarea id="customerData" rows="3" placeholder="ข้อมูลลูกค้า"></textarea><br>
   <select id="courier">
@@ -41,16 +40,12 @@
     <option>Anousith Express</option>
     <option>Mixay Express</option>
   </select>
-  <select id="shopPhone" disabled>
-    <option>020 94036226</option>
-    <option>020 98052744</option>
-  </select>
+  <input type="text" id="shopPhone" disabled><br><br>
   <button class="btn" onclick="addOrder()">ยืนยันออเดอร์</button>
 
-  <!-- รายการออเดอร์หลัก -->
   <h2>ออเดอร์ทั้งหมด</h2>
   <button class="btn" onclick="selectAll(true)">เลือกทั้งหมด</button>
-  <button class="btn" onclick="selectAll(false)">ยกเลิกทั้งหมด</button><br>
+  <button class="btn" onclick="selectAll(false)">ยกเลิกทั้งหมด</button><br><br>
   <div id="orders"></div>
   <button class="btn" onclick="printSelected()">พิมพ์ที่เลือก</button>
   <button class="btn" onclick="printAll()">พิมพ์ทั้งหมด</button>
@@ -74,9 +69,9 @@ import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, q
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAR4ZN_J3u4nTl2dLpF6eXqE3txaUoYrMY",
-  authDomain: "bnchen-93d9d.firebaseapp.com",
-  projectId: "bnchen-93d9d"
+  apiKey: "...",
+  authDomain: "...",
+  projectId: "..."
 };
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app), auth = getAuth();
@@ -97,13 +92,16 @@ onAuthStateChanged(auth,user=>{
   document.getElementById('auth-view').classList.toggle('hidden',!!user);
   document.getElementById('app-view').classList.toggle('hidden',!user);
   document.getElementById('warehouse-view').classList.add('hidden');
-  if(user){ loadOrders(); loadWarehouse(); }
+  if(user){ loadOrders(); loadWarehouse(); updateShopPhone(); }
 });
 
-document.getElementById('courier').addEventListener('change',()=>{
+document.getElementById('courier').addEventListener('change', updateShopPhone);
+
+function updateShopPhone(){
+  const courier = document.getElementById('courier').value;
   document.getElementById('shopPhone').value =
-    document.getElementById('courier').value==='Anousith Express' ? '020 94036226' : '020 98052744';
-});
+    courier==='Anousith Express' ? '020 94036226' : '020 98052744';
+}
 
 async function loadOrders(){
   const qs = await getDocs(collection(db,'orders'));
@@ -111,8 +109,9 @@ async function loadOrders(){
   qs.forEach(s=> orderList.push({...s.data(), idDoc:s.id}));
   renderOrders();
 }
+
 async function loadWarehouse(){
-  const q = query(collection(db,'orders'),where('archived','==',true));
+  const q = query(collection(db,'orders'), where('archived','==',true));
   const qs = await getDocs(q);
   warehouseList = [];
   qs.forEach(s=> warehouseList.push({...s.data(), idDoc:s.id}));
@@ -120,133 +119,126 @@ async function loadWarehouse(){
 }
 
 function renderOrders(){
-  const c = document.getElementById('orders'); 
-  c.innerHTML='';
-  orderList.filter(o=>!o.archived).forEach((o)=>{
-    const d=document.createElement('div'); 
-    d.className='order';
+  const c = document.getElementById('orders'); c.innerHTML='';
+  orderList.filter(o=>!o.archived).forEach((o,i)=>{
+    const d=document.createElement('div'); d.className='order';
     d.innerHTML=`
-      <input type="checkbox" data-id="${o.idDoc}" checked style="position:absolute;right:10px;top:10px;">
+      <input type="checkbox" data-index="${i}">
       <b>ID:</b> ${o.id} <b>${o.courier}</b><br>
       <pre>${o.customer}</pre>
-      <button class="btn btn-edit" data-id="${o.idDoc}">แก้ไข</button>
+      <button class="btn" onclick="editOrder(${i})">แก้ไข</button>
     `;
     c.appendChild(d);
   });
 }
 
-// แสดงออเดอร์ในคลัง
 function renderWarehouse(){
   const c=document.getElementById('warehouse'); c.innerHTML='';
-  warehouseList.forEach((o)=>{
+  warehouseList.forEach((o,i)=>{
     const d=document.createElement('div'); d.className='order';
     d.innerHTML=`
       <b>ID:</b> ${o.id} (คลัง)<br><pre>${o.customer}</pre>
-      <button class="btn btn-restore" data-id="${o.idDoc}">คืน</button>
-      <button class="btn btn-danger btn-delete" data-id="${o.idDoc}">ลบถาวร</button>
+      <button class="btn" onclick="restoreOrder(${i})">คืน</button>
+      <button class="btn btn-danger" onclick="delOrder(${i},true)">ลบถาวร</button>
     `;
     c.appendChild(d);
   });
 }
 
-// เลือก / ยกเลิก checkbox ทั้งหมด
-function selectAll(b){
-  document.querySelectorAll('#orders input[type=checkbox]').forEach(c=>c.checked=b);
+function selectAll(flag){
+  document.querySelectorAll('#orders input[type=checkbox]').forEach(c=>c.checked = flag);
 }
 
 async function addOrder(){
-  const cust=document.getElementById('customerData').value.trim(),
-        cour=document.getElementById('courier').value,
-        phone=document.getElementById('shopPhone').value;
-  if(!cust) return alert('กรอกลูกค้า');
+  const cust = document.getElementById('customerData').value.trim();
+  if(!cust){ return alert('กรอกข้อมูลลูกค้าก่อน'); }
+  const cour = document.getElementById('courier').value;
+  const phone = document.getElementById('shopPhone').value;
+  const timestamp = Date.now().toString();
   await addDoc(collection(db,'orders'),{
-    id:'BN'+Date.now(),
+    id:'BN'+timestamp,
     customer:cust,
     courier:cour,
     shopPhone:phone,
     date:Date.now(),
-    barcode:String(Date.now()),
+    barcode:timestamp,
     archived:false
   });
-  document.getElementById('customerData').value='';
+  document.getElementById('customerData').value = '';
   loadOrders();
 }
 
-// Event delegation สำหรับปุ่มแก้ไข, คืน, ลบ, ฯลฯ
-document.getElementById('orders').addEventListener('click', async e=>{
-  if(e.target.classList.contains('btn-edit')){
-    const id = e.target.dataset.id;
-    const o = orderList.find(x=>x.idDoc === id);
-    if(!o) return alert('ไม่พบออเดอร์นี้');
-    const cust = prompt('แก้ไขลูกค้า', o.customer);
-    if(cust !== null){
-      await updateDoc(doc(db,'orders',id), { customer: cust });
-      loadOrders();
-    }
+function editOrder(i){
+  const o = orderList[i];
+  const cust = prompt('แก้ไขข้อมูลลูกค้า', o.customer);
+  if(cust !== null){
+    updateDoc(doc(db,'orders',o.idDoc),{customer:cust}).then(loadOrders);
   }
-});
+}
 
-document.getElementById('warehouse').addEventListener('click', async e=>{
-  const id = e.target.dataset.id;
-  if(!id) return;
-  if(e.target.classList.contains('btn-restore')){
-    await updateDoc(doc(db,'orders',id), { archived: false });
-    loadOrders(); loadWarehouse();
-  } else if(e.target.classList.contains('btn-delete')){
-    if(confirm('ต้องการลบถาวรออเดอร์นี้?')){
-      await deleteDoc(doc(db,'orders',id));
-      loadOrders(); loadWarehouse();
-    }
-  }
-});
-
-// ลบออเดอร์ที่เลือก
 async function deleteSelected(){
-  const checked = Array.from(document.querySelectorAll('#orders input[type=checkbox]:checked'));
-  for(const c of checked){
-    const id = c.dataset.id;
-    await deleteDoc(doc(db,'orders',id));
+  const boxes = document.querySelectorAll('#orders input[type=checkbox]');
+  for(const box of boxes){
+    if(box.checked){
+      const o = orderList[box.dataset.index];
+      await deleteDoc(doc(db,'orders',o.idDoc));
+    }
   }
   loadOrders(); loadWarehouse();
 }
 
-// เก็บออเดอร์ที่เลือกเข้าคลัง
 async function archiveSelected(){
-  const checked = Array.from(document.querySelectorAll('#orders input[type=checkbox]:checked'));
-  for(const c of checked){
-    const id = c.dataset.id;
-    await updateDoc(doc(db,'orders',id), { archived: true });
+  const boxes = document.querySelectorAll('#orders input[type=checkbox]');
+  for(const box of boxes){
+    if(box.checked){
+      const o = orderList[box.dataset.index];
+      await updateDoc(doc(db,'orders',o.idDoc),{archived:true});
+    }
   }
   loadOrders(); loadWarehouse();
 }
 
-// ฟังก์ชันพิมพ์บิล
+async function restoreOrder(i){
+  const o = warehouseList[i];
+  await updateDoc(doc(db,'orders',o.idDoc),{archived:false});
+  loadOrders(); loadWarehouse();
+}
+
+async function delOrder(i, isWare){
+  const o = isWare ? warehouseList[i] : orderList[i];
+  await deleteDoc(doc(db,'orders',o.idDoc));
+  loadOrders(); loadWarehouse();
+}
+
 function printSelected(){
-  const checkedIds = Array.from(document.querySelectorAll('#orders input[type=checkbox]:checked')).map(i=>i.dataset.id);
-  const arr = orderList.filter(o => checkedIds.includes(o.idDoc));
+  const boxes = document.querySelectorAll('#orders input[type=checkbox]');
+  const arr = Array.from(boxes).map((b,i)=>b.checked ? orderList[b.dataset.index] : null).filter(x=>x);
   printBills(arr);
 }
+
 function printAll(){
-  printBills(orderList.filter(o=>!o.archived));
+  printBills(orderList.filter(o => !o.archived));
 }
+
 function printBills(arr){
-  if(!arr.length) return alert('ไม่มีออเดอร์');
-  const w = window.open(); 
+  if(!arr.length) return alert('ไม่มีออเดอร์ที่เลือก');
+  const w = window.open();
   w.document.write('<html><body>');
   arr.forEach(o=>{
-    const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");
-    JsBarcode(svg,o.barcode,{format:"CODE128",width:2,height:50,displayValue:false});
+    const svg = document.createElementNS("http://www.w3.org/2000/svg","svg");
+    JsBarcode(svg, o.barcode, {format:"CODE128",width:2,height:50,displayValue:false});
     w.document.write(`<div style="page-break-after:always;"><b>ID:</b>${o.id}<br>${svg.outerHTML}<br><pre>${o.customer}</pre></div>`);
   });
-  w.document.write('</body></html>'); 
-  w.document.close(); 
-  setTimeout(()=>w.print(),500);
+  w.document.write('</body></html>');
+  w.document.close();
+  setTimeout(() => w.print(), 500);
 }
 
 function showWarehouse(){
   document.getElementById('app-view').classList.add('hidden');
   document.getElementById('warehouse-view').classList.remove('hidden');
 }
+
 function showApp(){
   document.getElementById('warehouse-view').classList.add('hidden');
   document.getElementById('app-view').classList.remove('hidden');
