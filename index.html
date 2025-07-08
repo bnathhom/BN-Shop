@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="lo">
+<!DOCTYPE html>
+<html lang="lo">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,12 +11,17 @@
     .form-control { margin-bottom: 10px; }
     .form-control label { display: block; margin-bottom: 5px; }
     .form-control input, .form-control textarea, .form-control select { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ccc; }
-    .btn { padding: 10px 20px; border: none; border-radius: 5px; background-color: #007BFF; color: white; cursor: pointer; }
+    .btn { padding: 10px 20px; border: none; border-radius: 5px; background-color: #007BFF; color: white; cursor: pointer; margin: 2px; }
     .btn-danger { background-color: #dc3545; }
     .order { border: 1px dashed #aaa; padding: 10px; margin: 10px 0; position: relative; }
     .order input[type=checkbox] { position: absolute; right: 10px; top: 10px; }
     .print-btns { margin-top: 20px; text-align: center; }
-    .bill { width: 76mm; height: auto; min-height: 130mm; padding: 10px; font-size: 14px; box-sizing: border-box; border: 1px solid #000; margin: 0 auto; overflow: hidden; }
+    .bill {
+      width: 76mm; height: auto; min-height: 130mm;
+      padding: 10px; font-size: 14px; box-sizing: border-box;
+      border: 1px solid #000; margin: 0 auto; overflow: hidden;
+      font-family: 'Noto Sans Lao', sans-serif;
+    }
     .logo { font-size: 48px; font-weight: bold; display: inline-block; vertical-align: middle; margin-right: 10px; }
     .shop-info { display: inline-block; vertical-align: middle; line-height: 1.4; white-space: nowrap; }
     .header { margin-bottom: 10px; }
@@ -23,17 +29,13 @@
     .barcode-container { text-align: center; margin: 15px 0; }
     .barcode-number { text-align: center; font-family: monospace; font-size: 12px; margin-top: 5px; }
     .thankyou { text-align: center; margin-top: 20px; font-weight: bold; }
-    .customer-pre, .bill pre {
-      white-space: pre-wrap;
-      word-wrap: break-word;
-      font-family: 'Noto Sans Lao', sans-serif;
-      margin: 0;
-      line-height: 1.4;
-    }
+    pre { white-space: pre-wrap; word-wrap: break-word; margin: 0; line-height: 1.4; }
   </style>
 </head>
 <body>
+
   <h1>BN Shop Order System</h1>
+
   <div class="order-form">
     <div class="form-control">
       <label>ข้อมูลลูกค้า</label>
@@ -55,16 +57,26 @@
       </select>
     </div>
     <button class="btn" onclick="addOrder()">ยืนยันออเดอร์</button>
-  </div>  <div class="order-list">
+  </div>
+
+  <div class="order-list">
     <h2>ออเดอร์ทั้งหมด</h2>
+    <div style="text-align:center;">
+      <button class="btn" onclick="selectAll(true)">เลือกทั้งหมด</button>
+      <button class="btn" onclick="selectAll(false)">ยกเลิกทั้งหมด</button>
+    </div>
     <div id="orders"></div>
     <div class="print-btns">
       <button class="btn" onclick="printSelected()">พิมพ์ที่เลือก</button>
       <button class="btn" onclick="printAll()">พิมพ์ทั้งหมด</button>
+      <button class="btn btn-danger" onclick="deleteSelected()">ลบที่เลือก</button>
     </div>
-  </div>  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>  <script type="module">
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+  <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAR4ZN_J3u4nTl2dLpF6eXqE3txaUoYrMY",
@@ -78,7 +90,6 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-
     let orderList = [];
 
     async function loadOrdersFromFirebase() {
@@ -98,31 +109,29 @@
       updatePhoneByCourier();
     };
 
-    window.updatePhoneByCourier = function() {
+    window.updatePhoneByCourier = function () {
       const courier = document.getElementById('courier').value;
       const phoneSelect = document.getElementById('shopPhone');
       phoneSelect.value = (courier === 'Anousith Express') ? '020 94036226' : '020 98052744';
-    }
+    };
 
     document.getElementById('courier').addEventListener('change', updatePhoneByCourier);
 
-    window.addOrder = async function() {
+    window.addOrder = async function () {
       const customer = document.getElementById('customerData').value.trim();
       const courier = document.getElementById('courier').value;
       const shopPhone = document.getElementById('shopPhone').value;
       if (!customer) return alert('กรุณากรอกข้อมูลลูกค้า');
-
       const id = 'BN' + Math.floor(Math.random() * 100000);
       const date = new Date();
       const barcode = Math.floor(100000000000 + Math.random() * 900000000000);
       const order = { id, customer, courier, date: date.toISOString(), barcode, shopPhone };
-
       await addDoc(collection(db, "orders"), order);
       await loadOrdersFromFirebase();
       document.getElementById('customerData').value = '';
-    }
+    };
 
-    window.renderOrders = function() {
+    window.renderOrders = function () {
       const container = document.getElementById('orders');
       container.innerHTML = '';
       orderList.forEach((order, index) => {
@@ -133,90 +142,102 @@
           <strong>Order ID:</strong> ${order.id}<br>
           <strong>ขนส่ง:</strong> ${order.courier}<br>
           <strong>เบอร์ร้าน:</strong> ${order.shopPhone}<br>
-          <strong>ลูกค้า:</strong><br> <pre class="customer-pre">${order.customer}</pre>`;
-    container.appendChild(div);
-  });
-}
+          <strong>ลูกค้า:</strong><br> <pre>${order.customer}</pre>
+        `;
+        container.appendChild(div);
+      });
+    };
 
-window.generateBarcodeSVG = function(barcodeNumber) {
-  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  JsBarcode(svg, barcodeNumber.toString(), {
-    format: "CODE128",
-    lineColor: "#000",
-    width: 2,
-    height: 50,
-    displayValue: false
-  });
-  return svg.outerHTML;
-}
+    window.selectAll = function (checked) {
+      document.querySelectorAll('#orders input[type=checkbox]').forEach(c => c.checked = checked);
+    };
 
-window.printBill = function(order) {
-  const dateStr = new Date(order.date).toLocaleString();
-  const barcodeSVG = generateBarcodeSVG(order.barcode);
-  return `
-    <div class="bill">
-      <div class="header">
-        <div class="logo">BN</div>
-        <div class="shop-info">
-          ໌າ້ນ : BN Shop<br>
-          ເບີໂທ : ${order.shopPhone}
+    window.generateBarcodeSVG = function (barcodeNumber) {
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      JsBarcode(svg, barcodeNumber.toString(), {
+        format: "CODE128", lineColor: "#000", width: 2, height: 50, displayValue: false
+      });
+      return svg.outerHTML;
+    };
+
+    window.printBill = function (order) {
+      const dateStr = new Date(order.date).toLocaleString();
+      const barcodeSVG = generateBarcodeSVG(order.barcode);
+      return `
+        <div class="bill">
+          <div class="header">
+            <div class="logo">BN</div>
+            <div class="shop-info">
+              ຮ້ານ : BN Shop<br>ເບີໂທ : ${order.shopPhone}
+            </div>
+          </div>
+          <div class="section">
+            <strong>ວັນທີ:</strong> ${dateStr}<br>
+            <strong>ລະຫັດອອເດີ:</strong> ${order.id}
+          </div>
+          <div class="barcode-container">
+            ${barcodeSVG}
+            <div class="barcode-number">${order.barcode}</div>
+          </div>
+          <div class="section">
+            <strong>ຂົນສົ່ງ:</strong> ${order.courier}<br>
+            <strong>ຂໍ້ມູນລູກຄ້າ:</strong><br><pre>${order.customer.replace(/\n/g, '<br>')}</pre>
+          </div>
+          <div class="thankyou">ຂອບໃຈ💗</div>
         </div>
-      </div>
-      <div class="section">
-        <div><strong>ວັນທີ:</strong> ${dateStr}</div>
-        <div><strong>ລະຫັດອອເດີ:</strong> ${order.id}</div>
-      </div>
-      <div class="barcode-container">
-        ${barcodeSVG}
-        <div class="barcode-number">${order.barcode}</div>
-      </div>
-      <div class="section">
-        <div><strong>ຂັ້ນສ່່ົງ:</strong> ${order.courier}</div>
-        <div><strong>ຂໍ້ມູນລູກຄູ້า:</strong><br><pre>${order.customer.replace(/\n/g, '<br>')}</pre></div>
-      </div>
-      <div class="thankyou">ຂໍ່ຂໍບ຃າຍ💗</div>
-    </div>
-  `;
-}
+      `;
+    };
 
-window.printBills = function(orders) {
-  const printWindow = window.open('', '_blank');
-  printWindow.document.write(`
-    <html>
-    <head><title>Print Bills</title>
-    <style>
-      body { margin: 0; padding: 0; }
-      @page { size: 80mm 150mm; margin: 0; }
-      .bill { width: 76mm; min-height: 130mm; padding: 10px; font-size: 14px; border: 1px solid #000; page-break-after: always; font-family: 'Noto Sans Lao', sans-serif; }
-      .logo { font-size: 48px; font-weight: bold; display: inline-block; vertical-align: middle; margin-right: 10px; }
-      .shop-info { display: inline-block; vertical-align: middle; line-height: 1.4; white-space: nowrap; }
-      .header { margin-bottom: 10px; }
-      .section { margin-top: 10px; }
-      .barcode-container { text-align: center; margin: 15px 0; }
-      .barcode-number { text-align: center; font-family: monospace; font-size: 12px; margin-top: 5px; }
-      .thankyou { text-align: center; margin-top: 20px; font-weight: bold; }
-      pre { white-space: pre-wrap; word-wrap: break-word; margin: 0; line-height: 1.4; }
-    </style></head>
-    <body>
-  `);
-  orders.forEach(order => printWindow.document.write(printBill(order)));
-  printWindow.document.write('</body></html>');
-  printWindow.document.close();
-  setTimeout(() => printWindow.print(), 500);
-}
+    window.printBills = function (orders) {
+      const win = window.open('', '_blank');
+      win.document.write(`
+        <html><head><title>Print Bills</title><style>
+          @page { size: 80mm 150mm; margin: 0; }
+          body { margin: 0; padding: 0; font-family: 'Noto Sans Lao', sans-serif; }
+          .bill { width: 76mm; min-height: 130mm; padding: 10px; font-size: 14px; border: 1px solid #000; page-break-after: always; }
+          .logo { font-size: 48px; font-weight: bold; display: inline-block; margin-right: 10px; }
+          .shop-info { display: inline-block; vertical-align: middle; line-height: 1.4; white-space: nowrap; }
+          .header { margin-bottom: 10px; }
+          .section { margin-top: 10px; }
+          .barcode-container { text-align: center; margin: 15px 0; }
+          .barcode-number { text-align: center; font-family: monospace; font-size: 12px; margin-top: 5px; }
+          .thankyou { text-align: center; margin-top: 20px; font-weight: bold; }
+          pre { white-space: pre-wrap; word-wrap: break-word; margin: 0; line-height: 1.4; }
+        </style></head><body>
+      `);
+      orders.forEach(order => win.document.write(printBill(order)));
+      win.document.write('</body></html>');
+      win.document.close();
+      setTimeout(() => win.print(), 500);
+    };
 
-window.printSelected = function() {
-  const checkboxes = document.querySelectorAll('#orders input[type=checkbox]');
-  const selectedOrders = Array.from(checkboxes).filter(c => c.checked).map(c => orderList[c.dataset.index]);
-  if (selectedOrders.length === 0) return alert('กรุณาเลือกออเดอร์ที่ต้องการพิมพ์');
-  printBills(selectedOrders);
-}
+    window.printSelected = function () {
+      const checkboxes = document.querySelectorAll('#orders input[type=checkbox]');
+      const selected = Array.from(checkboxes).filter(c => c.checked).map(c => orderList[c.dataset.index]);
+      if (!selected.length) return alert('กรุณาเลือกออเดอร์');
+      printBills(selected);
+    };
 
-window.printAll = function() {
-  if (orderList.length === 0) return alert('ไม่มีออเดอร์ที่จะพิมพ์');
-  printBills(orderList);
-}
+    window.printAll = function () {
+      if (!orderList.length) return alert('ไม่มีออเดอร์');
+      printBills(orderList);
+    };
 
+    window.deleteSelected = async function () {
+      const checkboxes = document.querySelectorAll('#orders input[type=checkbox]');
+      const selected = Array.from(checkboxes).filter(c => c.checked);
+      if (!selected.length) return alert('กรุณาเลือกออเดอร์ที่จะลบ');
+
+      const confirmDelete = confirm('คุณแน่ใจว่าจะลบออเดอร์ที่เลือก?');
+      if (!confirmDelete) return;
+
+      for (const c of selected) {
+        const index = c.dataset.index;
+        const docId = orderList[index]._docId;
+        await deleteDoc(doc(db, "orders", docId));
+      }
+      await loadOrdersFromFirebase();
+    };
   </script>
 </body>
 </html>
