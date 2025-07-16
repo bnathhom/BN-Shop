@@ -332,6 +332,73 @@
         width: 100%;
         margin-bottom: 10px;
       }
+
+      .settings-tabs {
+  display: flex;
+  border-bottom: 1px solid #ddd;
+  margin-bottom: 20px;
+}
+
+.tab-btn {
+  padding: 12px 20px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  border-bottom: 3px solid transparent;
+  transition: all 0.3s;
+}
+
+.tab-btn.active {
+  border-bottom: 3px solid var(--primary-color);
+  color: var(--primary-color);
+}
+
+.settings-tab-content {
+  display: none;
+  padding: 15px;
+}
+
+.settings-tab-content.active {
+  display: block;
+}
+
+.theme-options {
+  display: flex;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.theme-option {
+  cursor: pointer;
+  text-align: center;
+}
+
+.theme-preview {
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  border: 2px solid #ddd;
+}
+
+.default-theme {
+  background: linear-gradient(135deg, #4361ee 0%, #3f37c9 100%);
+}
+
+.dark-theme {
+  background: linear-gradient(135deg, #212529 0%, #343a40 100%);
+}
+
+.btn-settings {
+  background-color: #6c757d;
+  color: white;
+  margin-right: 10px;
+}
+
+.btn-settings:hover {
+  background-color: #5a6268;
+}
     }
   </style>
 </head>
@@ -354,6 +421,9 @@
       <span id="userEmail" style="margin-right: 15px; color: white;"></span>
       <button class="btn btn-success" onclick="showArchive()" style="margin-right: 10px;">
     <i class="fas fa-archive"></i> คลังออเดอร์
+      </button>
+      <button class="btn btn-settings" onclick="openSettings()">
+  <i class="fas fa-cog"></i> ตั้งค่า
       </button>
       <button class="btn btn-danger" onclick="logout()">
         <i class="fas fa-sign-out-alt"></i> ออกจากระบบ
@@ -1021,7 +1091,134 @@
       document.getElementById('currentOrdersSection').style.display = 'block';
       document.getElementById('archiveSection').style.display = 'none';
     };
+    // ฟังก์ชันจัดการตั้งค่า
+function openSettings() {
+  openModal('settingsModal');
+  loadShopSettings(); // โหลดค่าที่บันทึกไว้
+}
+
+function openSettingsTab(tabId) {
+  document.querySelectorAll('.settings-tab-content').forEach(tab => {
+    tab.classList.remove('active');
+  });
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  
+  document.getElementById(tabId).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+
+function changeTheme(themeName) {
+  // เปลี่ยนธีมสีทั้งระบบ
+  if(themeName === 'dark') {
+    document.documentElement.style.setProperty('--primary-color', '#3a86ff');
+    document.documentElement.style.setProperty('--dark-color', '#f8f9fa');
+    document.documentElement.style.setProperty('--light-color', '#212529');
+  } else {
+    document.documentElement.style.setProperty('--primary-color', '#4361ee');
+    document.documentElement.style.setProperty('--dark-color', '#212529');
+    document.documentElement.style.setProperty('--light-color', '#f8f9fa');
+  }
+  localStorage.setItem('selectedTheme', themeName);
+}
+
+function loadShopSettings() {
+  // โหลดค่าที่บันทึกใน localStorage หรือ Firestore
+  const shopInfo = JSON.parse(localStorage.getItem('shopInfo')) || {};
+  document.getElementById('shopName').value = shopInfo.name || 'BN Shop';
+  document.getElementById('shopPhoneNumber').value = shopInfo.phone || '020 98052744';
+  document.getElementById('shopLogoUrl').value = shopInfo.logoUrl || '';
+  
+  // โหลดธีมที่เลือก
+  const savedTheme = localStorage.getItem('selectedTheme') || 'default';
+  changeTheme(savedTheme);
+}
+
+function saveShopInfo() {
+  const shopInfo = {
+    name: document.getElementById('shopName').value,
+    phone: document.getElementById('shopPhoneNumber').value,
+    logoUrl: document.getElementById('shopLogoUrl').value
+  };
+  
+  localStorage.setItem('shopInfo', JSON.stringify(shopInfo));
+  
+  // อัปเดตใน Firestore (ถ้าใช้)
+  if(currentUser) {
+    updateDoc(doc(db, "settings", currentUser.uid), {
+      shopInfo: shopInfo
+    }, { merge: true });
+  }
+  
+  alert('บันทึกการตั้งค่าเรียบร้อยแล้ว');
+  updateShopHeader(); // อัปเดตส่วนหัวบิล
+}
+
+function updateShopHeader() {
+  const shopInfo = JSON.parse(localStorage.getItem('shopInfo')) || {};
+  // อัปเดตส่วนแสดงผลในระบบ
+}
   </script>
+<div id="settingsModal" class="modal">
+  <div class="modal-content" style="max-width: 800px;">
+    <span class="close" onclick="closeModal('settingsModal')">&times;</span>
+    <h2><i class="fas fa-cog"></i> ตั้งค่าระบบ</h2>
+    
+    <div class="settings-tabs">
+      <button class="tab-btn active" onclick="openSettingsTab('themeTab')">
+        <i class="fas fa-palette"></i> ธีมสี
+      </button>
+      <button class="tab-btn" onclick="openSettingsTab('shopInfoTab')">
+        <i class="fas fa-store"></i> ข้อมูลร้าน
+      </button>
+      <button class="tab-btn" onclick="openSettingsTab('printerTab')">
+        <i class="fas fa-print"></i> การพิมพ์
+      </button>
+    </div>
+    
+    <div id="themeTab" class="settings-tab-content active">
+      <h3><i class="fas fa-palette"></i> ตั้งค่าธีมสี</h3>
+      <div class="theme-options">
+        <div class="theme-option" onclick="changeTheme('default')">
+          <div class="theme-preview default-theme"></div>
+          <span>ธีมมาตรฐาน</span>
+        </div>
+        <div class="theme-option" onclick="changeTheme('dark')">
+          <div class="theme-preview dark-theme"></div>
+          <span>ธีมมืด</span>
+        </div>
+        <!-- เพิ่มธีมอื่นๆ -->
+      </div>
+    </div>
+    
+    <div id="shopInfoTab" class="settings-tab-content">
+      <h3><i class="fas fa-store"></i> ข้อมูลร้านค้า</h3>
+      <div class="form-control">
+        <label>ชื่อร้าน</label>
+        <input type="text" id="shopName" placeholder="BN Shop">
+      </div>
+      <div class="form-control">
+        <label>เบอร์โทรร้าน</label>
+        <input type="text" id="shopPhoneNumber" placeholder="020 98052744">
+      </div>
+      <div class="form-control">
+        <label>โลโก้ร้าน (URL)</label>
+        <input type="text" id="shopLogoUrl" placeholder="https://...">
+        <small>หรืออัปโหลดไฟล์:</small>
+        <input type="file" id="logoUpload" accept="image/*">
+      </div>
+      <button class="btn btn-primary" onclick="saveShopInfo()">
+        <i class="fas fa-save"></i> บันทึก
+      </button>
+    </div>
+    
+    <div id="printerTab" class="settings-tab-content">
+      <h3><i class="fas fa-print"></i> การตั้งค่าการพิมพ์</h3>
+      <!-- ตั้งค่าการพิมพ์ -->
+    </div>
+  </div>
+</div>
 </body>
 </html>
 
