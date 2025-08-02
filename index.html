@@ -344,16 +344,16 @@
     </div>
     <div class="auth-buttons" id="authButtons">
       <button class="btn btn-primary" onclick="openModal('authModal')">
-        <i class="fas fa-sign-in-alt"></i> เข้าสู่ระบบ
+        <i class="fas fa-sign-in-alt"></i> ເຂົ້າສູ່ລະບົບ
       </button>
       <button class="btn btn-success" onclick="openModal('authModal', 'register')">
-        <i class="fas fa-user-plus"></i> สร้างบัญชี
+        <i class="fas fa-user-plus"></i> ສ້າງບັນຊີ
       </button>
     </div>
     <div class="user-menu" id="userMenu" style="display: none;">
       <span id="userEmail" style="margin-right: 15px; color: white;"></span>
       <button class="btn btn-danger" onclick="logout()">
-        <i class="fas fa-sign-out-alt"></i> ออกจากระบบ
+        <i class="fas fa-sign-out-alt"></i> ອອກຈາກລະບົບ
       </button>
     </div>
   </div>
@@ -363,17 +363,17 @@
     <!-- Current Orders Section -->
     <div id="currentOrdersSection">
       <div class="card">
-        <h2><i class="fas fa-plus-circle"></i> เพิ่มออเดอร์ใหม่</h2>
+        <h2><i class="fas fa-plus-circle"></i> ເພີ່ມອໍເດີ້ໃໝ່</h2>
         <div class="form-control">
-          <label>ข้อมูลลูกค้า</label>
+          <label>ຂໍ້ມູນລູກຄ້າ</label>
           <textarea id="customerData" rows="4"></textarea>
         </div>
         <div class="form-control">
-          <label>เลือกขนส่ง</label>
+          <label>ເລືອກຂົນສົ່ງ</label>
           <select id="courier">
-            <option value="HAL LOGISTICS">HAL LOGISTICS</option>
-            <option value="Anousith Express">Anousith Express</option>
-            <option value="Mixay Express">Mixay Express</option>
+            <option value="HAL LOGISTICS">HAL LOGISTIC(ຮຸ່ງອາລຸນ)</option>
+            <option value="Anousith Express">Anousith Express(ອະນຸສິດ)</option>
+            <option value="Mixay Express">Mixay Express(ມີໄຊ)</option>
           </select>
         </div>
         <div class="form-control">
