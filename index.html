@@ -384,7 +384,7 @@
           </select>
         </div>
         <button class="btn btn-primary" onclick="addOrder()">
-          <i class="fas fa-check"></i> ยืนยันออเดอร์
+          <i class="fas fa-check"></i> ຢືນຢັນ
         </button>
       </div>
 
@@ -485,9 +485,9 @@
       <div class="form-control">
         <label>เลือกขนส่ง</label>
         <select id="editCourier">
-          <option value="HAL LOGISTICS">HAL LOGISTICS</option>
-          <option value="Anousith Express">Anousith Express</option>
-          <option value="Mixay Express">Mixay Express</option>
+          <option value="HAL LOGISTICS">HAL LOGISTICS(ຮຸ່ງອາລຸນ)</option>
+          <option value="Anousith Express">Anousith Express(ອະນຸສິດ)</option>
+          <option value="Mixay Express">Mixay Express(ມີໄຊ)</option>
         </select>
       </div>
       <div class="form-control">
@@ -887,14 +887,14 @@
       return `
         <div class="bill">
           <div class="header">
-            <div class="logo">BN</div>
+            <div class="logo">BN Shop</div>
             <div class="shop-info">
               ຮ້ານ : BN Shop<br>ເບີໂທ : ${order.shopPhone}
             </div>
           </div>
           <div class="section">
             <strong>ວັນທີ:</strong> ${dateStr}<br>
-            <strong>ລະຫັດອອເດີ:</strong> ${order.id}
+            <strong>ລະຫັດອໍເດີ້:</strong> ${order.id}
           </div>
           <div class="barcode-container">
             ${barcodeSVG}
