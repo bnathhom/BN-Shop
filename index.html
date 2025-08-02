@@ -15,13 +15,25 @@
       --light-color: #f8f9fa;
       --dark-color: #212529;
     }
-    
+
+  
     body { 
       font-family: 'Noto Sans Lao', sans-serif; 
       margin: 0;
       padding: 0;
       background-color: #f5f7fa;
       color: var(--dark-color);
+    }
+
+      @media print {
+       body, .bill, .bill * {
+         font-family: 'Noto Sans Lao', sans-serif !important;
+       }
+
+       body {
+         background-color: white !important;
+         color: black !important;
+      }
     }
     
     .navbar {
