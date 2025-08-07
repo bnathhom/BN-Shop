@@ -23,7 +23,39 @@
       background-color: #f5f7fa;
       color: var(--dark-color);
     }
-    
+
+    .archived-order {
+      border-left: 4px solid var(--success-color);
+      margin-bottom: 15px;
+      padding: 15px;
+      background-color: rgba(0, 200, 83, 0.05);
+    }
+
+    .order-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px dashed #ddd;
+    }
+
+    .order-actions {
+      display: flex;
+      gap: 5px;
+    }
+
+    .order-actions .btn-sm {
+      padding: 5px 10px;
+      font-size: 0.8em;
+    }
+
+    .order-details pre {
+      background: rgba(0,0,0,0.03);
+      padding: 10px;
+      border-radius: 5px;
+      white-space: pre-wrap;
+
     .navbar {
       background-color: var(--primary-color);
       color: white;
@@ -845,33 +877,34 @@
     window.renderArchivedOrders = function() {
       const container = document.getElementById('archivedOrders');
       container.innerHTML = '';
-      
-      if (archivedOrderList.length === 0) {
-        container.innerHTML = '<p style="text-align: center; color: #666;">ไม่มีออเดอร์ในคลัง</p>';
-        return;
-      }
-      
+
       archivedOrderList.forEach((order, index) => {
+        const orderDate = new Date(order.date);
+        const dateStr = orderDate.toLocaleDateString('lo-LA') + ' ' + orderDate.toLocaleTimeString();
+    
         const div = document.createElement('div');
         div.className = 'order';
         div.innerHTML = `
-          <strong>Order ID:</strong> ${order.id}<br>
-          <strong>ขนส่ง:</strong> ${order.courier}<br>
-          <strong>เบอร์ร้าน:</strong> ${order.shopPhone}<br>
-          <strong>ลูกค้า:</strong><br> <pre>${order.customer}</pre>
+          <div class="order-header">
+            <strong>${order.id}</strong>
+            <span class="order-date">${dateStr}</span>
+          </div>
+          <div><strong>ขนส่ง:</strong> ${order.courier}</div>
+          <div><strong>เบอร์ร้าน:</strong> ${order.shopPhone}</div>
+          <div class="customer-data"><strong>ลูกค้า:</strong><pre>${order.customer}</pre></div>
           <div class="action-buttons">
-            <button class="btn btn-primary" onclick="printBillFromArchive('${index}')">
+            <button class="btn btn-primary" onclick="printBillFromArchive(${index})">
               <i class="fas fa-print"></i> พิมพ์บิล
             </button>
             <button class="btn btn-success" onclick="unarchiveOrder('${order._docId}')">
-              <i class="fas fa-undo"></i> ยกเลิกการเก็บ
-            </button>
-          </div>
-        `;
-        container.appendChild(div);
-      });
-    };
-
+              <i class="fas fa-undo"></i> นำออกจากคลัง
+           </button>
+         </div>
+       `;
+       container.appendChild(div);
+     });
+  };
+    
     window.openEditOrderModal = function(index) {
       const order = orderList[index];
       document.getElementById('editCustomerData').value = order.customer;
