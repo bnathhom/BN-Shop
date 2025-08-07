@@ -4,8 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BN Shop Order System</title>
-  <link rel="icon" type="image/png" href="favicon.png">
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     :root {
@@ -16,8 +15,7 @@
       --light-color: #f8f9fa;
       --dark-color: #212529;
     }
-
-  
+    
     body { 
       font-family: 'Noto Sans Lao', sans-serif; 
       margin: 0;
@@ -25,8 +23,7 @@
       background-color: #f5f7fa;
       color: var(--dark-color);
     }
-
-  
+    
     .navbar {
       background-color: var(--primary-color);
       color: white;
@@ -347,23 +344,19 @@
     </div>
     <div class="auth-buttons" id="authButtons">
       <button class="btn btn-primary" onclick="openModal('authModal')">
-        <i class="fas fa-sign-in-alt"></i> ເຂົ້າສູ່ລະບົບ
+        <i class="fas fa-sign-in-alt"></i> เข้าสู่ระบบ
       </button>
       <button class="btn btn-success" onclick="openModal('authModal', 'register')">
-        <i class="fas fa-user-plus"></i> ສ້າງບັນຊີ
-
-        <div class="user-menu" id="userMenu" style="display: none;">
-  <span id="userEmail" style="margin-right: 15px; color: white;"></span>
-  <button class="btn btn-success" onclick="showArchive()" style="margin-right: 10px;">
-    <i class="fas fa-archive"></i> เข้าคลังออเดอร์
-  </button>
-          
+        <i class="fas fa-user-plus"></i> สร้างบัญชี
       </button>
     </div>
     <div class="user-menu" id="userMenu" style="display: none;">
       <span id="userEmail" style="margin-right: 15px; color: white;"></span>
+      <button class="btn btn-success" onclick="showArchive()">
+    <i class="fas fa-archive"></i> ดูคลังออเดอร์
+  </button>
       <button class="btn btn-danger" onclick="logout()">
-        <i class="fas fa-sign-out-alt"></i> ອອກຈາກລະບົບ
+        <i class="fas fa-sign-out-alt"></i> ออกจากระบบ
       </button>
     </div>
   </div>
@@ -373,28 +366,28 @@
     <!-- Current Orders Section -->
     <div id="currentOrdersSection">
       <div class="card">
-        <h2><i class="fas fa-plus-circle"></i> ເພີ່ມອໍເດີ້ໃໝ່</h2>
+        <h2><i class="fas fa-plus-circle"></i> เพิ่มออเดอร์ใหม่</h2>
         <div class="form-control">
-          <label>ຂໍ້ມູນລູກຄ້າ</label>
+          <label>ข้อมูลลูกค้า</label>
           <textarea id="customerData" rows="4"></textarea>
         </div>
         <div class="form-control">
-          <label>ເລືອກຂົນສົ່ງ</label>
+          <label>เลือกขนส่ง</label>
           <select id="courier">
-            <option value="HAL LOGISTICS(ຮຸ່ງອາລຸນ)">HAL LOGISTIC(ຮຸ່ງອາລຸນ)</option>
-            <option value="Anousith Express(ອະນຸສິດ)">Anousith Express(ອະນຸສິດ)</option>
-            <option value="Mixay Express(ມີໄຊ)">Mixay Express(ມີໄຊ)</option>
+            <option value="HAL LOGISTICS">HAL LOGISTICS</option>
+            <option value="Anousith Express">Anousith Express</option>
+            <option value="Mixay Express">Mixay Express</option>
           </select>
         </div>
         <div class="form-control">
-          <label>ເບີໂທຮ້ານ (เปลี่ยนอัตโนมัติตามขนส่ง)</labe>
+          <label>เบอร์โทรร้าน (เปลี่ยนอัตโนมัติตามขนส่ง)</label>
           <select id="shopPhone" disabled>
             <option value="020 94036226">020 94036226</option>
             <option value="020 98052744">020 98052744</option>
           </select>
         </div>
         <button class="btn btn-primary" onclick="addOrder()">
-          <i class="fas fa-check"></i> ยืนยัน
+          <i class="fas fa-check"></i> ยืนยันออเดอร์
         </button>
       </div>
 
@@ -495,9 +488,9 @@
       <div class="form-control">
         <label>เลือกขนส่ง</label>
         <select id="editCourier">
-          <option value="HAL LOGISTICS(ຮຸ່ງອາລຸນ)">HAL LOGISTICS(ຮຸ່ງອາລຸນ)</option>
-          <option value="Anousith Express(ອະນຸສິດ)">Anousith Express(ອະນຸສິດ)</option>
-          <option value="Mixay Express(ມີໄຊ)">Mixay Express(ມີໄຊ)</option>
+          <option value="HAL LOGISTICS">HAL LOGISTICS</option>
+          <option value="Anousith Express">Anousith Express</option>
+          <option value="Mixay Express">Mixay Express</option>
         </select>
       </div>
       <div class="form-control">
@@ -782,6 +775,45 @@
       }
     };
 
+    window.addOrder = async function() {
+      if (!currentUser) {
+        alert('กรุณาเข้าสู่ระบบก่อนเพิ่มออเดอร์');
+        return;
+      }
+      
+      const customer = document.getElementById('customerData').value.trim();
+      const courier = document.getElementById('courier').value;
+      const shopPhone = document.getElementById('shopPhone').value;
+      
+      if (!customer) {
+        alert('กรุณากรอกข้อมูลลูกค้า');
+        return;
+      }
+      
+      const id = 'BN' + Math.floor(Math.random() * 100000);
+      const date = new Date();
+      const barcode = Math.floor(100000000000 + Math.random() * 900000000000);
+      
+      try {
+        await addDoc(collection(db, "orders"), {
+          id,
+          customer,
+          courier,
+          date: date.toISOString(),
+          barcode,
+          shopPhone,
+          userId: currentUser.uid,
+          archived: false
+        });
+        
+        await loadOrders();
+        document.getElementById('customerData').value = '';
+      } catch (error) {
+        console.error("Error adding order:", error);
+        alert("เกิดข้อผิดพลาดในการเพิ่มออเดอร์: " + error.message);
+      }
+    };
+
     window.renderOrders = function() {
       const container = document.getElementById('orders');
       container.innerHTML = '';
@@ -789,7 +821,8 @@
       if (orderList.length === 0) {
         container.innerHTML = '<p style="text-align: center; color: #666;">ไม่มีออเดอร์ในขณะนี้</p>';
         return;
-    }
+      }
+      
       orderList.forEach((order, index) => {
         const div = document.createElement('div');
         div.className = 'order';
@@ -892,40 +925,32 @@
     };
 
     window.printBill = function(order) {
-  const dateStr = new Date(order.date).toLocaleString();
-  const barcodeSVG = generateBarcodeSVG(order.barcode);
-  return `
-    <div class="bill" style="
-      background-image: url('bg-bill.png');
-      background-size: cover;
-      background-repeat: no-repeat;
-      background-position: center;
-      padding: 40px;
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
-    ">
-      <div class="header">
-        <div class="logo">BN Shop</div>
-        <div class="shop-info">
-          ຮ້ານ : BN Shop<br>ເບີໂທ : ${order.shopPhone}
+      const dateStr = new Date(order.date).toLocaleString();
+      const barcodeSVG = generateBarcodeSVG(order.barcode);
+      return `
+        <div class="bill">
+          <div class="header">
+            <div class="logo">BN</div>
+            <div class="shop-info">
+              ຮ້ານ : BN Shop<br>ເບີໂທ : ${order.shopPhone}
+            </div>
+          </div>
+          <div class="section">
+            <strong>ວັນທີ:</strong> ${dateStr}<br>
+            <strong>ລະຫັດອອເດີ:</strong> ${order.id}
+          </div>
+          <div class="barcode-container">
+            ${barcodeSVG}
+            <div class="barcode-number">${order.barcode}</div>
+          </div>
+          <div class="section">
+            <strong>ຂົນສົ່ງ:</strong> ${order.courier}<br>
+            <strong>ຂໍ້ມູນລູກຄ້າ:</strong><br><pre>${order.customer.replace(/\n/g, '<br>')}</pre>
+          </div>
+          <div class="thankyou">ຂອບໃຈ💗</div>
         </div>
-      </div>
-      <div class="section">
-        <strong>ວັນທີ:</strong> ${dateStr}<br>
-        <strong>ລະຫັດອໍເດີ້:</strong> ${order.id}
-      </div>
-      <div class="barcode-container">
-        ${barcodeSVG}
-        <div class="barcode-number">${order.barcode}</div>
-      </div>
-      <div class="section">
-        <strong>ຂົນສົ່ງ:</strong> ${order.courier}<br>
-        <strong>ຂໍ້ມູນລູກຄ້າ:</strong><br><pre>${order.customer.replace(/\n/g, '<br>')}</pre>
-      </div>
-      <div class="thankyou">ຂອບໃຈ💗</div>
-    </div>
-  `;
-};
+      `;
+    };
 
     window.printBills = function(orders) {
       const win = window.open('', '_blank');
@@ -934,7 +959,7 @@
           @page { size: 80mm 150mm; margin: 0; }
           body { margin: 0; padding: 0; font-family: 'Noto Sans Lao', sans-serif; }
           .bill { width: 76mm; min-height: 130mm; padding: 10px; font-size: 14px; border: 1px solid #000; page-break-after: always; }
-          .logo { font-size: 32px; font-weight: bold; display: inline-block; margin-right: 10px; }
+          .logo { font-size: 48px; font-weight: bold; display: inline-block; margin-right: 10px; }
           .shop-info { display: inline-block; vertical-align: middle; line-height: 1.4; white-space: nowrap; }
           .header { margin-bottom: 10px; }
           .section { margin-top: 10px; }
