@@ -310,6 +310,31 @@
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
+
+    .search-box {
+      display: flex;
+      gap: 10px;
+      margin: 15px 0;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .search-input {
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      flex: 1;
+      min-width: 200px;
+    }
+
+    @media (max-width: 768px) {
+      .search-box {
+        flex-direction: column;
+      }
+      .search-input {
+        width: 100%;
+      }
+    }
     
     /* Responsive */
     @media (max-width: 768px) {
@@ -420,13 +445,23 @@
     </div>
 
     <!-- Archive Section -->
-    <div class="card archive-section" id="archiveSection">
-      <h2><i class="fas fa-archive"></i> คลังออเดอร์</h2>
-      <button class="btn btn-primary" onclick="backToCurrentOrders()">
-        <i class="fas fa-arrow-left"></i> กลับไปออเดอร์ปัจจุบัน
-      </button>
-      <div id="archivedOrders" style="margin-top: 20px;"></div>
-    </div>
+     <div class="search-box">
+       <input type="text" id="archiveSearchInput" placeholder="ค้นหาจากเบอร์โทรลูกค้า..." class="search-input">
+       <input type="date" id="archiveDateInput" class="search-input">
+       <button class="btn btn-primary" onclick="searchArchivedOrders()">
+         <i class="fas fa-search"></i> ค้นหา
+       </button>
+       <button class="btn" onclick="resetArchiveSearch()">
+         <i class="fas fa-undo"></i> ล้าง
+       </button>
+     </div>
+    
+    <button class="btn btn-primary" onclick="backToCurrentOrders()">
+      <i class="fas fa-arrow-left"></i> กลับไปออเดอร์ปัจจุบัน
+    </button>
+  </div>
+  <div id="archivedOrders" style="margin-top: 20px;"></div>
+</div>
   </div>
 
   <!-- Auth Modal -->
@@ -843,10 +878,10 @@
     };
 
     window.renderArchivedOrders = function() {
-      const container = document.getElementById('archivedOrders');
-      container.innerHTML = '';
+  const container = document.getElementById('archivedOrders');
+  container.innerHTML = '';
 
-      archivedOrderList.forEach((order, index) => {
+  archivedOrderList.forEach((order) => {
         const orderDate = new Date(order.date);
         const dateStr = orderDate.toLocaleDateString('lo-LA') + ' ' + orderDate.toLocaleTimeString();
     
@@ -1061,6 +1096,51 @@
       document.getElementById('currentOrdersSection').style.display = 'block';
       document.getElementById('archiveSection').style.display = 'none';
     };
+
+    // ฟังก์ชันค้นหา
+    window.searchArchivedOrders = function() {
+      const searchText = document.getElementById('archiveSearchInput').value.toLowerCase();
+      const searchDate = document.getElementById('archiveDateInput').value;
+  
+      const filteredOrders = archivedOrderList.filter(order => {
+        // ค้นหาเบอร์โทร (ในข้อมูลลูกค้า)
+        const hasPhone = order.customer.toLowerCase().includes(searchText);
+    
+        // ค้นหาตามวันที่
+        let hasDate = true;
+        if (searchDate) {
+          const orderDate = new Date(order.date).toISOString().split('T')[0];
+          hasDate = orderDate === searchDate;
+        }
+    
+        return hasPhone && hasDate;
+      });
+  
+      renderFilteredArchivedOrders(filteredOrders);
+    };
+
+    // ฟังก์ชันแสดงผลลัพธ์การค้นหา
+    window.renderFilteredArchivedOrders = function(orders) {
+      const container = document.getElementById('archivedOrders');
+      if (orders.length === 0) {
+        container.innerHTML = '<p style="text-align:center; color:#666;">ไม่พบออเดอร์ที่ตรงกับเงื่อนไข</p>';
+        return;
+  }
+  
+      // ใช้ฟังก์ชัน render เดิมแต่ส่งข้อมูลที่กรองแล้วเข้าไป
+      const tempList = archivedOrderList;
+      archivedOrderList = orders;
+      renderArchivedOrders();
+      archivedOrderList = tempList; // คืนค่าข้อมูลเดิม
+    };
+
+    // ฟังก์ชันล้างการค้นหา
+    window.resetArchiveSearch = function() {
+      document.getElementById('archiveSearchInput').value = '';
+      document.getElementById('archiveDateInput').value = '';
+      renderArchivedOrders();
+    };
+  
   </script>
 </body>
 </html>
