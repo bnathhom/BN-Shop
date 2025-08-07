@@ -1086,11 +1086,31 @@
       }
     };
 
-    window.showArchive = function() {
-      document.getElementById('currentOrdersSection').style.display = 'none';
-      document.getElementById('archiveSection').style.display = 'block';
-      renderArchivedOrders();
-    };
+    window.showArchive = async function() {
+  try {
+    const q = query(
+      collection(db, "orders"),
+      where("userId", "==", currentUser.uid),
+      where("archived", "==", true),
+      orderBy("date", "desc")
+    );
+    
+    const snapshot = await getDocs(q);
+    archivedOrderList = snapshot.docs.map(doc => {
+      const data = doc.data();
+      data._docId = doc.id; 
+      return data;
+    });
+    
+    renderArchivedOrders(); // แสดงทั้งหมดครั้งแรก
+    document.getElementById('currentOrdersSection').style.display = 'none';
+    document.getElementById('archiveSection').style.display = 'block';
+    
+  } catch (error) {
+    console.error("Error loading archive:", error);
+    alert("โหลดคลังออเดอร์ไม่สำเร็จ");
+  }
+};
 
     window.backToCurrentOrders = function() {
       document.getElementById('currentOrdersSection').style.display = 'block';
@@ -1099,48 +1119,51 @@
 
     // ฟังก์ชันค้นหา
     window.searchArchivedOrders = function() {
-      const searchText = document.getElementById('archiveSearchInput').value.toLowerCase();
-      const searchDate = document.getElementById('archiveDateInput').value;
+  const searchText = document.getElementById('archiveSearchInput').value.toLowerCase();
+  const searchDate = document.getElementById('archiveDateInput').value;
   
-      const filteredOrders = archivedOrderList.filter(order => {
-        // ค้นหาเบอร์โทร (ในข้อมูลลูกค้า)
-        const hasPhone = order.customer.toLowerCase().includes(searchText);
+  // ดึงข้อมูลทั้งหมดจาก Firestore ใหม่ (ป้องกันข้อมูลไม่ตรงปัจจุบัน)
+  showArchive().then(() => {
+    const filtered = archivedOrderList.filter(order => {
+      // ค้นหาเบอร์โทรในข้อมูลลูกค้า
+      const hasPhone = order.customer.toLowerCase().includes(searchText);
+      
+      // ค้นหาตามวันที่ (ถ้ามีการเลือก)
+      const hasDate = searchDate 
+        ? new Date(order.date).toISOString().split('T')[0] === searchDate
+        : true;
+      
+      return hasPhone && hasDate;
+    });
     
-        // ค้นหาตามวันที่
-        let hasDate = true;
-        if (searchDate) {
-          const orderDate = new Date(order.date).toISOString().split('T')[0];
-          hasDate = orderDate === searchDate;
-        }
-    
-        return hasPhone && hasDate;
-      });
-  
-      renderFilteredArchivedOrders(filteredOrders);
-    };
+    renderFilteredArchivedOrders(filtered);
+  });
+};
 
-    // ฟังก์ชันแสดงผลลัพธ์การค้นหา
-    window.renderFilteredArchivedOrders = function(orders) {
-      const container = document.getElementById('archivedOrders');
-      if (orders.length === 0) {
-        container.innerHTML = '<p style="text-align:center; color:#666;">ไม่พบออเดอร์ที่ตรงกับเงื่อนไข</p>';
-        return;
+window.renderFilteredArchivedOrders = function(filteredOrders) {
+  const container = document.getElementById('archivedOrders');
+  container.innerHTML = '';
+  
+  if (filteredOrders.length === 0) {
+    container.innerHTML = '<p class="no-result">ไม่พบออเดอร์ที่ตรงเงื่อนไข</p>';
+    return;
   }
   
-      // ใช้ฟังก์ชัน render เดิมแต่ส่งข้อมูลที่กรองแล้วเข้าไป
-      const tempList = archivedOrderList;
-      archivedOrderList = orders;
-      renderArchivedOrders();
-      archivedOrderList = tempList; // คืนค่าข้อมูลเดิม
-    };
-
-    // ฟังก์ชันล้างการค้นหา
-    window.resetArchiveSearch = function() {
-      document.getElementById('archiveSearchInput').value = '';
-      document.getElementById('archiveDateInput').value = '';
-      renderArchivedOrders();
-    };
-  
+  filteredOrders.forEach(order => {
+    const orderDiv = document.createElement('div');
+    orderDiv.className = 'order archived-order';
+    orderDiv.innerHTML = `
+      <div class="order-header">
+        <span>${order.id}</span>
+        <span class="order-date">${new Date(order.date).toLocaleString()}</span>
+      </div>
+      <div class="order-details">
+        <pre>${order.customer}</pre>
+      </div>
+    `;
+    container.appendChild(orderDiv);
+  });
+}
   </script>
 </body>
 </html>
