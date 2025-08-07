@@ -751,8 +751,12 @@
         return;
       }
       
-      const phoneMatch = customer.match(/(020\d{6,8})/);
-      const id = phoneMatch ? phoneMatch[0] : 'BN' + Math.floor(Math.random() * 100000);
+      const phoneMatch = customer.match(/(?:0|\\+?856)(?:20|30|85\d{6,8})\b/);
+      if (!phoneMatch) {
+        alert('ไม่พบเบอร์โทรลูกค้า (8-12 หลัก) ในข้อมูลลูกค้า');
+        return;
+      }
+      const id = 'BN' + phoneMatch[0];
       const date = new Date();
       const barcode = Math.floor(100000000000 + Math.random() * 900000000000);
       
@@ -781,20 +785,32 @@
         alert('กรุณาเข้าสู่ระบบก่อนเพิ่มออเดอร์');
         return;
       }
-      
+  
       const customer = document.getElementById('customerData').value.trim();
       const courier = document.getElementById('courier').value;
       const shopPhone = document.getElementById('shopPhone').value;
-      
+  
       if (!customer) {
         alert('กรุณากรอกข้อมูลลูกค้า');
         return;
       }
-      
-      const id = 'BN' + Math.floor(Math.random() * 100000);
+
+      // Debug: แสดงข้อมูลลูกค้า
+      console.log("Customer Data:", customer);
+  
+  // หาเบอร์โทรลูกค้า (รูปแบบ: ตัวเลข 8-12 หลัก)
+      const phoneMatch = customer.match(/(020|030)\d{6,8}\b/);
+      console.log("Found Phone:", phoneMatch);
+  
+      if (!phoneMatch) {
+        alert('ไม่พบเบอร์โทรลูกค้า (รูปแบบ 020/030 ตามด้วยตัวเลข 6-8 หลัก)');
+        return;
+      }
+  
+      const id = 'BN' + phoneMatch[0]; // ใช้ BN นำหน้าเบอร์โทร
       const date = new Date();
       const barcode = Math.floor(100000000000 + Math.random() * 900000000000);
-      
+  
       try {
         await addDoc(collection(db, "orders"), {
           id,
@@ -806,7 +822,7 @@
           userId: currentUser.uid,
           archived: false
         });
-        
+    
         await loadOrders();
         document.getElementById('customerData').value = '';
       } catch (error) {
@@ -939,7 +955,7 @@
           </div>
           <div class="section">
             <strong>ວັນທີ:</strong> ${dateStr}<br>
-            <strong>ລະຫັດອອເດີ:</strong> ${order.id.startsWith('BN') ? order.id : 'BN' + order.id}
+            <strong>ລະຫັດອອເດີ:</strong> ${order.id.replace('BN', '')}
           </div>
           <div class="barcode-container">
             ${barcodeSVG}
