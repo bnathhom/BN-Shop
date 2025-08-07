@@ -1118,52 +1118,52 @@
     };
 
     // ฟังก์ชันค้นหา
-    window.searchArchivedOrders = function() {
+window.searchArchivedOrders = function() {
   const searchText = document.getElementById('archiveSearchInput').value.toLowerCase();
   const searchDate = document.getElementById('archiveDateInput').value;
   
-  // ดึงข้อมูลทั้งหมดจาก Firestore ใหม่ (ป้องกันข้อมูลไม่ตรงปัจจุบัน)
-  showArchive().then(() => {
-    const filtered = archivedOrderList.filter(order => {
-      // ค้นหาเบอร์โทรในข้อมูลลูกค้า
-      const hasPhone = order.customer.toLowerCase().includes(searchText);
-      
-      // ค้นหาตามวันที่ (ถ้ามีการเลือก)
-      const hasDate = searchDate 
-        ? new Date(order.date).toISOString().split('T')[0] === searchDate
-        : true;
-      
-      return hasPhone && hasDate;
-    });
+  const filtered = archivedOrderList.filter(order => {
+    // ค้นหาในข้อมูลลูกค้า (รวมเบอร์โทร)
+    const textMatch = order.customer.toLowerCase().includes(searchText);
     
-    renderFilteredArchivedOrders(filtered);
+    // ค้นหาตามวันที่ (ถ้ามีการเลือก)
+    const dateMatch = searchDate 
+      ? new Date(order.date).toISOString().split('T')[0] === searchDate
+      : true;
+    
+    return textMatch && dateMatch;
   });
+  
+  renderFilteredArchivedOrders(filtered);
 };
 
-window.renderFilteredArchivedOrders = function(filteredOrders) {
+// ฟังก์ชันแสดงผลลัพธ์
+window.renderFilteredArchivedOrders = function(orders) {
   const container = document.getElementById('archivedOrders');
   container.innerHTML = '';
   
-  if (filteredOrders.length === 0) {
-    container.innerHTML = '<p class="no-result">ไม่พบออเดอร์ที่ตรงเงื่อนไข</p>';
+  if (orders.length === 0) {
+    container.innerHTML = '<p style="text-align:center; color:#666;">ไม่พบออเดอร์</p>';
     return;
   }
   
-  filteredOrders.forEach(order => {
+  orders.forEach(order => {
+    // ใช้โค้ดแสดงผลเดิมของคุณ
     const orderDiv = document.createElement('div');
-    orderDiv.className = 'order archived-order';
+    orderDiv.className = 'order';
     orderDiv.innerHTML = `
-      <div class="order-header">
-        <span>${order.id}</span>
-        <span class="order-date">${new Date(order.date).toLocaleString()}</span>
-      </div>
-      <div class="order-details">
-        <pre>${order.customer}</pre>
-      </div>
+      <!-- ใส่โครงสร้างการแสดงผลเดิมของคุณที่นี่ -->
     `;
     container.appendChild(orderDiv);
   });
-}
+};
+
+// ฟังก์ชันล้างการค้นหา
+window.resetArchiveSearch = function() {
+  document.getElementById('archiveSearchInput').value = '';
+  document.getElementById('archiveDateInput').value = '';
+  renderArchivedOrders(); // ใช้ฟังก์ชันแสดงผลเดิมของคุณ
+};
   </script>
 </body>
 </html>
