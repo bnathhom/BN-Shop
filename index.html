@@ -751,7 +751,8 @@
         return;
       }
       
-      const id = 'BN' + Math.floor(Math.random() * 100000);
+      const phoneMatch = customer.match(/(020\d{6,8})/);
+      const id = phoneMatch ? phoneMatch[0] : 'BN' + Math.floor(Math.random() * 100000);
       const date = new Date();
       const barcode = Math.floor(100000000000 + Math.random() * 900000000000);
       
@@ -938,7 +939,7 @@
           </div>
           <div class="section">
             <strong>ວັນທີ:</strong> ${dateStr}<br>
-            <strong>ລະຫັດອອເດີ:</strong> ${order.id}
+            <strong>ລະຫັດອອເດີ:</strong> ${order.id.startsWith('BN') ? order.id : 'BN' + order.id}
           </div>
           <div class="barcode-container">
             ${barcodeSVG}
