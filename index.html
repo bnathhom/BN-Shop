@@ -1094,6 +1094,49 @@
       <div style="border: 1px solid #000; border-radius: 5px; padding: 10px; margin-bottom: 10px; text-align: center;">
         ${barcodeSVG}
         <div style="font-family: monospace; font-size: 12px; margin-top: 5px;">${order.barcode}</div>
+window.printBill = function(order) {
+  const dateStr = new Date(order.date).toLocaleString('lo-LA', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  }).replace(/\//g, '-');
+
+  const barcodeSVG = generateBarcodeSVG(order.barcode);
+  
+  return `
+    <div class="bill" style="font-family: 'Noto Sans Lao', sans-serif;">
+      <!-- ส่วนหัวบิลและข้อมูลร้าน -->
+      <div style="display: flex; justify-content: space-between; align-items: center; 
+           border: 1px solid #000; border-radius: 5px; padding: 8px; margin-bottom: 10px;">
+        <div style="font-size: 20px; font-weight: bold;">BN Shop</div>
+        <div style="text-align: right;">
+          <div>📌 ${order.shopPhone}</div>
+          <div>📍 020 94036226</div>
+        </div>
+      </div>
+
+      <!-- ส่วนลำดับบิลและขนส่ง -->
+      <div style="display: flex; justify-content: space-between; align-items: center;
+           border: 1px solid #000; border-radius: 5px; padding: 8px; margin-bottom: 10px;">
+        <div style="font-size: 18px; font-weight: bold;">${billCounter.toString().padStart(2, '0')}</div>
+        <div style="font-size: 16px;">${order.courier}</div>
+      </div>
+
+      <!-- ข้อมูลลูกค้า -->
+      <div style="border: 1px solid #000; border-radius: 5px; padding: 8px; margin-bottom: 10px;">
+        <div style="display: flex;">
+          <span style="margin-right: 8px;">📌</span>
+          <pre style="margin: 0; white-space: pre-wrap;">${order.customer.replace(/\n/g, '<br>')}</pre>
+        </div>
+      </div>
+
+      <!-- บาร์โค้ด -->
+      <div style="border: 1px solid #000; border-radius: 5px; padding: 10px; margin-bottom: 5px; text-align: center;">
+        ${barcodeSVG}
+        <div style="font-family: monospace; font-size: 12px; margin-top: 5px;">${order.barcode}</div>
+        <div style="font-size: 14px; margin-top: 5px;">รหัสออเดอร์: ${order.id.replace('BN', '')}</div>
       </div>
 
       <!-- วันที่และเวลา -->
