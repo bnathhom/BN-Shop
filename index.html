@@ -1048,10 +1048,13 @@
       const barcodeSVG = generateBarcodeSVG(order.barcode);
       return `
         <div class="bill">
-          <div class="header">
-            <div class="logo">BN Shop</div>
-            <div class="shop-info">
-              ຮ້ານ : BN Shop<br>ເບີໂທ : ${order.shopPhone}
+          <div class="header" style="border: 1px solid #000; padding: 5px; margin-bottom: 10px;">
+            <div style="display: flex; align-items: center;">
+              <div class="logo">BN</div>
+              <div class="shop-info">
+               <div style="font-weight: bold; text-align: center;">ຮ້ານ : BN Shop</div>
+               <div style="text-align: center;">ເບີໂທ : ${order.shopPhone}</div>
+              </div>
             </div>
           </div>
           <div class="section">
@@ -1070,7 +1073,6 @@
         </div>
       `;
     };
-
     window.printBills = function(orders) {
       const win = window.open('', '_blank');
       win.document.write(`
