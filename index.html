@@ -596,6 +596,7 @@
     let orderList = [];
     let archivedOrderList = [];
     let currentUser = null;
+    let billCounter = localStorage.getItem('billCounter') || 1;
 
     // ฟังก์ชันอัปเดตตัวนับออเดอร์
     window.updateOrderCounter = function() {
@@ -1044,57 +1045,99 @@
     };
 
     window.printBill = function(order) {
-      const dateStr = new Date(order.date).toLocaleString();
-      const barcodeSVG = generateBarcodeSVG(order.barcode);
-      return `
-        <div class="bill">
-          <div class="header" style="border: 1px solid #000; padding: 5px; margin-bottom: 10px;">
-            <div style="display: flex; align-items: center;">
-              <div class="logo">BN</div>
-              <div class="shop-info">
-               <div style="font-weight: bold; text-align: center;">ຮ້ານ : BN Shop</div>
-               <div style="text-align: center;">ເບີໂທ : ${order.shopPhone}</div>
-              </div>
-            </div>
-          </div>
-          <div class="section">
-            <strong>ວັນທີ:</strong> ${dateStr}<br>
-            <strong>ລະຫັດອອເດີ:</strong> ${order.id.replace('BN', '')}
-          </div>
-          <div class="barcode-container">
-            ${barcodeSVG}
-            <div class="barcode-number">${order.barcode}</div>
-          </div>
-          <div class="section">
-            <strong>ຂົນສົ່ງ:</strong> ${order.courier}<br>
-            <strong>ຂໍ້ມູນລູກຄ້າ:</strong><br><pre>${order.customer.replace(/\n/g, '<br>')}</pre>
-          </div>
-          <div class="thankyou">ຂອບໃຈ💗</div>
+  const dateStr = new Date(order.date).toLocaleString('lo-LA', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  }).replace(/\//g, '-');
+
+  const barcodeSVG = generateBarcodeSVG(order.barcode);
+  
+  // รูปแบบบิลใหม่ตามตัวอย่าง PDF
+  return `
+    <div class="bill">
+      <div style="text-align: center; font-weight: bold; font-size: 18px; margin-bottom: 5px;">
+        BN Shop
+      </div>
+      <div style="text-align: center; font-size: 16px; margin-bottom: 10px;">
+        ${billCounter.toString().padStart(2, '0')}
+      </div>
+      <div style="text-align: center; font-size: 14px; margin-bottom: 10px;">
+        ${order.courier}
+      </div>
+      <div style="margin-bottom: 10px;">
+        <div style="display: flex; align-items: center; margin-bottom: 5px;">
+          <span style="margin-right: 5px;">📌️ 💬:</span>
+          <span>BN Shop</span>
         </div>
-      `;
-    };
+        <div style="display: flex; align-items: center; margin-bottom: 5px;">
+          <span style="margin-right: 5px;">📍️</span>
+          <span>${order.shopPhone}</span>
+        </div>
+      </div>
+      <div style="margin-bottom: 10px;">
+        <div style="display: flex; align-items: center;">
+          <span style="margin-right: 5px;">📌️ 💬:</span>
+          <pre style="margin: 0; white-space: pre-wrap;">${order.customer.replace(/\n/g, '<br>')}</pre>
+        </div>
+      </div>
+      <div class="barcode-container" style="margin-top: 15px;">
+        ${barcodeSVG}
+        <div class="barcode-number">${order.barcode}</div>
+      </div>
+      <div style="text-align: center; margin-top: 10px; font-size: 12px;">
+        ${dateStr}
+      </div>
+    </div>
+  `;
+};
     window.printBills = function(orders) {
-      const win = window.open('', '_blank');
-      win.document.write(`
-        <html><head><title>Print Bills</title><style>
-          @page { size: 80mm 150mm; margin: 0; }
-          body { margin: 0; padding: 0; font-family: 'Noto Sans Lao', sans-serif; }
-          .bill { width: 76mm; min-height: 130mm; padding: 10px; font-size: 14px; border: 1px solid #000; page-break-after: always; }
-          .logo { font-size: 32px; font-weight: bold; display: inline-block; margin-right: 10px; }
-          .shop-info { display: inline-block; vertical-align: middle; line-height: 1.4; white-space: nowrap; }
-          .header { margin-bottom: 10px; }
-          .section { margin-top: 10px; }
-          .barcode-container { text-align: center; margin: 15px 0; }
-          .barcode-number { text-align: center; font-family: monospace; font-size: 12px; margin-top: 5px; }
-          .thankyou { text-align: center; margin-top: 20px; font-weight: bold; }
-          pre { white-space: pre-wrap; word-wrap: break-word; margin: 0; line-height: 1.4; }
-        </style></head><body>
-      `);
-      orders.forEach(order => win.document.write(printBill(order)));
-      win.document.write('</body></html>');
-      win.document.close();
-      setTimeout(() => win.print(), 500);
-    };
+  const win = window.open('', '_blank');
+  win.document.write(`
+    <html><head><title>Print Bills</title><style>
+      @page { size: 80mm 150mm; margin: 0; }
+      body { margin: 0; padding: 0; font-family: 'Noto Sans Lao', sans-serif; }
+      .bill { 
+        width: 76mm; 
+        min-height: 130mm; 
+        padding: 10px; 
+        font-size: 14px; 
+        box-sizing: border-box;
+        page-break-after: always; 
+      }
+      .barcode-container { 
+        text-align: center; 
+        margin: 15px 0; 
+      }
+      .barcode-number { 
+        text-align: center; 
+        font-family: monospace; 
+        font-size: 12px; 
+        margin-top: 5px; 
+      }
+      pre { 
+        white-space: pre-wrap; 
+        word-wrap: break-word; 
+        margin: 0; 
+        line-height: 1.4; 
+      }
+    </style></head><body>
+  `);
+  
+  // Reset counter เมื่อเริ่มพิมพ์ใหม่
+  billCounter = 1;
+  
+  orders.forEach(order => {
+    win.document.write(printBill(order));
+    billCounter++; // เพิ่มลำดับบิล
+  });
+  
+  win.document.write('</body></html>');
+  win.document.close();
+  setTimeout(() => win.print(), 500);
+};
 
     window.printSelected = function() {
       const checkboxes = document.querySelectorAll('#orders input[type=checkbox]');
