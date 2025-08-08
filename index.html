@@ -321,6 +321,31 @@
       animation: spin 1s ease-in-out infinite;
       margin-left: 10px;
     }
+    .courier-counters {
+  background-color: rgba(255, 255, 255, 0.2);
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+}
+
+.courier-counter {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.courier-counter i {
+  margin-right: 3px;
+}
+
+@media (max-width: 768px) {
+  .courier-counters {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+    margin: 10px 0;
+    width: 100%;
+  }
     
     @keyframes spin {
       to { transform: rotate(360deg); }
@@ -378,6 +403,16 @@
     <div class="order-counter" id="orderCounter">
       <i class="fas fa-shopping-cart"></i> ออเดอร์ปัจจุบัน: <span id="currentOrderCount">0</span>
     </div>
+    <div class="courier-counters" style="display: flex; gap: 10px; color: white;">
+  <div class="courier-counter" data-courier="HAL LOGISTICS">
+    <i class="fas fa-truck"></i> HAL: <span>0</span>
+  </div>
+  <div class="courier-counter" data-courier="Anousith Express">
+    <i class="fas fa-truck"></i> Anousith: <span>0</span>
+  </div>
+  <div class="courier-counter" data-courier="Mixay Express">
+    <i class="fas fa-truck"></i> Mixay: <span>0</span>
+  </div>
     <div class="auth-buttons" id="authButtons">
       <button class="btn btn-primary" onclick="openModal('authModal')">
         <i class="fas fa-sign-in-alt"></i> เข้าสู่ระบบ
@@ -753,6 +788,7 @@
 
     // Order Functions
     window.loadOrders = async function() {
+      updateCourierCounters();
       if (!currentUser) return;
       
       try {
@@ -1208,6 +1244,32 @@
       document.getElementById('currentOrdersSection').style.display = 'block';
       document.getElementById('archiveSection').style.display = 'none';
     };
+    window.updateCourierCounters = function() {
+  const counters = {
+    'HAL LOGISTICS': 0,
+    'Anousith Express': 0,
+    'Mixay Express': 0
+  };
+
+  // นับออเดอร์ปัจจุบัน
+  orderList.forEach(order => {
+    counters[order.courier]++;
+  });
+
+  // อัปเดต UI
+  document.querySelectorAll('.courier-counter').forEach(el => {
+    const courier = el.dataset.courier;
+    el.querySelector('span').textContent = counters[courier];
+    
+    // เปลี่ยนสีเมื่อมีออเดอร์
+    if (counters[courier] > 0) {
+      el.style.color = '#4cc9f0'; // สีฟ้า
+    } else {
+      el.style.color = 'white';
+    }
+  });
+};
+
   </script>
 </body>
 </html>
