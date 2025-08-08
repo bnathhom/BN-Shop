@@ -1055,39 +1055,49 @@
 
   const barcodeSVG = generateBarcodeSVG(order.barcode);
   
-  // รูปแบบบิลใหม่ตามตัวอย่าง PDF
   return `
-    <div class="bill">
-      <div style="text-align: center; font-weight: bold; font-size: 18px; margin-bottom: 5px;">
-        BN Shop
+    <div class="bill" style="font-family: 'Noto Sans Lao', sans-serif;">
+      <!-- หัวบิล -->
+      <div style="text-align: center; margin-bottom: 10px;">
+        <div style="font-size: 20px; font-weight: bold; border-bottom: 1px dashed #000; padding-bottom: 5px; margin-bottom: 5px;">
+          BN Shop
+        </div>
+        <div style="font-size: 18px; font-weight: bold;">${billCounter.toString().padStart(2, '0')}</div>
       </div>
-      <div style="text-align: center; font-size: 16px; margin-bottom: 10px;">
-        ${billCounter.toString().padStart(2, '0')}
-      </div>
-      <div style="text-align: center; font-size: 14px; margin-bottom: 10px;">
+
+      <!-- ข้อมูลขนส่ง -->
+      <div style="border: 1px solid #000; border-radius: 5px; padding: 8px; margin-bottom: 10px; text-align: center;">
         ${order.courier}
       </div>
-      <div style="margin-bottom: 10px;">
+
+      <!-- ข้อมูลร้าน -->
+      <div style="border: 1px solid #000; border-radius: 5px; padding: 8px; margin-bottom: 10px;">
         <div style="display: flex; align-items: center; margin-bottom: 5px;">
-          <span style="margin-right: 5px;">📌️ 💬:</span>
+          <span style="margin-right: 8px;">📌</span>
           <span>BN Shop</span>
         </div>
-        <div style="display: flex; align-items: center; margin-bottom: 5px;">
-          <span style="margin-right: 5px;">📍️</span>
+        <div style="display: flex; align-items: center;">
+          <span style="margin-right: 8px;">📍</span>
           <span>${order.shopPhone}</span>
         </div>
       </div>
-      <div style="margin-bottom: 10px;">
-        <div style="display: flex; align-items: center;">
-          <span style="margin-right: 5px;">📌️ 💬:</span>
+
+      <!-- ข้อมูลลูกค้า -->
+      <div style="border: 1px solid #000; border-radius: 5px; padding: 8px; margin-bottom: 10px;">
+        <div style="display: flex; margin-bottom: 5px;">
+          <span style="margin-right: 8px;">📌</span>
           <pre style="margin: 0; white-space: pre-wrap;">${order.customer.replace(/\n/g, '<br>')}</pre>
         </div>
       </div>
-      <div class="barcode-container" style="margin-top: 15px;">
+
+      <!-- บาร์โค้ด -->
+      <div style="border: 1px solid #000; border-radius: 5px; padding: 10px; margin-bottom: 10px; text-align: center;">
         ${barcodeSVG}
-        <div class="barcode-number">${order.barcode}</div>
+        <div style="font-family: monospace; font-size: 12px; margin-top: 5px;">${order.barcode}</div>
       </div>
-      <div style="text-align: center; margin-top: 10px; font-size: 12px;">
+
+      <!-- วันที่และเวลา -->
+      <div style="text-align: center; font-size: 12px; border-top: 1px dashed #000; padding-top: 5px;">
         ${dateStr}
       </div>
     </div>
