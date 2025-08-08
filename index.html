@@ -1044,35 +1044,61 @@
     };
 
     window.printBill = function(order) {
-      const dateStr = new Date(order.date).toLocaleString();
-      const barcodeSVG = generateBarcodeSVG(order.barcode);
-      return `
-        <div class="bill">
-          <div class="header" style="border: 1px solid #000; padding: 5px; margin-bottom: 10px;">
-            <div style="display: flex; align-items: center;">
-              <div class="logo">BN</div>
-              <div class="shop-info">
-               <div style="font-weight: bold; text-align: center;">ຮ້ານ : BN Shop</div>
-               <div style="text-align: center;">ເບີໂທ : ${order.shopPhone}</div>
-              </div>
+  const dateStr = new Date(order.date).toLocaleString();
+  const barcodeSVG = generateBarcodeSVG(order.barcode);
+  return `
+    <div class="bill" style="font-family: 'Noto Sans Lao', sans-serif;">
+      <!-- ส่วนหัวบิล - กล่องข้อมูลร้าน -->
+      <div style="border: 2px solid #000; border-radius: 8px; padding: 10px; margin-bottom: 15px; background: #f8f9fa;">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <div class="logo" style="font-size: 36px; font-weight: bold; color: #4361ee;">BN</div>
+          <div class="shop-info" style="text-align: right;">
+            <div style="font-weight: bold; font-size: 16px; border-bottom: 1px dashed #333; padding-bottom: 3px; margin-bottom: 3px;">
+              ຮ້ານ : BN Shop
+            </div>
+            <div style="font-size: 14px;">
+              ເບີໂທ : ${order.shopPhone}
             </div>
           </div>
-          <div class="section">
-            <strong>ວັນທີ:</strong> ${dateStr}<br>
-            <strong>ລະຫັດອອເດີ:</strong> ${order.id.replace('BN', '')}
-          </div>
-          <div class="barcode-container">
-            ${barcodeSVG}
-            <div class="barcode-number">${order.barcode}</div>
-          </div>
-          <div class="section">
-            <strong>ຂົນສົ່ງ:</strong> ${order.courier}<br>
-            <strong>ຂໍ້ມູນລູກຄ້າ:</strong><br><pre>${order.customer.replace(/\n/g, '<br>')}</pre>
-          </div>
-          <div class="thankyou">ຂອບໃຈ💗</div>
         </div>
-      `;
-    };
+      </div>
+
+      <!-- ส่วนข้อมูลออเดอร์ -->
+      <div style="border: 1px solid #ddd; border-radius: 6px; padding: 10px; margin-bottom: 10px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+          <div><strong>ວັນທີ:</strong> ${dateStr}</div>
+          <div><strong>ລະຫັດ:</strong> ${order.id.replace('BN', '')}</div>
+        </div>
+        <div style="border-top: 1px dashed #ddd; padding-top: 8px;">
+          <strong>ຂົນສົ່ງ:</strong> ${order.courier}
+        </div>
+      </div>
+
+      <!-- ส่วนบาร์โค้ด -->
+      <div style="border: 1px solid #ddd; border-radius: 6px; padding: 15px; margin-bottom: 10px; text-align: center;">
+        <div class="barcode-container">
+          ${barcodeSVG}
+          <div class="barcode-number" style="font-family: monospace; font-size: 12px; margin-top: 8px;">
+            ${order.barcode}
+          </div>
+        </div>
+      </div>
+
+      <!-- ส่วนข้อมูลลูกค้า -->
+      <div style="border: 1px solid #ddd; border-radius: 6px; padding: 10px; margin-bottom: 10px;">
+        <div style="font-weight: bold; margin-bottom: 5px; border-bottom: 1px solid #eee; padding-bottom: 3px;">
+          ຂໍ້ມູນລູກຄ້າ:
+        </div>
+        <pre style="margin: 0; white-space: pre-wrap; font-size: 14px;">${order.customer.replace(/\n/g, '<br>')}</pre>
+      </div>
+
+      <!-- ส่วนท้ายบิล -->
+      <div style="text-align: center; font-weight: bold; color: #4361ee; margin-top: 10px; border-top: 1px dashed #4361ee; padding-top: 8px;">
+        ຂອບໃຈ💗
+      </div>
+    </div>
+  `;
+};
     window.printBills = function(orders) {
       const win = window.open('', '_blank');
       win.document.write(`
