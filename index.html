@@ -332,6 +332,17 @@
         width: 100%;
         margin-bottom: 10px;
       }
+    .search-section {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+
+    .search-section .form-control {
+      margin-bottom: 10px;
+    }
+    
     }
   </style>
 </head>
@@ -425,8 +436,31 @@
       <button class="btn btn-primary" onclick="backToCurrentOrders()">
         <i class="fas fa-arrow-left"></i> กลับไปออเดอร์ปัจจุบัน
       </button>
+  
+      <!-- เพิ่มส่วนค้นหา -->
+      <div class="search-section" style="margin-top: 20px;">
+        <div class="form-control">
+          <label>ค้นหาออเดอร์</label>
+          <input type="text" id="searchOrderId" placeholder="ค้นหาตามเลขออเดอร์ (BN...)">
+        </div>
+        <div class="form-control">
+          <label>ค้นหาตามวันที่</label>
+          <div style="display: flex; gap: 10px;">
+            <input type="date" id="searchStartDate">
+            <span>ถึง</span>
+           <input type="date" id="searchEndDate">
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="searchArchivedOrders()">
+          <i class="fas fa-search"></i> ค้นหา
+        </button>
+        <button class="btn btn-danger" onclick="clearSearch()">
+          <i class="fas fa-times"></i> ล้างการค้นหา
+        </button>
+      </div>
+  
       <div id="archivedOrders" style="margin-top: 20px;"></div>
-    </div>
+    </div
   </div>
 
   <!-- Auth Modal -->
@@ -889,6 +923,84 @@
        container.appendChild(div);
      });
   };
+
+    window.searchArchivedOrders = function() {
+  const orderIdQuery = document.getElementById('searchOrderId').value.trim().toLowerCase();
+  const startDate = document.getElementById('searchStartDate').value;
+  const endDate = document.getElementById('searchEndDate').value;
+  
+  let filteredOrders = [...archivedOrderList];
+  
+  // ค้นหาตามเลขออเดอร์
+  if (orderIdQuery) {
+    filteredOrders = filteredOrders.filter(order => 
+      order.id.toLowerCase().includes(orderIdQuery)
+    );
+  }
+  
+  // ค้นหาตามวันที่
+  if (startDate) {
+    const start = new Date(startDate);
+    filteredOrders = filteredOrders.filter(order => 
+      new Date(order.date) >= start
+    );
+  }
+  
+  if (endDate) {
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999); // ตั้งเวลาเป็นสิ้นวัน
+    filteredOrders = filteredOrders.filter(order => 
+      new Date(order.date) <= end
+    );
+  }
+  
+  renderFilteredArchivedOrders(filteredOrders);
+};
+
+// ฟังก์ชันแสดงผลลัพธ์การค้นหา
+window.renderFilteredArchivedOrders = function(orders) {
+  const container = document.getElementById('archivedOrders');
+  container.innerHTML = '';
+
+  if (orders.length === 0) {
+    container.innerHTML = '<p style="text-align: center; color: #666;">ไม่พบออเดอร์ที่ตรงกับการค้นหา</p>';
+    return;
+  }
+
+  orders.forEach((order, index) => {
+    const orderDate = new Date(order.date);
+    const dateStr = orderDate.toLocaleDateString('lo-LA') + ' ' + orderDate.toLocaleTimeString();
+    
+    const div = document.createElement('div');
+    div.className = 'order';
+    div.innerHTML = `
+      <div class="order-header">
+        <strong>${order.id}</strong>
+        <span class="order-date">${dateStr}</span>
+      </div>
+      <div><strong>ขนส่ง:</strong> ${order.courier}</div>
+      <div><strong>เบอร์ร้าน:</strong> ${order.shopPhone}</div>
+      <div class="customer-data"><strong>ลูกค้า:</strong><pre>${order.customer}</pre></div>
+      <div class="action-buttons">
+        <button class="btn btn-primary" onclick="printBillFromArchive(${archivedOrderList.findIndex(o => o._docId === order._docId)})">
+          <i class="fas fa-print"></i> พิมพ์บิล
+        </button>
+        <button class="btn btn-success" onclick="unarchiveOrder('${order._docId}')">
+          <i class="fas fa-undo"></i> นำออกจากคลัง
+        </button>
+      </div>
+    `;
+    container.appendChild(div);
+  });
+};
+
+// ฟังก์ชันล้างการค้นหา
+window.clearSearch = function() {
+  document.getElementById('searchOrderId').value = '';
+  document.getElementById('searchStartDate').value = '';
+  document.getElementById('searchEndDate').value = '';
+  renderArchivedOrders();
+};
     
     window.openEditOrderModal = function(index) {
       const order = orderList[index];
@@ -1071,6 +1183,10 @@
     window.showArchive = function() {
       document.getElementById('currentOrdersSection').style.display = 'none';
       document.getElementById('archiveSection').style.display = 'block';
+      // ล้างการค้นหาเมื่อเปิดคลังออเดอร์
+      document.getElementById('searchOrderId').value = '';
+      document.getElementById('searchStartDate').value = '';
+      document.getElementById('searchEndDate').value = '';
       renderArchivedOrders();
     };
 
