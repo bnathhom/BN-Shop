@@ -1,4 +1,3 @@
-html
 <!DOCTYPE html>
 <html lang="lo">
 <head>
@@ -24,7 +23,7 @@ html
       background-color: #f5f7fa;
       color: var(--dark-color);
     }
-
+    
     .navbar {
       background-color: var(--primary-color);
       color: white;
@@ -33,7 +32,6 @@ html
       justify-content: space-between;
       align-items: center;
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      flex-wrap: wrap;
     }
     
     .navbar-brand {
@@ -45,42 +43,6 @@ html
     
     .navbar-brand i {
       margin-right: 10px;
-    }
-
-    .order-counter {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      background-color: rgba(255, 255, 255, 0.2);
-      padding: 5px 10px;
-      border-radius: 20px;
-      font-weight: bold;
-      margin-right: 15px;
-    }
-
-    .order-counter i {
-      margin-right: 5px;
-    }
-
-    .courier-counters {
-      display: flex;
-      gap: 10px;
-      color: white;
-      background-color: rgba(255, 255, 255, 0.2);
-      padding: 5px 10px;
-      border-radius: 20px;
-      font-size: 0.9rem;
-      margin-right: 15px;
-    }
-
-    .courier-counter {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-
-    .courier-counter i {
-      margin-right: 3px;
     }
     
     .auth-buttons button {
@@ -257,7 +219,7 @@ html
       margin-top: 20px; 
       font-weight: bold; 
     }
-
+    
     pre { 
       white-space: pre-wrap; 
       word-wrap: break-word; 
@@ -332,7 +294,6 @@ html
     .archive-section {
       display: none;
     }
-    
     /* Loading Spinner */
     .spinner {
       display: inline-block;
@@ -348,17 +309,6 @@ html
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
-
-    .search-section {
-      background: #f8f9fa;
-      padding: 15px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-    }
-
-    .search-section .form-control {
-      margin-bottom: 10px;
-    }
     
     /* Responsive */
     @media (max-width: 768px) {
@@ -366,19 +316,6 @@ html
         flex-direction: column;
         text-align: center;
         padding: 15px;
-      }
-      
-      .order-counter, .courier-counters {
-        margin: 10px 0;
-        order: 2;
-        width: 100%;
-        justify-content: center;
-      }
-      
-      .courier-counters {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 5px;
       }
       
       .auth-buttons {
@@ -395,28 +332,19 @@ html
         margin-bottom: 10px;
       }
     }
-    </style>
+
+    /* Style for Archive button */
+    .archive-btn-container {
+      margin-bottom: 20px;
+      text-align: right;
+    }
+  </style>
 </head>
 <body>
-  <!-- Navbar -->
   <div class="navbar">
     <div class="navbar-brand">
       <i class="fas fa-store"></i>
       <span>BN Shop Order System</span>
-    </div>
-    <div class="order-counter" id="orderCounter">
-      <i class="fas fa-shopping-cart"></i> ออเดอร์ปัจจุบัน: <span id="currentOrderCount">0</span>
-    </div>
-    <div class="courier-counters">
-      <div class="courier-counter" data-courier="HAL LOGISTICS">
-        <i class="fas fa-truck"></i> HAL: <span>0</span>
-      </div>
-      <div class="courier-counter" data-courier="Anousith Express">
-        <i class="fas fa-truck"></i> Anousith: <span>0</span>
-      </div>
-      <div class="courier-counter" data-courier="Mixay Express">
-        <i class="fas fa-truck"></i> Mixay: <span>0</span>
-      </div>
     </div>
     <div class="auth-buttons" id="authButtons">
       <button class="btn btn-primary" onclick="openModal('authModal')">
@@ -427,19 +355,17 @@ html
       </button>
     </div>
     <div class="user-menu" id="userMenu" style="display: none;">
-      <span id="userEmail" style="margin-right: 15px; color: white;"></span>
-      <button class="btn btn-success" onclick="showArchive()">
-        <i class="fas fa-archive"></i> ดูคลังออเดอร์
+      <button class="btn btn-primary" onclick="showArchive()">
+        <i class="fas fa-archive"></i> คลังออเดอร์
       </button>
+      <span id="userEmail" style="margin-left: 15px; margin-right: 15px; color: white;"></span>
       <button class="btn btn-danger" onclick="logout()">
         <i class="fas fa-sign-out-alt"></i> ออกจากระบบ
       </button>
     </div>
   </div>
 
-  <!-- Main Content -->
   <div class="container">
-    <!-- Current Orders Section -->
     <div id="currentOrdersSection">
       <div class="card">
         <h2><i class="fas fa-plus-circle"></i> เพิ่มออเดอร์ใหม่</h2>
@@ -495,40 +421,15 @@ html
       </div>
     </div>
 
-    <!-- Archive Section -->
     <div class="card archive-section" id="archiveSection">
       <h2><i class="fas fa-archive"></i> คลังออเดอร์</h2>
       <button class="btn btn-primary" onclick="backToCurrentOrders()">
         <i class="fas fa-arrow-left"></i> กลับไปออเดอร์ปัจจุบัน
       </button>
-  
-      <!-- เพิ่มส่วนค้นหา -->
-      <div class="search-section" style="margin-top: 20px;">
-        <div class="form-control">
-          <label>ค้นหาออเดอร์</label>
-          <input type="text" id="searchOrderId" placeholder="ค้นหาตามเลขออเดอร์ (BN...)">
-        </div>
-        <div class="form-control">
-          <label>ค้นหาตามวันที่</label>
-          <div style="display: flex; gap: 10px;">
-            <input type="date" id="searchStartDate">
-            <span>ถึง</span>
-            <input type="date" id="searchEndDate">
-          </div>
-        </div>
-        <button class="btn btn-primary" onclick="searchArchivedOrders()">
-          <i class="fas fa-search"></i> ค้นหา
-        </button>
-        <button class="btn btn-danger" onclick="clearSearch()">
-          <i class="fas fa-times"></i> ล้างการค้นหา
-        </button>
-      </div>
-  
       <div id="archivedOrders" style="margin-top: 20px;"></div>
     </div>
   </div>
 
-  <!-- Auth Modal -->
   <div id="authModal" class="modal">
     <div class="modal-content">
       <span class="close" onclick="closeModal('authModal')">&times;</span>
@@ -574,8 +475,6 @@ html
       </div>
     </div>
   </div>
-
-  <!-- Edit Order Modal -->
   <div id="editOrderModal" class="modal">
     <div class="modal-content">
       <span class="close" onclick="closeModal('editOrderModal')">&times;</span>
@@ -637,48 +536,7 @@ html
     let archivedOrderList = [];
     let currentUser = null;
 
-    // ฟังก์ชันอัปเดตตัวนับออเดอร์
-    window.updateOrderCounter = function() {
-      const counterElement = document.getElementById('currentOrderCount');
-      const counterBox = document.getElementById('orderCounter');
-      
-      counterElement.textContent = orderList.length;
-      
-      // เปลี่ยนสีเมื่อมีออเดอร์
-      if (orderList.length > 0) {
-        counterBox.style.backgroundColor = 'rgba(255, 255, 255, 0.3)';
-      } else {
-        counterBox.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
-      }
-    };
-
-    // ฟังก์ชันนับจำนวนออเดอร์ตามขนส่ง
-    window.updateCourierCounters = function() {
-      const counters = {
-        'HAL LOGISTICS': 0,
-        'Anousith Express': 0,
-        'Mixay Express': 0
-      };
-
-      // นับออเดอร์ปัจจุบัน
-      orderList.forEach(order => {
-        counters[order.courier]++;
-      });
-
-      // อัปเดต UI
-      document.querySelectorAll('.courier-counter').forEach(el => {
-        const courier = el.dataset.courier;
-        el.querySelector('span').textContent = counters[courier];
-        
-        // เปลี่ยนสีเมื่อมีออเดอร์
-        if (counters[courier] > 0) {
-          el.style.color = '#4cc9f0'; // สีฟ้า
-        } else {
-          el.style.color = 'white';
-        }
-      });
-    };
-     // Initialize the app
+    // Initialize the app
     window.onload = () => {
       updatePhoneByCourier();
       document.getElementById('courier').addEventListener('change', updatePhoneByCourier);
@@ -839,9 +697,6 @@ html
           orderList.push(data);
         });
         
-        // อัปเดตตัวนับออเดอร์
-        updateOrderCounter();
-        updateCourierCounters();
         renderOrders();
         document.getElementById('currentOrdersSection').style.display = 'block';
         
@@ -894,12 +749,7 @@ html
         return;
       }
       
-      const phoneMatch = customer.match(/(020|030)\d{6,8}\b/);
-      if (!phoneMatch) {
-        alert('ไม่พบเบอร์โทรลูกค้า (รูปแบบ 020/030 ตามด้วยตัวเลข 6-8 หลัก)');
-        return;
-      }
-      const id = 'BN' + phoneMatch[0];
+      const id = 'BN' + Math.floor(Math.random() * 100000);
       const date = new Date();
       const barcode = Math.floor(100000000000 + Math.random() * 900000000000);
       
@@ -922,7 +772,6 @@ html
         alert("เกิดข้อผิดพลาดในการเพิ่มออเดอร์: " + error.message);
       }
     };
-
     window.renderOrders = function() {
       const container = document.getElementById('orders');
       container.innerHTML = '';
@@ -954,96 +803,26 @@ html
     window.renderArchivedOrders = function() {
       const container = document.getElementById('archivedOrders');
       container.innerHTML = '';
-
-      archivedOrderList.forEach((order, index) => {
-        const orderDate = new Date(order.date);
-        const dateStr = orderDate.toLocaleDateString('lo-LA') + ' ' + orderDate.toLocaleTimeString();
-    
-        const div = document.createElement('div');
-        div.className = 'order';
-        div.innerHTML = `
-          <div class="order-header">
-            <strong>${order.id}</strong>
-            <span class="order-date">${dateStr}</span>
-          </div>
-          <div><strong>ขนส่ง:</strong> ${order.courier}</div>
-          <div><strong>เบอร์ร้าน:</strong> ${order.shopPhone}</div>
-          <div class="customer-data"><strong>ลูกค้า:</strong><pre>${order.customer}</pre></div>
-          <div class="action-buttons">
-            <button class="btn btn-primary" onclick="printBillFromArchive(${index})">
-              <i class="fas fa-print"></i> พิมพ์บิล
-            </button>
-            <button class="btn btn-success" onclick="unarchiveOrder('${order._docId}')">
-              <i class="fas fa-undo"></i> นำออกจากคลัง
-           </button>
-         </div>
-       `;
-       container.appendChild(div);
-     });
-    };
-
-    window.searchArchivedOrders = function() {
-      const orderIdQuery = document.getElementById('searchOrderId').value.trim().toLowerCase();
-      const startDate = document.getElementById('searchStartDate').value;
-      const endDate = document.getElementById('searchEndDate').value;
       
-      let filteredOrders = [...archivedOrderList];
-      
-      // ค้นหาตามเลขออเดอร์
-      if (orderIdQuery) {
-        filteredOrders = filteredOrders.filter(order => 
-          order.id.toLowerCase().includes(orderIdQuery)
-        );
-      }
-      
-      // ค้นหาตามวันที่
-      if (startDate) {
-        const start = new Date(startDate);
-        filteredOrders = filteredOrders.filter(order => 
-          new Date(order.date) >= start
-        );
-      }
-      
-      if (endDate) {
-        const end = new Date(endDate);
-        end.setHours(23, 59, 59, 999); // ตั้งเวลาเป็นสิ้นวัน
-        filteredOrders = filteredOrders.filter(order => 
-          new Date(order.date) <= end
-        );
-      }
-      
-      renderFilteredArchivedOrders(filteredOrders);
-    };
-
-    window.renderFilteredArchivedOrders = function(orders) {
-      const container = document.getElementById('archivedOrders');
-      container.innerHTML = '';
-
-      if (orders.length === 0) {
-        container.innerHTML = '<p style="text-align: center; color: #666;">ไม่พบออเดอร์ที่ตรงกับการค้นหา</p>';
+      if (archivedOrderList.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: #666;">ไม่มีออเดอร์ในคลัง</p>';
         return;
       }
-
-      orders.forEach((order, index) => {
-        const orderDate = new Date(order.date);
-        const dateStr = orderDate.toLocaleDateString('lo-LA') + ' ' + orderDate.toLocaleTimeString();
-        
+      
+      archivedOrderList.forEach((order, index) => {
         const div = document.createElement('div');
         div.className = 'order';
         div.innerHTML = `
-          <div class="order-header">
-            <strong>${order.id}</strong>
-            <span class="order-date">${dateStr}</span>
-          </div>
-          <div><strong>ขนส่ง:</strong> ${order.courier}</div>
-          <div><strong>เบอร์ร้าน:</strong> ${order.shopPhone}</div>
-          <div class="customer-data"><strong>ลูกค้า:</strong><pre>${order.customer}</pre></div>
+          <strong>Order ID:</strong> ${order.id}<br>
+          <strong>ขนส่ง:</strong> ${order.courier}<br>
+          <strong>เบอร์ร้าน:</strong> ${order.shopPhone}<br>
+          <strong>ลูกค้า:</strong><br> <pre>${order.customer}</pre>
           <div class="action-buttons">
-            <button class="btn btn-primary" onclick="printBillFromArchive(${archivedOrderList.findIndex(o => o._docId === order._docId)})">
+            <button class="btn btn-primary" onclick="printBillFromArchive('${index}')">
               <i class="fas fa-print"></i> พิมพ์บิล
             </button>
             <button class="btn btn-success" onclick="unarchiveOrder('${order._docId}')">
-              <i class="fas fa-undo"></i> นำออกจากคลัง
+              <i class="fas fa-undo"></i> ยกเลิกการเก็บ
             </button>
           </div>
         `;
@@ -1051,13 +830,6 @@ html
       });
     };
 
-    window.clearSearch = function() {
-      document.getElementById('searchOrderId').value = '';
-      document.getElementById('searchStartDate').value = '';
-      document.getElementById('searchEndDate').value = '';
-      renderArchivedOrders();
-    };
-    
     window.openEditOrderModal = function(index) {
       const order = orderList[index];
       document.getElementById('editCustomerData').value = order.customer;
@@ -1114,57 +886,30 @@ html
       const dateStr = new Date(order.date).toLocaleString();
       const barcodeSVG = generateBarcodeSVG(order.barcode);
       return `
-        <div class="bill" style="font-family: 'Noto Sans Lao', sans-serif; padding: 5px;">
-          <!-- ส่วนหัวบิล - กล่องข้อมูลร้าน -->
-          <div style="border: 2px solid #000; border-radius: 5px; padding: 8px; margin-bottom: 8px; background: #f8f9fa;">
-            <div style="display: flex; align-items: center; justify-content: space-between;">
-              <div class="logo" style="font-size: 28px; font-weight: bold; color: #4361ee;">BN Shop</div>
-              <div class="shop-info" style="text-align: right;">
-                <div style="font-weight: bold; font-size: 16px; border-bottom: 1px solid #000; padding-bottom: 3px; margin-bottom: 3px;">
-                  ຮ້ານ : BN Shop
-                </div>
-                <div style="font-size: 14px;">
-                  ເບີໂທ : ${order.shopPhone}
-                </div>
-              </div>
+        <div class="bill">
+          <div class="header">
+            <div class="logo">BN</div>
+            <div class="shop-info">
+              ຮ້ານ : BN Shop<br>ເບີໂທ : ${order.shopPhone}
             </div>
           </div>
-
-          <!-- ส่วนข้อมูลออเดอร์ -->
-          <div style="border: 1px solid #000; border-radius: 5px; padding: 8px; margin-bottom: 8px;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-              <div><strong>ວັນທີ:</strong> ${dateStr}</div>
-              <div><strong>ລະຫັດ:</strong> ${order.id.replace('BN', '')}</div>
-            </div>
-            <div style="border-top: 1px solid #000; padding-top: 5px;">
-              <strong>ຂົນສົ່ງ:</strong> ${order.courier}
-            </div>
+          <div class="section">
+            <strong>ວັນທີ:</strong> ${dateStr}<br>
+            <strong>ລະຫັດອອເດີ:</strong> ${order.id}
           </div>
-
-          <!-- ส่วนบาร์โค้ด (ไม่มีกรอบ, ชิดขอบบน) -->
-          <div style="margin-top: 0; margin-bottom: 5px; text-align: center;">
+          <div class="barcode-container">
             ${barcodeSVG}
-            <div class="barcode-number" style="font-family: monospace; font-size: 11px; margin-top: 0px; letter-spacing: 1px;">
-              ${order.barcode}
-            </div>
+            <div class="barcode-number">${order.barcode}</div>
           </div>
-
-          <!-- ส่วนข้อมูลลูกค้า (ไม่มีกรอบ) -->
-          <div style="margin-bottom: 5px;">
-            <div style="font-weight: bold; margin-bottom: 3px;">
-              ຂໍ້ມູນລູກຄ້າ:
-            </div>
-            <pre style="margin: 0; white-space: pre-wrap; font-size: 14px; line-height: 1.3;">${order.customer.replace(/\n/g, '<br>')}</pre>
+          <div class="section">
+            <strong>ຂົນສົ່ງ:</strong> ${order.courier}<br>
+            <strong>ຂໍ້ມູນລູກຄ້າ:</strong><br><pre>${order.customer.replace(/\n/g, '<br>')}</pre>
           </div>
-
-          <!-- ส่วนท้ายบิล -->
-          <div style="text-align: center; font-weight: bold; color: #4361ee; margin-top: 5px; border-top: 1px solid #4361ee; padding-top: 5px;">
-            ຂອບໃຈ💗
-          </div>
+          <div class="thankyou">ຂอบໃຈ💗</div>
         </div>
       `;
-    }
-
+    };
+     
     window.printBills = function(orders) {
       const win = window.open('', '_blank');
       win.document.write(`
@@ -1172,11 +917,11 @@ html
           @page { size: 80mm 150mm; margin: 0; }
           body { margin: 0; padding: 0; font-family: 'Noto Sans Lao', sans-serif; }
           .bill { width: 76mm; min-height: 130mm; padding: 10px; font-size: 14px; border: 1px solid #000; page-break-after: always; }
-          .logo { font-size: 32px; font-weight: bold; display: inline-block; margin-right: 10px; }
+          .logo { font-size: 48px; font-weight: bold; display: inline-block; margin-right: 10px; }
           .shop-info { display: inline-block; vertical-align: middle; line-height: 1.4; white-space: nowrap; }
           .header { margin-bottom: 10px; }
           .section { margin-top: 10px; }
-          .barcode-container { text-align: center; margin: 12px 0; }
+          .barcode-container { text-align: center; margin: 15px 0; }
           .barcode-number { text-align: center; font-family: monospace; font-size: 12px; margin-top: 5px; }
           .thankyou { text-align: center; margin-top: 20px; font-weight: bold; }
           pre { white-space: pre-wrap; word-wrap: break-word; margin: 0; line-height: 1.4; }
@@ -1262,16 +1007,15 @@ html
         alert("เกิดข้อผิดพลาดในการนำออเดอร์ออกจากคลัง: " + error.message);
       }
     };
-
+    
+    // โค้ดที่เพิ่ม: แสดงหน้าคลังสินค้าและซ่อนหน้าออเดอร์ปัจจุบัน
     window.showArchive = function() {
       document.getElementById('currentOrdersSection').style.display = 'none';
       document.getElementById('archiveSection').style.display = 'block';
-      document.getElementById('searchOrderId').value = '';
-      document.getElementById('searchStartDate').value = '';
-      document.getElementById('searchEndDate').value = '';
       renderArchivedOrders();
     };
 
+    // โค้ดที่เพิ่ม: แสดงหน้าออเดอร์ปัจจุบันและซ่อนหน้าคลังสินค้า
     window.backToCurrentOrders = function() {
       document.getElementById('currentOrdersSection').style.display = 'block';
       document.getElementById('archiveSection').style.display = 'none';
@@ -1279,4 +1023,3 @@ html
   </script>
 </body>
 </html>
-    
