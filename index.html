@@ -1,4 +1,3 @@
-html
 <!DOCTYPE html>
 <html lang="lo">
 <head>
@@ -34,7 +33,8 @@ html
       padding: 0;
       box-sizing: border-box;
     }
-   body { 
+    
+    body { 
       font-family: 'Noto Sans Lao', -apple-system, BlinkMacSystemFont, sans-serif; 
       margin: 0;
       padding: 0;
@@ -56,7 +56,8 @@ html
       animation: float 20s infinite linear;
       filter: blur(40px);
     }
-   .floating-bg:nth-child(1) {
+
+    .floating-bg:nth-child(1) {
       top: 10%;
       left: 10%;
       width: 400px;
@@ -231,8 +232,9 @@ html
       transition: var(--transition);
       position: relative;
       overflow: hidden;
-     }
-   .card::before {
+    }
+
+    .card::before {
       content: '';
       position: absolute;
       top: 0;
@@ -356,7 +358,6 @@ html
       color: var(--light-color);
       border: 1px solid var(--glass-border);
     }
-
     .btn-outline:hover {
       background: rgba(255, 255, 255, 0.1);
       border-color: var(--primary-color);
@@ -544,7 +545,8 @@ html
       color: var(--secondary-color);
       transform: scale(1.1);
     }
-   .tabs {
+    
+    .tabs {
       display: flex;
       margin-bottom: 20px;
       border-bottom: 1px solid var(--glass-border);
@@ -803,9 +805,9 @@ html
       .filter-section {
         flex-direction: column;
       }
-     }
+    }
 
-   @media (max-width: 480px) {
+    @media (max-width: 480px) {
       .navbar-brand {
         font-size: 1.3rem;
       }
@@ -974,7 +976,7 @@ html
         </div>
       </div>
     </div>
-   <!-- Archive Section -->
+     <!-- Archive Section -->
     <div class="card archive-section" id="archiveSection">
       <h2><i class="fas fa-archive"></i> คลังออเดอร์</h2>
       <button class="btn btn-primary" onclick="backToCurrentOrders()">
@@ -1054,12 +1056,33 @@ html
     </div>
   </div>
 
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+
   <script>
-    // ข้อมูลตัวอย่าง
-    let orders = JSON.parse(localStorage.getItem('orders')) || [];
-    let archivedOrders = JSON.parse(localStorage.getItem('archivedOrders')) || [];
-    let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
-    let orderCounter = 1;
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyAR4ZN_J3u4nTl2dLpF6eXqE3txaUoYrMY",
+      authDomain: "bnchen-93d9d.firebaseapp.com",
+      projectId: "bnchen-93d9d",
+      storageBucket: "bnchen-93d9d.appspot.com",
+      messagingSenderId: "1047651812089",
+      appId: "1:1047651812089:web:6f520fa528059cc43e1828",
+      measurementId: "G-WK259X0ZQ1"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    // Global variables
+    let orderList = [];
+    let archivedOrderList = [];
+    let currentUser = null;
 
     // ฟังก์ชันแสดงการแจ้งเตือน
     function showNotification(message, type = 'success') {
@@ -1089,407 +1112,396 @@ html
     // ฟังก์ชันอัพเดตสถิติ
     function updateStats() {
       // อัพเดตจำนวนออเดอร์ปัจจุบัน
-      document.getElementById('currentOrderCount').textContent = orders.length;
+      document.getElementById('currentOrderCount').textContent = orderList.length;
       
       // อัพเดตจำนวนออเดอร์ตามขนส่ง
       document.querySelectorAll('.courier-counter').forEach(counter => {
         const courier = counter.getAttribute('data-courier');
-        const count = orders.filter(order => order.courier === courier).length;
+        const count = orderList.filter(order => order.courier === courier).length;
         counter.querySelector('span').textContent = count;
       });
       
       // อัพเดตสถิติทั้งหมด
       if (currentUser) {
         document.getElementById('statsOverview').style.display = 'grid';
-        document.getElementById('totalOrders').textContent = orders.length + archivedOrders.length;
+        document.getElementById('totalOrders').textContent = orderList.length + archivedOrderList.length;
         document.getElementById('halOrders').textContent = 
-          orders.filter(o => o.courier === 'HAL LOGISTICS').length + 
-          archivedOrders.filter(o => o.courier === 'HAL LOGISTICS').length;
+          orderList.filter(o => o.courier === 'HAL LOGISTICS').length + 
+          archivedOrderList.filter(o => o.courier === 'HAL LOGISTICS').length;
         document.getElementById('anousithOrders').textContent = 
-          orders.filter(o => o.courier === 'Anousith Express').length + 
-          archivedOrders.filter(o => o.courier === 'Anousith Express').length;
+          orderList.filter(o => o.courier === 'Anousith Express').length + 
+          archivedOrderList.filter(o => o.courier === 'Anousith Express').length;
         document.getElementById('mixayOrders').textContent = 
-          orders.filter(o => o.courier === 'Mixay Express').length + 
-          archivedOrders.filter(o => o.courier === 'Mixay Express').length;
+          orderList.filter(o => o.courier === 'Mixay Express').length + 
+          archivedOrderList.filter(o => o.courier === 'Mixay Express').length;
       }
     }
 
-   / ฟังก์ชันเพิ่มออเดอร์ใหม่
-    function addOrder() {
-      const customerData = document.getElementById('customerData').value;
+    // ฟังก์ชันเปลี่ยนเบอร์โทรตามขนส่ง
+    function updatePhoneByCourier() {
       const courier = document.getElementById('courier').value;
+      const phoneSelect = document.getElementById('shopPhone');
+      phoneSelect.value = (courier === 'Anousith Express') ? '020 94036226' : '020 98052744';
+    }
+
+    // ฟังก์ชันโหลดออเดอร์
+    async function loadOrders() {
+      if (!currentUser) return;
       
-      if (!customerData) {
+      try {
+        // Load current orders
+        const q = db.collection("orders")
+          .where("userId", "==", currentUser.uid)
+          .where("archived", "==", false)
+          .orderBy("date", "desc");
+        
+        const querySnapshot = await q.get();
+        
+        orderList = [];
+        querySnapshot.forEach(docSnap => {
+          const data = docSnap.data();
+          data.date = data.date.toDate();
+          data._docId = docSnap.id;
+          orderList.push(data);
+        });
+        
+        // อัปเดตการแสดงผล
+        renderOrders();
+        updateStats();
+        document.getElementById('currentOrdersSection').style.display = 'block';
+        
+        // Load archived orders
+        const archiveQ = db.collection("orders")
+          .where("userId", "==", currentUser.uid)
+          .where("archived", "==", true)
+          .orderBy("date", "desc");
+        
+        const archiveSnapshot = await archiveQ.get();
+        
+        archivedOrderList = [];
+        archiveSnapshot.forEach(docSnap => {
+          const data = docSnap.data();
+          data.date = data.date.toDate();
+          data._docId = docSnap.id;
+          archivedOrderList.push(data);
+        });
+      } catch (error) {
+        console.error("Error loading orders:", error);
+        showNotification("เกิดข้อผิดพลาดในการโหลดออเดอร์: " + error.message, 'error');
+      }
+    }
+
+    // ฟังก์ชันเพิ่มออเดอร์ใหม่
+    async function addOrder() {
+      if (!currentUser) {
+        showNotification('กรุณาเข้าสู่ระบบก่อนเพิ่มออเดอร์', 'error');
+        return;
+      }
+      
+      const customer = document.getElementById('customerData').value.trim();
+      const courier = document.getElementById('courier').value;
+      const shopPhone = document.getElementById('shopPhone').value;
+      
+      if (!customer) {
         showNotification('กรุณากรอกข้อมูลลูกค้า', 'error');
         return;
       }
+      const phoneMatch = customer.match(/(020|030)\d{6,8}\b/);
+      if (!phoneMatch) {
+        showNotification('ไม่พบเบอร์โทรลูกค้า (รูปแบบ 020/030 ตามด้วยตัวเลข 6-8 หลัก)', 'error');
+        return;
+      }
       
-      // สร้างเลขออเดอร์
-      const orderId = `BN${Date.now().toString().slice(-6)}`;
+      const id = 'BN' + phoneMatch[0];
+      const date = new Date();
+      const barcode = Math.floor(100000000000 + Math.random() * 900000000000);
       
-      // เพิ่มออเดอร์ใหม่
-      const newOrder = {
-        id: orderId,
-        customerData: customerData,
-        courier: courier,
-        date: new Date().toLocaleString('lo-LA'),
-        status: 'active'
-      };
-      
-      orders.push(newOrder);
-      localStorage.setItem('orders', JSON.stringify(orders));
-      
-      // ล้างฟอร์ม
-      document.getElementById('customerData').value = '';
-      
-      // อัพเดตการแสดงผล
-      displayOrders();
-      updateStats();
-      
-      showNotification(`เพิ่มออเดอร์ ${orderId} สำเร็จ`);
+      try {
+        await db.collection("orders").add({
+          id,
+          customer,
+          courier,
+          date: firebase.firestore.Timestamp.fromDate(date),
+          barcode,
+          shopPhone,
+          userId: currentUser.uid,
+          archived: false
+        });
+        
+        await loadOrders();
+        document.getElementById('customerData').value = '';
+        showNotification(`เพิ่มออเดอร์ ${id} สำเร็จ`);
+      } catch (error) {
+        console.error("Error adding order:", error);
+        showNotification("เกิดข้อผิดพลาดในการเพิ่มออเดอร์: " + error.message, 'error');
+      }
     }
 
     // ฟังก์ชันแสดงออเดอร์
-    function displayOrders(filter = 'all') {
-      const ordersContainer = document.getElementById('orders');
-      let filteredOrders = orders;
+    function renderOrders() {
+      const container = document.getElementById('orders');
+      container.innerHTML = '';
       
-      if (filter !== 'all') {
-        filteredOrders = orders.filter(order => order.courier === filter);
-      }
-      
-      if (filteredOrders.length === 0) {
-        ordersContainer.innerHTML = '<p style="text-align:center; padding:20px; color:#aaa;">ไม่มีออเดอร์ในขณะนี้</p>';
+      if (orderList.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: #666;">ไม่มีออเดอร์ในขณะนี้</p>';
         return;
       }
       
-      ordersContainer.innerHTML = '';
-      
-      filteredOrders.forEach((order, index) => {
-        const orderElement = document.createElement('div');
-        orderElement.className = 'order';
-        orderElement.innerHTML = `
-          <div class="order-header">
-            <h3>ออเดอร์: ${order.id}</h3>
-            <div class="order-date">${order.date}</div>
+      orderList.forEach((order, index) => {
+        const div = document.createElement('div');
+        div.className = 'order';
+        div.innerHTML = `
+          <input type="checkbox" data-index="${index}" checked>
+          <strong>Order ID:</strong> ${order.id}<br>
+          <strong>ขนส่ง:</strong> ${order.courier}<br>
+          <strong>เบอร์ร้าน:</strong> ${order.shopPhone}<br>
+          <strong>ลูกค้า:</strong><br> <pre>${order.customer}</pre>
+          <div class="action-buttons">
+            <button class="btn btn-primary" onclick="openEditOrderModal('${index}')">
+              <i class="fas fa-edit"></i> แก้ไข
+            </button>
           </div>
-          <div class="customer-data">
-            <pre>${order.customerData}</pre>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    // ฟังก์ชันแสดงออเดอร์ในคลัง
+    function renderArchivedOrders() {
+      const container = document.getElementById('archivedOrders');
+      container.innerHTML = '';
+
+      if (archivedOrderList.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: #666;">ไม่มีออเดอร์ในคลัง</p>';
+        return;
+      }
+
+      archivedOrderList.forEach((order, index) => {
+        const orderDate = new Date(order.date);
+        const dateStr = orderDate.toLocaleDateString('lo-LA') + ' ' + orderDate.toLocaleTimeString();
+    
+        const div = document.createElement('div');
+        div.className = 'order';
+        div.innerHTML = `
+          <div class="order-header">
+            <strong>${order.id}</strong>
+            <span class="order-date">${dateStr}</span>
           </div>
           <div><strong>ขนส่ง:</strong> ${order.courier}</div>
+          <div><strong>เบอร์ร้าน:</strong> ${order.shopPhone}</div>
+          <div class="customer-data"><strong>ลูกค้า:</strong><pre>${order.customer}</pre></div>
           <div class="action-buttons">
-            <button class="btn btn-primary" onclick="printOrder('${order.id}')">
-              <i class="fas fa-print"></i> พิมพ์
+            <button class="btn btn-primary" onclick="printBillFromArchive(${index})">
+              <i class="fas fa-print"></i> พิมพ์บิล
             </button>
-            <button class="btn btn-success" onclick="archiveOrder('${order.id}')">
-              <i class="fas fa-archive"></i> เก็บเข้าคลัง
-            </button>
-            <button class="btn btn-danger" onclick="deleteOrder('${order.id}')">
-              <i class="fas fa-trash"></i> ลบ
-            </button>
-          </div>
-          <input type="checkbox" class="order-checkbox" data-order-id="${order.id}">
-        `;
-        ordersContainer.appendChild(orderElement);
-      });
+            <button class="btn btn-success" onclick="unarchiveOrder('${order._docId}')">
+              <i class="fas fa-undo"></i> นำออกจากคลัง
+           </button>
+         </div>
+       `;
+       container.appendChild(div);
+     });
     }
 
-    // ฟังก์ชันพิมพ์ออเดอร์
-    function printOrder(orderId) {
-      const order = orders.find(o => o.id === orderId);
-      if (!order) return;
+    // ฟังก์ชันพิมพ์บิล
+    function printBill(order) {
+      const dateStr = new Date(order.date).toLocaleString();
+      const barcodeNumber = order.barcode || order.id.replace('BN', '') + '000000';
       
-      const printWindow = window.open('', '', 'width=800,height=600');
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>พิมพ์ออเดอร์ ${order.id}</title>
-            <style>
-              body { font-family: 'Noto Sans Lao', sans-serif; margin: 0; padding: 20px; }
-              .bill { width: 76mm; height: auto; min-height: 130mm; padding: 10px; font-size: 14px; box-sizing: border-box; border: 1px solid #000; margin: 0 auto; overflow: hidden; }
-              .logo { font-size: 48px; font-weight: bold; display: inline-block; vertical-align: middle; margin-right: 10px; color: #6C63FF; }
-              .shop-info { display: inline-block; vertical-align: middle; line-height: 1.4; white-space: nowrap; }
-              .header { margin-bottom: 10px; }
-              .section { margin-top: 10px; }
-              .barcode-container { text-align: center; margin: 15px 0; }
-              .barcode-number { text-align: center; font-family: monospace; font-size: 12px; margin-top: 5px; }
-              .thankyou { text-align: center; margin-top: 20px; font-weight: bold; }
-              pre { white-space: pre-wrap; word-wrap: break-word; margin: 0; line-height: 1.4; }
-            </style>
-          </head>
-          <body>
-            <div class="bill">
-              <div class="header">
-                <div class="logo">BN</div>
-                <div class="shop-info">
-                  <strong>BN SHOP</strong><br>
-                  ${order.courier === 'HAL LOGISTICS' ? '020 94036226' : '020 98052744'}<br>
-                  Vientiane, Laos
+      return `
+        <div class="bill" style="font-family: 'Noto Sans Lao', sans-serif; padding: 5px;">
+          <!-- ส่วนหัวบิล - กล่องข้อมูลร้าน -->
+          <div style="border: 2px solid #000; border-radius: 5px; padding: 8px; margin-bottom: 8px; background: #f8f9fa;">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <div class="logo" style="font-size: 28px; font-weight: bold; color: #4361ee;">BN Shop</div>
+              <div class="shop-info" style="text-align: right;">
+                <div style="font-weight: bold; font-size: 16px; border-bottom: 1px solid #000; padding-bottom: 3px; margin-bottom: 3px;">
+                  ຮ້ານ : BN Shop
+                </div>
+                <div style="font-size: 14px;">
+                  ເບີໂທ : ${order.shopPhone}
                 </div>
               </div>
-              <hr>
-              <div class="section">
-                <strong>ออเดอร์:</strong> ${order.id}<br>
-                <strong>วันที่:</strong> ${new Date().toLocaleDateString('lo-LA')}
-              </div>
-              <div class="section">
-                <strong>ข้อมูลลูกค้า:</strong><br>
-                <pre>${order.customerData}</pre>
-              </div>
-              <div class="section">
-                <strong>ขนส่ง:</strong> ${order.courier}
-              </div>
-              <div class="barcode-container">
-                <div style="font-family: 'Libre Barcode 128', cursive; font-size: 40px;">${order.id}</div>
-                <div class="barcode-number">${order.id}</div>
-              </div>
-              <div class="thankyou">ขอบคุณที่ใช้บริการ!</div>
             </div>
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
-      printWindow.focus();
+          </div>
+
+          <!-- ส่วนข้อมูลออเดอร์ -->
+          <div style="border: 1px solid #000; border-radius: 5px; padding: 8px; margin-bottom: 8px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+              <div><strong>ວັນທີ:</strong> ${dateStr}</div>
+              <div><strong>ລະຫັດ:</strong> ${order.id.replace('BN', '')}</div>
+            </div>
+            <div style="border-top: 1px solid #000; padding-top: 5px;">
+              <strong>ຂົນສົ່ງ:</strong> ${order.courier}
+            </div>
+          </div>
+
+          <!-- ส่วนบาร์โค้ด -->
+          <div style="margin-top: 0; margin-bottom: 5px; text-align: center;">
+            <svg id="barcode-${order.id}"></svg>
+            <div class="barcode-number" style="font-family: monospace; font-size: 11px; margin-top: 0px; letter-spacing: 1px;">
+              ${barcodeNumber}
+            </div>
+          </div>
+
+          <!-- ส่วนข้อมูลลูกค้า -->
+          <div style="margin-bottom: 5px;">
+            <div style="font-weight: bold; margin-bottom: 3px;">
+              ຂໍ້ມູນລູກຄ້າ:
+            </div>
+            <pre style="margin: 0; white-space: pre-wrap; font-size: 14px; line-height: 1.3;">${order.customer.replace(/\n/g, '<br>')}</pre>
+          </div>
+
+          <!-- ส่วนท้ายบิล -->
+          <div style="text-align: center; font-weight: bold; color: #4361ee; margin-top: 5px; border-top: 1px solid #4361ee; padding-top: 5px;">
+            ຂອບໃຈ💗
+          </div>
+        </div>
+        <script>
+          JsBarcode("#barcode-${order.id}", "${barcodeNumber}", {
+            format: "CODE128",
+            lineColor: "#000",
+            width: 2,
+            height: 50,
+            displayValue: false
+          });
+        <\/script>
+      `;
+    }
+
+    // ฟังก์ชันพิมพ์หลายบิล
+    function printBills(orders) {
+      const win = window.open('', '_blank');
+      let content = `
+        <html><head><title>Print Bills</title>
+        <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"><\/script>
+        <style>
+          @page { size: 80mm 150mm; margin: 0; }
+          body { margin: 0; padding: 0; font-family: 'Noto Sans Lao', sans-serif; }
+          .bill { width: 76mm; min-height: 130mm; padding: 10px; font-size: 14px; border: 1px solid #000; page-break-after: always; margin: 0 auto; }
+          .logo { font-size: 32px; font-weight: bold; display: inline-block; margin-right: 10px; }
+          .shop-info { display: inline-block; vertical-align: middle; line-height: 1.4; white-space: nowrap; }
+          .header { margin-bottom: 10px; }
+          .section { margin-top: 10px; }
+          .barcode-container { text-align: center; margin: 12px 0; }
+          .barcode-number { text-align: center; font-family: monospace; font-size: 12px; margin-top: 5px; }
+          .thankyou { text-align: center; margin-top: 20px; font-weight: bold; }
+          pre { white-space: pre-wrap; word-wrap: break-word; margin: 0; line-height: 1.4; }
+        </style></head><body>
+      `;
+      
+      orders.forEach(order => {
+        content += printBill(order);
+      });
+      
+      content += '</body></html>';
+      
+      win.document.write(content);
+      win.document.close();
+      
+      // รอให้บาร์โค้ดโหลดเสร็จก่อนพิมพ์
       setTimeout(() => {
-        printWindow.print();
-        printWindow.close();
+        win.print();
+        win.close();
       }, 500);
     }
-
-    // ฟังก์ชันเก็บออเดอร์เข้าคลัง
-    function archiveOrder(orderId) {
-      const orderIndex = orders.findIndex(o => o.id === orderId);
-      if (orderIndex === -1) return;
-      
-      const order = orders[orderIndex];
-      order.archivedDate = new Date().toLocaleString('lo-LA');
-      archivedOrders.push(order);
-      orders.splice(orderIndex, 1);
-      
-      localStorage.setItem('orders', JSON.stringify(orders));
-      localStorage.setItem('archivedOrders', JSON.stringify(archivedOrders));
-      
-      displayOrders();
-      updateStats();
-      showNotification(`เก็บออเดอร์ ${orderId} เข้าคลังสำเร็จ`);
-   }
-
-   // ฟังก์ชันลบออเดอร์
-    function deleteOrder(orderId) {
-      if (!confirm('คุณแน่ใจว่าต้องการลบออเดอร์นี้?')) return;
-      
-      orders = orders.filter(o => o.id !== orderId);
-      localStorage.setItem('orders', JSON.stringify(orders));
-      
-      displayOrders();
-      updateStats();
-      showNotification('ลบออเดอร์สำเร็จ');
-    }
-
-    // ฟังก์ชันเลือกทั้งหมด
-    function selectAll(select) {
-      document.querySelectorAll('.order-checkbox').forEach(checkbox => {
-        checkbox.checked = select;
-      });
-    }
-
-    // ฟังก์ชันเก็บที่เลือกเข้าคลัง
-    function archiveSelected() {
-      const selectedCheckboxes = document.querySelectorAll('.order-checkbox:checked');
-      if (selectedCheckboxes.length === 0) {
-        showNotification('กรุณาเลือกออเดอร์ที่ต้องการเก็บเข้าคลัง', 'error');
-        return;
-      }
-      
-      selectedCheckboxes.forEach(checkbox => {
-        const orderId = checkbox.getAttribute('data-order-id');
-        archiveOrder(orderId);
-      });
-    }
-
     // ฟังก์ชันพิมพ์ที่เลือก
     function printSelected() {
-      const selectedCheckboxes = document.querySelectorAll('.order-checkbox:checked');
-      if (selectedCheckboxes.length === 0) {
-        showNotification('กรุณาเลือกออเดอร์ที่ต้องการพิมพ์', 'error');
+      const checkboxes = document.querySelectorAll('#orders input[type=checkbox]');
+      const selected = Array.from(checkboxes).filter(c => c.checked).map(c => orderList[c.dataset.index]);
+      if (!selected.length) {
+        showNotification('กรุณาเลือกออเดอร์', 'error');
         return;
       }
-      
-      selectedCheckboxes.forEach(checkbox => {
-        const orderId = checkbox.getAttribute('data-order-id');
-        printOrder(orderId);
-      });
+      printBills(selected);
     }
 
     // ฟังก์ชันพิมพ์ทั้งหมด
     function printAll() {
-      if (orders.length === 0) {
-        showNotification('ไม่มีออเดอร์ที่สามารถพิมพ์ได้', 'error');
+      if (!orderList.length) {
+        showNotification('ไม่มีออเดอร์', 'error');
         return;
       }
-      
-      orders.forEach(order => {
-        printOrder(order.id);
-      });
+      printBills(orderList);
+    }
+
+    // ฟังก์ชันพิมพ์จากคลัง
+    function printBillFromArchive(index) {
+      const order = archivedOrderList[index];
+      printBills([order]);
+    }
+
+    // ฟังก์ชันเลือกทั้งหมด
+    function selectAll(checked) {
+      document.querySelectorAll('#orders input[type=checkbox]').forEach(c => c.checked = checked);
+    }
+
+    // ฟังก์ชันเก็บที่เลือกเข้าคลัง
+    async function archiveSelected() {
+      const checkboxes = document.querySelectorAll('#orders input[type=checkbox]');
+      const selected = Array.from(checkboxes).filter(c => c.checked);
+      if (!selected.length) {
+        showNotification('กรุณาเลือกออเดอร์ที่จะเก็บเข้าคลัง', 'error');
+        return;
+      }
+
+      const confirmArchive = confirm('คุณแน่ใจว่าจะเก็บออเดอร์ที่เลือกเข้าคลัง?');
+      if (!confirmArchive) return;
+
+      try {
+        for (const c of selected) {
+          const index = c.dataset.index;
+          const docId = orderList[index]._docId;
+          await db.collection("orders").doc(docId).update({
+            archived: true
+          });
+        }
+        await loadOrders();
+        showNotification('เก็บออเดอร์เข้าคลังเรียบร้อยแล้ว');
+      } catch (error) {
+        console.error("Error archiving orders:", error);
+        showNotification("เกิดข้อผิดพลาดในการเก็บออเดอร์เข้าคลัง: " + error.message, 'error');
+      }
+    }
+
+    // ฟังก์ชันนำออกจากคลัง
+    async function unarchiveOrder(docId) {
+      try {
+        await db.collection("orders").doc(docId).update({
+          archived: false
+        });
+        await loadOrders();
+        showNotification('นำออเดอร์ออกจากคลังเรียบร้อยแล้ว');
+      } catch (error) {
+        console.error("Error unarchiving order:", error);
+        showNotification("เกิดข้อผิดพลาดในการนำออเดอร์ออกจากคลัง: " + error.message, 'error');
+      }
     }
 
     // ฟังก์ชันลบที่เลือก
-    function deleteSelected() {
-      const selectedCheckboxes = document.querySelectorAll('.order-checkbox:checked');
-      if (selectedCheckboxes.length === 0) {
-        showNotification('กรุณาเลือกออเดอร์ที่ต้องการลบ', 'error');
+    async function deleteSelected() {
+      const checkboxes = document.querySelectorAll('#orders input[type=checkbox]');
+      const selected = Array.from(checkboxes).filter(c => c.checked);
+      if (!selected.length) {
+        showNotification('กรุณาเลือกออเดอร์ที่จะลบ', 'error');
         return;
       }
-      
-      if (!confirm(`คุณแน่ใจว่าต้องการลบ ${selectedCheckboxes.length} ออเดอร์?`)) return;
-      
-      selectedCheckboxes.forEach(checkbox => {
-        const orderId = checkbox.getAttribute('data-order-id');
-        deleteOrder(orderId);
-      });
-    }
 
-    // ฟังก์ชันแสดงคลังออเดอร์
-    function showArchive() {
-      document.getElementById('currentOrdersSection').style.display = 'none';
-      document.getElementById('archiveSection').style.display = 'block';
-      displayArchivedOrders();
-    }
+      const confirmDelete = confirm('คุณแน่ใจว่าจะลบออเดอร์ที่เลือก?');
+      if (!confirmDelete) return;
 
-    // ฟังก์ชันกลับไปออเดอร์ปัจจุบัน
-    function backToCurrentOrders() {
-      document.getElementById('currentOrdersSection').style.display = 'block';
-      document.getElementById('archiveSection').style.display = 'none';
-    }
-
-    // ฟังก์ชันแสดงออเดอร์ในคลัง
-    function displayArchivedOrders() {
-      const archivedContainer = document.getElementById('archivedOrders');
-      
-      if (archivedOrders.length === 0) {
-        archivedContainer.innerHTML = '<p style="text-align:center; padding:20px; color:#aaa;">ไม่มีออเดอร์ในคลัง</p>';
-        return;
+      try {
+        for (const c of selected) {
+          const index = c.dataset.index;
+          const docId = orderList[index]._docId;
+          await db.collection("orders").doc(docId).delete();
+        }
+        await loadOrders();
+        showNotification('ลบออเดอร์เรียบร้อยแล้ว');
+      } catch (error) {
+        console.error("Error deleting orders:", error);
+        showNotification("เกิดข้อผิดพลาดในการลบออเดอร์: " + error.message, 'error');
       }
-      
-      archivedContainer.innerHTML = '';
-      
-      archivedOrders.forEach(order => {
-        const orderElement = document.createElement('div');
-        orderElement.className = 'order';
-        orderElement.innerHTML = `
-          <div class="order-header">
-            <h3>ออเดอร์: ${order.id}</h3>
-            <div class="order-date">${order.archivedDate}</div>
-          </div>
-          <div class="customer-data">
-            <pre>${order.customerData}</pre>
-          </div>
-          <div><strong>ขนส่ง:</strong> ${order.courier}</div>
-          <div class="action-buttons">
-            <button class="btn btn-primary" onclick="printOrderFromArchive('${order.id}')">
-              <i class="fas fa-print"></i> พิมพ์
-            </button>
-            <button class="btn btn-danger" onclick="deleteArchivedOrder('${order.id}')">
-              <i class="fas fa-trash"></i> ลบ
-            </button>
-          </div>
-        `;
-        archivedContainer.appendChild(orderElement);
-      });
-    }
-
-    // ฟังก์ชันพิมพ์ออเดอร์จากคลัง
-    function printOrderFromArchive(orderId) {
-      const order = archivedOrders.find(o => o.id === orderId);
-      if (!order) return;
-      
-      printOrder(orderId);
-    }
-
-    // ฟังก์ชันลบออเดอร์จากคลัง
-    function deleteArchivedOrder(orderId) {
-      if (!confirm('คุณแน่ใจว่าต้องการลบออเดอร์นี้จากคลัง?')) return;
-      
-      archivedOrders = archivedOrders.filter(o => o.id !== orderId);
-      localStorage.setItem('archivedOrders', JSON.stringify(archivedOrders));
-      
-      displayArchivedOrders();
-      updateStats();
-      showNotification('ลบออเดอร์จากคลังสำเร็จ');
-    }
-
-    // ฟังก์ชันค้นหาออเดอร์ในคลัง
-    function searchArchivedOrders() {
-      const searchId = document.getElementById('searchOrderId').value.toLowerCase();
-      const startDate = document.getElementById('searchStartDate').value;
-      const endDate = document.getElementById('searchEndDate').value;
-      
-      let filteredOrders = archivedOrders;
-      
-      // กรองตามเลขออเดอร์
-      if (searchId) {
-        filteredOrders = filteredOrders.filter(order => 
-          order.id.toLowerCase().includes(searchId)
-        );
-      }
-      
-      // กรองตามวันที่
-      if (startDate) {
-        filteredOrders = filteredOrders.filter(order => {
-          const orderDate = new Date(order.archivedDate.split(',')[0].split('/').reverse().join('-'));
-          const start = new Date(startDate);
-          return orderDate >= start;
-        });
-      }
-      
-      if (endDate) {
-        filteredOrders = filteredOrders.filter(order => {
-          const orderDate = new Date(order.archivedDate.split(',')[0].split('/').reverse().join('-'));
-          const end = new Date(endDate);
-          return orderDate <= end;
-        });
-      }
-      
-      // แสดงผลลัพธ์
-      const archivedContainer = document.getElementById('archivedOrders');
-      
-      if (filteredOrders.length === 0) {
-        archivedContainer.innerHTML = '<p style="text-align:center; padding:20px; color:#aaa;">ไม่พบออเดอร์ที่ตรงกับการค้นหา</p>';
-        return;
-      }
-      
-      archivedContainer.innerHTML = '';
-      
-      filteredOrders.forEach(order => {
-        const orderElement = document.createElement('div');
-        orderElement.className = 'order';
-        orderElement.innerHTML = `
-          <div class="order-header">
-            <h3>ออเดอร์: ${order.id}</h3>
-            <div class="order-date">${order.archivedDate}</div>
-          </div>
-          <div class="customer-data">
-            <pre>${order.customerData}</pre>
-          </div>
-          <div><strong>ขนส่ง:</strong> ${order.courier}</div>
-          <div class="action-buttons">
-            <button class="btn btn-primary" onclick="printOrderFromArchive('${order.id}')">
-              <i class="fas fa-print"></i> พิมพ์
-            </button>
-            <button class="btn btn-danger" onclick="deleteArchivedOrder('${order.id}')">
-              <i class="fas fa-trash"></i> ลบ
-            </button>
-          </div>
-        `;
-        archivedContainer.appendChild(orderElement);
-      });
-    }
-   // ฟังก์ชันล้างการค้นหา
-    function clearSearch() {
-      document.getElementById('searchOrderId').value = '';
-      document.getElementById('searchStartDate').value = '';
-      document.getElementById('searchEndDate').value = '';
-      displayArchivedOrders();
     }
 
     // ฟังก์ชันจัดการ Modal
@@ -1500,211 +1512,202 @@ html
 
     function closeModal(modalId) {
       document.getElementById(modalId).style.display = 'none';
+      // Clear errors
+      document.getElementById('loginError').textContent = '';
+      document.getElementById('registerError').textContent = '';
     }
 
     function switchTab(tabName) {
-      // ซ่อนแท็บทั้งหมด
-      document.querySelectorAll('.tab-content').forEach(tab => {
-        tab.classList.remove('active');
-      });
+      // Switch tabs in auth modal
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
       
-      // แสดงแท็บที่เลือก
-      document.getElementById(tabName + 'Tab').classList.add('active');
-      
-      // อัพเดตแท็บที่ active
-      document.querySelectorAll('.tab').forEach(tab => {
-        tab.classList.remove('active');
-      });
-      
-      document.querySelector(`.tab:nth-child(${tabName === 'login' ? 1 : 2})`).classList.add('active');
-      
-      // ล้างข้อผิดพลาด
-      document.getElementById(tabName === 'login' ? 'loginError' : 'registerError').textContent = '';
+      if (tabName === 'login') {
+        document.querySelector('.tab:nth-child(1)').classList.add('active');
+        document.getElementById('loginTab').classList.add('active');
+      } else {
+        document.querySelector('.tab:nth-child(2)').classList.add('active');
+        document.getElementById('registerTab').classList.add('active');
+      }
     }
 
     // ฟังก์ชันเข้าสู่ระบบ
-    function login() {
+    async function login() {
       const email = document.getElementById('loginEmail').value;
       const password = document.getElementById('loginPassword').value;
       const loginBtn = document.getElementById('loginBtn');
-      const loginError = document.getElementById('loginError');
+      const errorElement = document.getElementById('loginError');
       
       if (!email || !password) {
-        loginError.textContent = 'กรุณากรอกอีเมลและรหัสผ่าน';
+        errorElement.textContent = 'กรุณากรอกอีเมลและรหัสผ่าน';
         return;
       }
       
-      // จำลองการโหลด
-      loginBtn.innerHTML = '<i class="fas fa-spinner spinner"></i> กำลังเข้าสู่ระบบ...';
-      loginBtn.disabled = true;
-      
-      // จำลองการเข้าสู่ระบบ (ในระบบจริงควรเชื่อมต่อกับเซิร์ฟเวอร์)
-      setTimeout(() => {
-        // ตรวจสอบผู้ใช้ใน localStorage
-        const users = JSON.parse(localStorage.getItem('users')) || [];
-        const user = users.find(u => u.email === email && u.password === password);
-        
-        if (user) {
-          currentUser = { email: user.email };
-          localStorage.setItem('currentUser', JSON.stringify(currentUser));
-          
-          closeModal('authModal');
-          updateUIForUser();
-          showNotification('เข้าสู่ระบบสำเร็จ');
-        } else {
-          loginError.textContent = 'อีเมลหรือรหัสผ่านไม่ถูกต้อง';
-        }
-        
+      try {
+        loginBtn.innerHTML = '<i class="fas fa-spinner spinner"></i> กำลังเข้าสู่ระบบ...';
+        await auth.signInWithEmailAndPassword(email, password);
+        closeModal('authModal');
+        showNotification('เข้าสู่ระบบสำเร็จ');
+      } catch (error) {
+        console.error('Login error:', error);
+        errorElement.textContent = getAuthErrorMessage(error.code);
+      } finally {
         loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> เข้าสู่ระบบ';
-        loginBtn.disabled = false;
-      }, 1500);
+      }
     }
 
     // ฟังก์ชันสร้างบัญชี
-    function register() {
+    async function register() {
       const email = document.getElementById('registerEmail').value;
       const password = document.getElementById('registerPassword').value;
       const confirmPassword = document.getElementById('confirmPassword').value;
       const registerBtn = document.getElementById('registerBtn');
-      const registerError = document.getElementById('registerError');
+      const errorElement = document.getElementById('registerError');
       
       if (!email || !password || !confirmPassword) {
-        registerError.textContent = 'กรุณากรอกข้อมูลให้ครบถ้วน';
-        return;
-      }
-      
-      if (password.length < 6) {
-        registerError.textContent = 'รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร';
+        errorElement.textContent = 'กรุณากรอกข้อมูลให้ครบทุกช่อง';
         return;
       }
       
       if (password !== confirmPassword) {
-        registerError.textContent = 'รหัสผ่านไม่ตรงกัน';
+        errorElement.textContent = 'รหัสผ่านไม่ตรงกัน';
         return;
       }
       
-      // จำลองการโหลด
-      registerBtn.innerHTML = '<i class="fas fa-spinner spinner"></i> กำลังสร้างบัญชี...';
-      registerBtn.disabled = true;
+      if (password.length < 6) {
+        errorElement.textContent = 'รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร';
+        return;
+      }
       
-      // จำลองการสมัครสมาชิก (ในระบบจริงควรเชื่อมต่อกับเซิร์ฟเวอร์)
-      setTimeout(() => {
-        // ตรวจสอบว่ามีผู้ใช้แล้วหรือไม่
-        const users = JSON.parse(localStorage.getItem('users')) || [];
-        const existingUser = users.find(u => u.email === email);
-        
-        if (existingUser) {
-          registerError.textContent = 'มีบัญชีนี้อยู่ในระบบแล้ว';
-        } else {
-          // เพิ่มผู้ใช้ใหม่
-          users.push({ email, password });
-          localStorage.setItem('users', JSON.stringify(users));
-          
-          // เข้าสู่ระบบอัตโนมัติ
-          currentUser = { email };
-          localStorage.setItem('currentUser', JSON.stringify(currentUser));
-          
-          closeModal('authModal');
-          updateUIForUser();
-          showNotification('สร้างบัญชีสำเร็จ');
-        }
-        
+      try {
+        registerBtn.innerHTML = '<i class="fas fa-spinner spinner"></i> กำลังสร้างบัญชี...';
+        await auth.createUserWithEmailAndPassword(email, password);
+        closeModal('authModal');
+        showNotification('สร้างบัญชีสำเร็จ');
+      } catch (error) {
+        console.error('Registration error:', error);
+        errorElement.textContent = getAuthErrorMessage(error.code);
+      } finally {
         registerBtn.innerHTML = '<i class="fas fa-user-plus"></i> สร้างบัญชี';
-        registerBtn.disabled = false;
-      }, 1500);
+      }
     }
 
     // ฟังก์ชันออกจากระบบ
-    function logout() {
-      currentUser = null;
-      localStorage.removeItem('currentUser');
-      updateUIForUser();
-      showNotification('ออกจากระบบสำเร็จ');
+    async function logout() {
+      try {
+        await auth.signOut();
+        showNotification('ออกจากระบบสำเร็จ');
+      } catch (error) {
+        console.error('Logout error:', error);
+        showNotification('เกิดข้อผิดพลาดในการออกจากระบบ: ' + error.message, 'error');
+      }
+    }
+
+    // ฟังก์ชันแสดงข้อความผิดพลาดจาก Firebase Auth
+    function getAuthErrorMessage(errorCode) {
+      switch(errorCode) {
+        case 'auth/invalid-email':
+          return 'อีเมลไม่ถูกต้อง';
+        case 'auth/user-disabled':
+          return 'บัญชีนี้ถูกระงับการใช้งาน';
+        case 'auth/user-not-found':
+          return 'ไม่พบผู้ใช้ที่ใช้อีเมลนี้';
+        case 'auth/wrong-password':
+          return 'รหัสผ่านไม่ถูกต้อง';
+        case 'auth/email-already-in-use':
+          return 'อีเมลนี้ถูกใช้งานแล้ว';
+        case 'auth/weak-password':
+          return 'รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร';
+        default:
+          return 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ';
+      }
+    }
+
+    // ฟังก์ชันแสดงคลังออเดอร์
+    function showArchive() {
+      document.getElementById('currentOrdersSection').style.display = 'none';
+      document.getElementById('archiveSection').style.display = 'block';
+      renderArchivedOrders();
+    }
+
+    // ฟังก์ชันกลับไปออเดอร์ปัจจุบัน
+    function backToCurrentOrders() {
+      document.getElementById('currentOrdersSection').style.display = 'block';
+      document.getElementById('archiveSection').style.display = 'none';
     }
 
     // ฟังก์ชันอัพเดต UI ตามสถานะผู้ใช้
-    function updateUIForUser() {
+    function updateUIForUser(user) {
       const authButtons = document.getElementById('authButtons');
       const userMenu = document.getElementById('userMenu');
       const userEmail = document.getElementById('userEmail');
       const userAvatar = document.getElementById('userAvatar');
+      const currentOrdersSection = document.getElementById('currentOrdersSection');
       
-      if (currentUser) {
+      if (user) {
+        currentUser = user;
         authButtons.style.display = 'none';
         userMenu.style.display = 'flex';
-        userEmail.textContent = currentUser.email;
-        userAvatar.textContent = currentUser.email.charAt(0).toUpperCase();
+        userEmail.textContent = user.email;
+        userAvatar.textContent = user.email.charAt(0).toUpperCase();
+        currentOrdersSection.style.display = 'block';
+        loadOrders();
       } else {
+        currentUser = null;
         authButtons.style.display = 'flex';
         userMenu.style.display = 'none';
+        currentOrdersSection.style.display = 'none';
+        document.getElementById('archiveSection').style.display = 'none';
+        orderList = [];
+        archivedOrderList = [];
+        renderOrders();
+        updateStats();
       }
-      
-      updateStats();
     }
 
-    // ฟังก์ชันจัดการการกรองออเดอร์
-    function setupFilterButtons() {
+    // ฟังก์ชันเริ่มต้นแอปพลิเคชัน
+    function initApp() {
+      // ตั้งค่า event listener สำหรับการเปลี่ยนขนส่ง
+      document.getElementById('courier').addEventListener('change', updatePhoneByCourier);
+      
+      // ตั้งค่า filter buttons
       document.querySelectorAll('.filter-btn').forEach(btn => {
         btn.addEventListener('click', function() {
-          // ลบ active class จากปุ่มทั้งหมด
-          document.querySelectorAll('.filter-btn').forEach(b => {
-            b.classList.remove('active');
-          });
-          
-          // เพิ่ม active class ให้ปุ่มที่คลิก
+          document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
           this.classList.add('active');
-          
-          // กรองออเดอร์
           const filter = this.getAttribute('data-filter');
-          displayOrders(filter);
+          // ฟังก์ชันกรองออเดอร์ (สามารถเพิ่มได้ในภายหลัง)
+        });
+      });
+       // ตั้งค่า Firebase Auth state listener
+      auth.onAuthStateChanged(user => {
+        updateUIForUser(user);
+      });
+      
+      // ตั้งค่า Navbar scroll effect
+      window.addEventListener('scroll', function() {
+        const navbar = document.getElementById('navbar');
+        if (window.scrollY > 50) {
+          navbar.classList.add('scrolled');
+        } else {
+          navbar.classList.remove('scrolled');
+        }
+      });
+      
+      // ตั้งค่าให้ปิด modal เมื่อคลิกนอกพื้นที่
+      window.addEventListener('click', function(event) {
+        const modals = document.querySelectorAll('.modal');
+        modals.forEach(modal => {
+          if (event.target === modal) {
+            modal.style.display = 'none';
+          }
         });
       });
     }
 
-    // ฟังก์ชันจัดการการเลื่อน Navbar
-    window.addEventListener('scroll', function() {
-      const navbar = document.getElementById('navbar');
-      if (window.scrollY > 50) {
-        navbar.classList.add('scrolled');
-      } else {
-        navbar.classList.remove('scrolled');
-      }
-    });
-
-    // ฟังก์ชันเปลี่ยนเบอร์โทรตามขนส่ง
-    document.getElementById('courier').addEventListener('change', function() {
-      const shopPhone = document.getElementById('shopPhone');
-      if (this.value === 'HAL LOGISTICS') {
-        shopPhone.value = '020 94036226';
-      } else {
-        shopPhone.value = '020 98052744';
-      }
-    });
-   / เริ่มต้นการทำงาน
-    document.addEventListener('DOMContentLoaded', function() {
-      // แสดงออเดอร์
-      displayOrders();
-      
-      // อัพเดตสถิติ
-      updateStats();
-      
-      // อัพเดต UI ตามสถานะผู้ใช้
-      updateUIForUser();
-      
-      // ตั้งค่าปุ่มกรอง
-      setupFilterButtons();
-      
-      // ปิด modal เมื่อคลิกนอกพื้นที่
-      window.addEventListener('click', function(event) {
-        const authModal = document.getElementById('authModal');
-        if (event.target === authModal) {
-          closeModal('authModal');
-        }
-      });
-    });
+    // เริ่มต้นแอปพลิเคชันเมื่อโหลดหน้าเว็บเสร็จ
+    document.addEventListener('DOMContentLoaded', initApp);
   </script>
 </body>
 </html>
-   
-    
     
