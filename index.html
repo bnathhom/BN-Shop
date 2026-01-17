@@ -1,1492 +1,846 @@
- <!DOCTYPE html>
-<html lang="lo">
+<!DOCTYPE html>
+<html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BN Shop Order System</title>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <style>
-    :root {
-      --primary-color: #6C63FF;
-      --secondary-color: #4A43C9;
-      --accent-color: #FF6B9D;
-      --success-color: #4CD9B0;
-      --warning-color: #FFD166;
-      --dark-color: #1A1A2E;
-      --darker-color: #16213E;
-      --light-color: #F0F4FF;
-      --glass-bg: rgba(255, 255, 255, 0.1);
-      --glass-border: rgba(255, 255, 255, 0.2);
-      --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BN POS System - Ultimate SaaS Edition</title>
     
-    body { 
-      font-family: 'Noto Sans Lao', sans-serif; 
-      margin: 0;
-      padding: 0;
-      background: linear-gradient(135deg, var(--darker-color) 0%, var(--dark-color) 100%);
-      color: var(--light-color);
-      min-height: 100vh;
-    }
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-    .navbar {
-      background: rgba(26, 26, 46, 0.8);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border-bottom: 1px solid var(--glass-border);
-      color: white;
-      padding: 15px 30px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: var(--glass-shadow);
-      flex-wrap: wrap;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-    
-    .navbar-brand {
-      font-size: 1.5rem;
-      font-weight: bold;
-      display: flex;
-      align-items: center;
-      background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-    
-    .navbar-brand i {
-      margin-right: 10px;
-      color: var(--primary-color);
-    }
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-    .order-counter {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      background: var(--glass-bg);
-      backdrop-filter: blur(5px);
-      -webkit-backdrop-filter: blur(5px);
-      padding: 8px 15px;
-      border-radius: 15px;
-      font-weight: bold;
-      margin-right: 15px;
-      border: 1px solid var(--glass-border);
-      transition: all 0.3s ease;
-    }
-
-    .order-counter:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-    }
-
-    .order-counter i {
-      margin-right: 5px;
-      color: var(--primary-color);
-    }
-
-    .courier-counters {
-      display: flex;
-      gap: 10px;
-      color: white;
-      background: var(--glass-bg);
-      backdrop-filter: blur(5px);
-      -webkit-backdrop-filter: blur(5px);
-      padding: 8px 15px;
-      border-radius: 15px;
-      font-size: 0.9rem;
-      margin-right: 15px;
-      border: 1px solid var(--glass-border);
-    }
-
-    .courier-counter {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      transition: all 0.3s ease;
-    }
-
-    .courier-counter:hover {
-      transform: scale(1.05);
-    }
-
-    .courier-counter i {
-      margin-right: 3px;
-      color: var(--success-color);
-    }
-    
-    .auth-buttons button {
-      margin-left: 10px;
-      transition: all 0.3s ease;
-    }
-    
-    .container {
-      max-width: 1200px;
-      margin: 30px auto;
-      padding: 0 20px;
-    }
-    
-    .card {
-      background: var(--glass-bg);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border-radius: 15px;
-      box-shadow: var(--glass-shadow);
-      padding: 25px;
-      margin-bottom: 25px;
-      border: 1px solid var(--glass-border);
-      transition: all 0.3s ease;
-    }
-
-    .card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 15px 30px rgba(0,0,0,0.3);
-    }
-    
-    h1, h2, h3 {
-      color: var(--light-color);
-      margin-top: 0;
-      position: relative;
-      display: inline-block;
-    }
-
-    h2::after {
-      content: '';
-      position: absolute;
-      bottom: -5px;
-      left: 0;
-      width: 50px;
-      height: 3px;
-      background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
-      border-radius: 3px;
-    }
-    
-    .btn {
-      padding: 12px 25px;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-      font-weight: 600;
-      transition: all 0.3s ease;
-      display: inline-flex;
-      align-items: center;
-      position: relative;
-      overflow: hidden;
-    }
-    
-    .btn::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-      transition: all 0.5s;
-    }
-    
-    .btn:hover::before {
-      left: 100%;
-    }
-    
-    .btn i {
-      margin-right: 8px;
-      transition: transform 0.3s ease;
-    }
-    
-    .btn:hover i {
-      transform: scale(1.2);
-    }
-    
-    .btn-primary {
-      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-      color: white;
-    }
-    
-    .btn-primary:hover {
-      background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
-      transform: translateY(-3px);
-      box-shadow: 0 10px 20px rgba(108, 99, 255, 0.3);
-    }
-    
-    .btn-danger {
-      background: linear-gradient(135deg, var(--accent-color), #E85685);
-      color: white;
-    }
-    
-    .btn-danger:hover {
-      background: linear-gradient(135deg, #E85685, var(--accent-color));
-      transform: translateY(-3px);
-      box-shadow: 0 10px 20px rgba(255, 107, 157, 0.3);
-    }
-    
-    .btn-success {
-      background: linear-gradient(135deg, var(--success-color), #3AB895);
-      color: white;
-    }
-    
-    .btn-success:hover {
-      background: linear-gradient(135deg, #3AB895, var(--success-color));
-      transform: translateY(-3px);
-      box-shadow: 0 10px 20px rgba(76, 217, 176, 0.3);
-    }
-    
-    .form-control {
-      margin-bottom: 20px;
-    }
-    
-    .form-control label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: 600;
-      color: var(--light-color);
-    }
-    
-    .form-control input, 
-    .form-control textarea, 
-    .form-control select {
-      width: 100%;
-      padding: 12px 15px;
-      border-radius: 10px;
-      border: 1px solid var(--glass-border);
-      font-family: 'Noto Sans Lao', sans-serif;
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(5px);
-      color: var(--light-color);
-      transition: all 0.3s ease;
-    }
-
-    .form-control input:focus, 
-    .form-control textarea:focus, 
-    .form-control select:focus {
-      outline: none;
-      border-color: var(--primary-color);
-      box-shadow: 0 0 0 2px rgba(108, 99, 255, 0.3);
-    }
-    
-    .form-control textarea {
-      min-height: 100px;
-      resize: vertical;
-    }
-    
-    .order {
-      border: 1px solid var(--glass-border);
-      padding: 20px;
-      margin: 15px 0;
-      border-radius: 12px;
-      position: relative;
-      transition: all 0.3s ease;
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(5px);
-    }
-
-    .order:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-      border-color: var(--primary-color);
-    }
-    
-    .order input[type=checkbox] {
-      position: absolute;
-      right: 20px;
-      top: 20px;
-      transform: scale(1.5);
-      accent-color: var(--primary-color);
-    }
-    
-    .action-buttons {
-      display: flex;
-      gap: 10px;
-      margin-top: 15px;
-    }
-    
-    .print-btns {
-      margin-top: 25px;
-      text-align: center;
-      display: flex;
-      justify-content: center;
-      gap: 15px;
-      flex-wrap: wrap;
-    }
-    
-    .bill {
-      width: 76mm; 
-      height: auto; 
-      min-height: 130mm;
-      padding: 10px; 
-      font-size: 14px; 
-      box-sizing: border-box;
-      border: 1px solid #000; 
-      margin: 0 auto; 
-      overflow: hidden;
-      font-family: 'Noto Sans Lao', sans-serif;
-      background: white;
-    }
-    
-    .logo { 
-      font-size: 48px; 
-      font-weight: bold; 
-      display: inline-block; 
-      vertical-align: middle; 
-      margin-right: 10px; 
-      color: var(--primary-color);
-    }
-    
-    .shop-info { 
-      display: inline-block; 
-      vertical-align: middle; 
-      line-height: 1.4; 
-      white-space: nowrap; 
-    }
-    
-    .header { margin-bottom: 10px; }
-    .section { margin-top: 10px; }
-    
-    .barcode-container { 
-      text-align: center; 
-      margin: 15px 0; 
-    }
-    
-    .barcode-number { 
-      text-align: center; 
-      font-family: monospace; 
-      font-size: 12px; 
-      margin-top: 5px; 
-    }
-    
-    .thankyou { 
-      text-align: center; 
-      margin-top: 20px; 
-      font-weight: bold; 
-    }
-
-    pre { 
-      white-space: pre-wrap; 
-      word-wrap: break-word; 
-      margin: 0; 
-      line-height: 1.4; 
-    }
-    
-    /* Auth Modal */
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 1000;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0,0,0,0.7);
-      overflow: auto;
-      backdrop-filter: blur(5px);
-    }
-    
-    .modal-content {
-      background: var(--darker-color);
-      margin: 5% auto;
-      padding: 30px;
-      border-radius: 20px;
-      width: 90%;
-      max-width: 500px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
-      position: relative;
-      border: 1px solid var(--glass-border);
-      backdrop-filter: blur(10px);
-    }
-    
-    .close {
-      position: absolute;
-      right: 20px;
-      top: 15px;
-      font-size: 24px;
-      cursor: pointer;
-      color: #aaa;
-      transition: color 0.3s ease;
-    }
-    
-    .close:hover {
-      color: var(--accent-color);
-    }
-    
-    .tabs {
-      display: flex;
-      margin-bottom: 20px;
-      border-bottom: 1px solid var(--glass-border);
-    }
-    
-    .tab {
-      padding: 12px 25px;
-      cursor: pointer;
-      border-bottom: 3px solid transparent;
-      transition: all 0.3s ease;
-      position: relative;
-    }
-    
-    .tab.active {
-      border-bottom: 3px solid var(--primary-color);
-      color: var(--primary-color);
-      font-weight: bold;
-    }
-    
-    .tab:hover {
-      color: var(--primary-color);
-    }
-    
-    .tab-content {
-      display: none;
-    }
-    
-    .tab-content.active {
-      display: block;
-      animation: fadeIn 0.5s ease;
-    }
-    
-    /* Archive Section */
-    .archive-section {
-      display: none;
-    }
-    
-    /* Loading Spinner */
-    .spinner {
-      display: inline-block;
-      width: 20px;
-      height: 20px;
-      border: 3px solid rgba(255,255,255,0.3);
-      border-radius: 50%;
-      border-top-color: white;
-      animation: spin 1s ease-in-out infinite;
-      margin-left: 10px;
-    }
-    
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .search-section {
-      background: rgba(255, 255, 255, 0.05);
-      padding: 20px;
-      border-radius: 12px;
-      margin-bottom: 25px;
-      border: 1px solid var(--glass-border);
-    }
-
-    .search-section .form-control {
-      margin-bottom: 15px;
-    }
-
-    .order-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
-      border-bottom: 1px solid var(--glass-border);
-      padding-bottom: 10px;
-    }
-
-    .order-date {
-      font-size: 0.9rem;
-      color: #aaa;
-    }
-
-    .customer-data pre {
-      background: rgba(255, 255, 255, 0.05);
-      padding: 10px;
-      border-radius: 8px;
-      border-left: 3px solid var(--primary-color);
-    }
-    
-    /* Responsive */
-    @media (max-width: 768px) {
-      .navbar {
-        flex-direction: column;
-        text-align: center;
-        padding: 15px;
-      }
-      
-      .order-counter, .courier-counters {
-        margin: 10px 0;
-        order: 2;
-        width: 100%;
-        justify-content: center;
-      }
-      
-      .courier-counters {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 5px;
-      }
-      
-      .auth-buttons {
-        margin-top: 15px;
-      }
-      
-      .print-btns {
-        flex-direction: column;
-        align-items: center;
-      }
-      
-      .print-btns .btn {
-        width: 100%;
-        margin-bottom: 10px;
-      }
-
-      .order-header {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-
-      .order-date {
-        margin-top: 5px;
-      }
-    }
-
-    /* Floating background elements */
-    .floating-bg {
-      position: fixed;
-      width: 200px;
-      height: 200px;
-      border-radius: 50%;
-      background: radial-gradient(circle, var(--primary-color) 0%, transparent 70%);
-      opacity: 0.1;
-      z-index: -1;
-      animation: float 15s infinite linear;
-    }
-
-    .floating-bg:nth-child(1) {
-      top: 10%;
-      left: 10%;
-      width: 300px;
-      height: 300px;
-      animation-duration: 20s;
-    }
-
-    .floating-bg:nth-child(2) {
-      top: 60%;
-      right: 10%;
-      width: 250px;
-      height: 250px;
-      background: radial-gradient(circle, var(--accent-color) 0%, transparent 70%);
-      animation-duration: 25s;
-      animation-direction: reverse;
-    }
-
-    .floating-bg:nth-child(3) {
-      bottom: 20%;
-      left: 20%;
-      width: 150px;
-      height: 150px;
-      background: radial-gradient(circle, var(--success-color) 0%, transparent 70%);
-      animation-duration: 18s;
-    }
-
-    @keyframes float {
-      0% {
-        transform: translate(0, 0) rotate(0deg);
-      }
-      33% {
-        transform: translate(30px, -30px) rotate(120deg);
-      }
-      66% {
-        transform: translate(-20px, 20px) rotate(240deg);
-      }
-      100% {
-        transform: translate(0, 0) rotate(360deg);
-      }
-    }
-  </style>
+    <style>
+        body { font-family: 'Sarabun', sans-serif; background-color: #F8FAFC; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .animate-in { animation: fadeIn 0.3s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Print Styles */
+        @media print {
+            body * { visibility: hidden; }
+            #receipt-content, #receipt-content * { visibility: visible; }
+            #receipt-content {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                margin: 0;
+                padding: 0;
+                background: white;
+                color: black;
+            }
+            .print\:hidden { display: none !important; }
+            .no-print { display: none !important; }
+        }
+    </style>
 </head>
 <body>
-  <!-- Floating background elements -->
-  <div class="floating-bg"></div>
-  <div class="floating-bg"></div>
-  <div class="floating-bg"></div>
+    <div id="root"></div>
 
-  <!-- Navbar -->
-  <div class="navbar">
-    <div class="navbar-brand">
-      <i class="fas fa-store"></i>
-      <span>BN Shop Order System</span>
-    </div>
-    <div class="order-counter" id="orderCounter">
-      <i class="fas fa-shopping-cart"></i> ออเดอร์ปัจจุบัน: <span id="currentOrderCount">0</span>
-    </div>
-    <div class="courier-counters">
-      <div class="courier-counter" data-courier="HAL LOGISTICS">
-        <i class="fas fa-truck"></i> HAL: <span>0</span>
-      </div>
-      <div class="courier-counter" data-courier="Anousith Express">
-        <i class="fas fa-truck"></i> Anousith: <span>0</span>
-      </div>
-      <div class="courier-counter" data-courier="Mixay Express">
-        <i class="fas fa-truck"></i> Mixay: <span>0</span>
-      </div>
-    </div>
-    <div class="auth-buttons" id="authButtons">
-      <button class="btn btn-primary" onclick="openModal('authModal')">
-        <i class="fas fa-sign-in-alt"></i> เข้าสู่ระบบ
-      </button>
-      <button class="btn btn-success" onclick="openModal('authModal', 'register')">
-        <i class="fas fa-user-plus"></i> สร้างบัญชี
-      </button>
-    </div>
-    <div class="user-menu" id="userMenu" style="display: none;">
-      <span id="userEmail" style="margin-right: 15px; color: white;"></span>
-      <button class="btn btn-success" onclick="showArchive()">
-        <i class="fas fa-archive"></i> ดูคลังออเดอร์
-      </button>
-      <button class="btn btn-danger" onclick="logout()">
-        <i class="fas fa-sign-out-alt"></i> ออกจากระบบ
-      </button>
-    </div>
-  </div>
+    <script type="text/babel">
+        const { useState, useEffect, useMemo, useRef } = React;
 
-  <!-- Main Content -->
-  <div class="container">
-    <!-- Current Orders Section -->
-    <div id="currentOrdersSection">
-      <div class="card">
-        <h2><i class="fas fa-plus-circle"></i> เพิ่มออเดอร์ใหม่</h2>
-        <div class="form-control">
-          <label>ข้อมูลลูกค้า</label>
-          <textarea id="customerData" rows="4"></textarea>
-        </div>
-        <div class="form-control">
-          <label>เลือกขนส่ง</label>
-          <select id="courier">
-            <option value="HAL LOGISTICS">HAL LOGISTICS</option>
-            <option value="Anousith Express">Anousith Express</option>
-            <option value="Mixay Express">Mixay Express</option>
-          </select>
-        </div>
-        <div class="form-control">
-          <label>เบอร์โทรร้าน (เปลี่ยนอัตโนมัติตามขนส่ง)</label>
-          <select id="shopPhone" disabled>
-            <option value="020 94036226">020 94036226</option>
-            <option value="020 98052744">020 98052744</option>
-          </select>
-        </div>
-        <button class="btn btn-primary" onclick="addOrder()">
-          <i class="fas fa-check"></i> ยืนยันออเดอร์
-        </button>
-      </div>
-
-      <div class="card">
-        <h2><i class="fas fa-list"></i> ออเดอร์ทั้งหมด</h2>
-        <div style="text-align:center; margin-bottom: 15px;">
-          <button class="btn btn-primary" onclick="selectAll(true)">
-            <i class="fas fa-check-square"></i> เลือกทั้งหมด
-          </button>
-          <button class="btn btn-primary" onclick="selectAll(false)">
-            <i class="fas fa-square"></i> ยกเลิกทั้งหมด
-          </button>
-          <button class="btn btn-success" onclick="archiveSelected()">
-            <i class="fas fa-archive"></i> เก็บเข้าคลัง
-          </button>
-        </div>
-        <div id="orders"></div>
-        <div class="print-btns">
-          <button class="btn btn-primary" onclick="printSelected()">
-            <i class="fas fa-print"></i> พิมพ์ที่เลือก
-          </button>
-          <button class="btn btn-primary" onclick="printAll()">
-            <i class="fas fa-print"></i> พิมพ์ทั้งหมด
-          </button>
-          <button class="btn btn-danger" onclick="deleteSelected()">
-            <i class="fas fa-trash"></i> ลบที่เลือก
-          </button>
-        </div>
-      </div>
-    </div>
-
-     <!-- Archive Section -->
-    <div class="card archive-section" id="archiveSection">
-      <h2><i class="fas fa-archive"></i> คลังออเดอร์</h2>
-      <button class="btn btn-primary" onclick="backToCurrentOrders()">
-        <i class="fas fa-arrow-left"></i> กลับไปออเดอร์ปัจจุบัน
-      </button>
-  
-      <!-- เพิ่มส่วนค้นหา -->
-      <div class="search-section" style="margin-top: 20px;">
-        <div class="form-control">
-          <label>ค้นหาออเดอร์</label>
-          <input type="text" id="searchOrderId" placeholder="ค้นหาตามเลขออเดอร์ (BN...)">
-        </div>
-        <div class="form-control">
-          <label>ค้นหาตามวันที่</label>
-          <div style="display: flex; gap: 10px;">
-            <input type="date" id="searchStartDate">
-            <span>ถึง</span>
-            <input type="date" id="searchEndDate">
-          </div>
-        </div>
-        <button class="btn btn-primary" onclick="searchArchivedOrders()">
-          <i class="fas fa-search"></i> ค้นหา
-        </button>
-        <button class="btn btn-danger" onclick="clearSearch()">
-          <i class="fas fa-times"></i> ล้างการค้นหา
-        </button>
-      </div>
-  
-      <div id="archivedOrders" style="margin-top: 20px;"></div>
-    </div>
-  </div>
-
-  <!-- Auth Modal -->
-  <div id="authModal" class="modal">
-    <div class="modal-content">
-      <span class="close" onclick="closeModal('authModal')">&times;</span>
-      <div class="tabs">
-        <div class="tab active" onclick="switchTab('login')">เข้าสู่ระบบ</div>
-        <div class="tab" onclick="switchTab('register')">สร้างบัญชี</div>
-      </div>
-      
-      <div id="loginTab" class="tab-content active">
-        <h3>เข้าสู่ระบบ</h3>
-        <div class="form-control">
-          <label>อีเมล</label>
-          <input type="email" id="loginEmail" placeholder="กรอกอีเมลของคุณ">
-        </div>
-        <div class="form-control">
-          <label>รหัสผ่าน</label>
-          <input type="password" id="loginPassword" placeholder="กรอกรหัสผ่าน">
-        </div>
-        <button class="btn btn-primary" onclick="login()" id="loginBtn">
-          <i class="fas fa-sign-in-alt"></i> เข้าสู่ระบบ
-        </button>
-        <div id="loginError" style="color: var(--accent-color); margin-top: 10px;"></div>
-      </div>
-      
-      <div id="registerTab" class="tab-content">
-        <h3>สร้างบัญชีใหม่</h3>
-        <div class="form-control">
-          <label>อีเมล</label>
-          <input type="email" id="registerEmail" placeholder="กรอกอีเมลของคุณ">
-        </div>
-        <div class="form-control">
-          <label>รหัสผ่าน</label>
-          <input type="password" id="registerPassword" placeholder="กรอกรหัสผ่าน (อย่างน้อย 6 ตัว)">
-        </div>
-        <div class="form-control">
-          <label>ยืนยันรหัสผ่าน</label>
-          <input type="password" id="registerConfirmPassword" placeholder="กรอกรหัสผ่านอีกครั้ง">
-        </div>
-        <button class="btn btn-success" onclick="register()" id="registerBtn">
-          <i class="fas fa-user-plus"></i> สร้างบัญชี
-        </button>
-        <div id="registerError" style="color: var(--accent-color); margin-top: 10px;"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Edit Order Modal -->
-  <div id="editOrderModal" class="modal">
-    <div class="modal-content">
-      <span class="close" onclick="closeModal('editOrderModal')">&times;</span>
-      <h3>แก้ไขออเดอร์</h3>
-      <div class="form-control">
-        <label>ข้อมูลลูกค้า</label>
-        <textarea id="editCustomerData" rows="4"></textarea>
-      </div>
-      <div class="form-control">
-        <label>เลือกขนส่ง</label>
-        <select id="editCourier">
-          <option value="HAL LOGISTICS">HAL LOGISTICS</option>
-          <option value="Anousith Express">Anousith Express</option>
-          <option value="Mixay Express">Mixay Express</option>
-        </select>
-      </div>
-      <div class="form-control">
-        <label>เบอร์โทรร้าน</label>
-        <select id="editShopPhone" disabled>
-          <option value="020 94036226">020 94036226</option>
-          <option value="020 98052744">020 98052744</option>
-        </select>
-      </div>
-      <input type="hidden" id="editOrderId">
-      <button class="btn btn-primary" onclick="updateOrder()" id="updateOrderBtn">
-        <i class="fas fa-save"></i> บันทึกการเปลี่ยนแปลง
-      </button>
-      <div id="editOrderError" style="color: var(--accent-color); margin-top: 10px;"></div>
-    </div>
-  </div>
-        
-   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { 
-      getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc,
-      query, where, orderBy
-    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-    import { 
-      getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, 
-      signOut, onAuthStateChanged 
-    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyAR4ZN_J3u4nTl2dLpF6eXqE3txaUoYrMY",
-      authDomain: "bnchen-93d9d.firebaseapp.com",
-      projectId: "bnchen-93d9d",
-      storageBucket: "bnchen-93d9d.appspot.com",
-      messagingSenderId: "1047651812089",
-      appId: "1:1047651812089:web:6f520fa528059cc43e1828",
-      measurementId: "G-WK259X0ZQ1"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const auth = getAuth(app);
-    
-    let orderList = [];
-    let archivedOrderList = [];
-    let currentUser = null;
-
-    // ฟังก์ชันอัปเดตตัวนับออเดอร์
-    window.updateOrderCounter = function() {
-      const counterElement = document.getElementById('currentOrderCount');
-      const counterBox = document.getElementById('orderCounter');
-      
-      counterElement.textContent = orderList.length;
-      
-      // เปลี่ยนสีเมื่อมีออเดอร์
-      if (orderList.length > 0) {
-        counterBox.style.backgroundColor = 'rgba(255, 255, 255, 0.3)';
-      } else {
-        counterBox.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
-      }
-    };
-
-    // ฟังก์ชันนับจำนวนออเดอร์ตามขนส่ง
-    window.updateCourierCounters = function() {
-      const counters = {
-        'HAL LOGISTICS': 0,
-        'Anousith Express': 0,
-        'Mixay Express': 0
-      };
-
-      // นับออเดอร์ปัจจุบัน
-      orderList.forEach(order => {
-        counters[order.courier]++;
-      });
-
-      // อัปเดต UI
-      document.querySelectorAll('.courier-counter').forEach(el => {
-        const courier = el.dataset.courier;
-        el.querySelector('span').textContent = counters[courier];
-        
-        // เปลี่ยนสีเมื่อมีออเดอร์
-        if (counters[courier] > 0) {
-          el.style.color = '#4cc9f0'; // สีฟ้า
-        } else {
-          el.style.color = 'white';
-        }
-      });
-    };
-     // Initialize the app
-    window.onload = () => {
-      updatePhoneByCourier();
-      document.getElementById('courier').addEventListener('change', updatePhoneByCourier);
-      document.getElementById('editCourier').addEventListener('change', updateEditPhoneByCourier);
-      
-      // Listen for auth state changes
-      onAuthStateChanged(auth, (user) => {
-        if (user) {
-          currentUser = user;
-          document.getElementById('userEmail').textContent = user.email;
-          document.getElementById('authButtons').style.display = 'none';
-          document.getElementById('userMenu').style.display = 'block';
-          loadOrders();
-        } else {
-          currentUser = null;
-          document.getElementById('authButtons').style.display = 'block';
-          document.getElementById('userMenu').style.display = 'none';
-          document.getElementById('currentOrdersSection').style.display = 'none';
-          document.getElementById('archiveSection').style.display = 'none';
-        }
-      });
-    };
-
-    // Auth Functions
-    window.openModal = function(modalId, tabName = 'login') {
-      document.getElementById(modalId).style.display = 'block';
-      if (tabName) {
-        switchTab(tabName);
-      }
-    };
-
-    window.closeModal = function(modalId) {
-      document.getElementById(modalId).style.display = 'none';
-      // Clear errors
-      document.getElementById('loginError').textContent = '';
-      document.getElementById('registerError').textContent = '';
-      document.getElementById('editOrderError').textContent = '';
-    };
-
-    window.switchTab = function(tabName) {
-      // Switch tabs in auth modal
-      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-      
-      if (tabName === 'login') {
-        document.querySelector('.tab:nth-child(1)').classList.add('active');
-        document.getElementById('loginTab').classList.add('active');
-      } else {
-        document.querySelector('.tab:nth-child(2)').classList.add('active');
-        document.getElementById('registerTab').classList.add('active');
-      }
-    };
-
-    window.login = async function() {
-      const email = document.getElementById('loginEmail').value;
-      const password = document.getElementById('loginPassword').value;
-      const loginBtn = document.getElementById('loginBtn');
-      const errorElement = document.getElementById('loginError');
-      
-      if (!email || !password) {
-        errorElement.textContent = 'กรุณากรอกอีเมลและรหัสผ่าน';
-        return;
-      }
-      
-      try {
-        loginBtn.innerHTML = '<i class="fas fa-spinner spinner"></i> กำลังเข้าสู่ระบบ...';
-        await signInWithEmailAndPassword(auth, email, password);
-        closeModal('authModal');
-      } catch (error) {
-        console.error('Login error:', error);
-        errorElement.textContent = getAuthErrorMessage(error.code);
-      } finally {
-        loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> เข้าสู่ระบบ';
-      }
-    };
-
-    window.register = async function() {
-      const email = document.getElementById('registerEmail').value;
-      const password = document.getElementById('registerPassword').value;
-      const confirmPassword = document.getElementById('registerConfirmPassword').value;
-      const registerBtn = document.getElementById('registerBtn');
-      const errorElement = document.getElementById('registerError');
-      
-      if (!email || !password || !confirmPassword) {
-        errorElement.textContent = 'กรุณากรอกข้อมูลให้ครบทุกช่อง';
-        return;
-      }
-      
-      if (password !== confirmPassword) {
-        errorElement.textContent = 'รหัสผ่านไม่ตรงกัน';
-        return;
-      }
-      
-      if (password.length < 6) {
-        errorElement.textContent = 'รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร';
-        return;
-      }
-      
-      try {
-        registerBtn.innerHTML = '<i class="fas fa-spinner spinner"></i> กำลังสร้างบัญชี...';
-        await createUserWithEmailAndPassword(auth, email, password);
-        closeModal('authModal');
-      } catch (error) {
-        console.error('Registration error:', error);
-        errorElement.textContent = getAuthErrorMessage(error.code);
-      } finally {
-        registerBtn.innerHTML = '<i class="fas fa-user-plus"></i> สร้างบัญชี';
-      }
-    };
-
-    window.logout = async function() {
-      try {
-        await signOut(auth);
-      } catch (error) {
-        console.error('Logout error:', error);
-        alert('เกิดข้อผิดพลาดในการออกจากระบบ: ' + error.message);
-      }
-    };
-
-    function getAuthErrorMessage(errorCode) {
-      switch(errorCode) {
-        case 'auth/invalid-email':
-          return 'อีเมลไม่ถูกต้อง';
-        case 'auth/user-disabled':
-          return 'บัญชีนี้ถูกระงับการใช้งาน';
-        case 'auth/user-not-found':
-          return 'ไม่พบผู้ใช้ที่ใช้อีเมลนี้';
-        case 'auth/wrong-password':
-          return 'รหัสผ่านไม่ถูกต้อง';
-        case 'auth/email-already-in-use':
-          return 'อีเมลนี้ถูกใช้งานแล้ว';
-        case 'auth/weak-password':
-          return 'รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร';
-        default:
-          return 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ';
-      }
-    }
-
-    // Order Functions
-    window.loadOrders = async function() {
-      if (!currentUser) return;
-      
-      try {
-        // Load current orders
-        const q = query(
-          collection(db, "orders"), 
-          where("userId", "==", currentUser.uid),
-          where("archived", "==", false),
-          orderBy("date", "desc")
+        // --- ICONS (SVG Elements wrapped in <g> for stability) ---
+        const Icon = ({ children, size=24, className="", ...props }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>
+                {children}
+            </svg>
         );
-        const querySnapshot = await getDocs(q);
-        
-        orderList = [];
-        querySnapshot.forEach(docSnap => {
-          const data = docSnap.data();
-          data.date = new Date(data.date);
-          data._docId = docSnap.id;
-          orderList.push(data);
-        });
-        
-        // อัปเดตตัวนับออเดอร์
-        updateOrderCounter();
-        updateCourierCounters();
-        renderOrders();
-        document.getElementById('currentOrdersSection').style.display = 'block';
-        
-        // Load archived orders
-        const archiveQ = query(
-          collection(db, "orders"), 
-          where("userId", "==", currentUser.uid),
-          where("archived", "==", true),
-          orderBy("date", "desc")
+
+        const icons = {
+            store: <path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4M2 7h20M22 7v3a2 2 0 0 1-2 2v0a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12v0a2 2 0 0 1-2-2V7"/>,
+            home: <g><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></g>,
+            history: <g><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></g>,
+            package: <g><path d="m16.5 9.4-9-5.19"/><path d="m21 16-9 5.19-9-5.19"/><path d="m3.29 7 9-5.19 9 5.19"/><line x1="12" y1="2" x2="12" y2="22"/><path d="m12 22 9-5.19V7l-9 5.19-9-5.19v9.81Z"/></g>,
+            dashboard: <g><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></g>,
+            settings: <g><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.35a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></g>,
+            logout: <g><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></g>,
+            shield: <g><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></g>,
+            user: <g><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></g>,
+            search: <g><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></g>,
+            plus: <g><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></g>,
+            minus: <line x1="5" y1="12" x2="19" y2="12"/>,
+            trash: <g><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></g>,
+            pause: <g><circle cx="12" cy="12" r="10"/><line x1="10" y1="15" x2="10" y2="9"/><line x1="14" y1="15" x2="14" y2="9"/></g>,
+            play: <g><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></g>,
+            scan: <g><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/></g>,
+            alert: <g><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></g>,
+            trending: <g><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></g>,
+            banknote: <g><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></g>,
+            upload: <g><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></g>,
+            x: <g><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></g>,
+            check: <g><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></g>,
+            calendar: <g><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></g>,
+            userCheck: <g><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></g>,
+            userX: <g><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="17" y1="8" x2="22" y2="13"/><line x1="22" y1="8" x2="17" y2="13"/></g>,
+            coffee: <g><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></g>,
+            edit: <g><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></g>,
+            receipt: <g><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2 1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17V7"/></g>,
+            shoppingCart: <g><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></g>,
+            arrowUpRight: <g><path d="M7 7h10v10"/><path d="M7 17 17 7"/></g>,
+            printer: <g><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></g>
+        };
+
+        const Lucide = ({ name, size=24, className="" }) => (
+            <Icon size={size} className={className}>{icons[name] || icons.store}</Icon>
         );
-        const archiveSnapshot = await getDocs(archiveQ);
+
+        // --- CONSTANTS & HELPERS ---
+        const MASTER_ADMIN = { email: 'bnathhomsombath@gmail.com', password: 'Asdf123#' };
+        const formatCurrency = (val) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(val);
         
-        archivedOrderList = [];
-        archiveSnapshot.forEach(docSnap => {
-          const data = docSnap.data();
-          data.date = new Date(data.date);
-          data._docId = docSnap.id;
-          archivedOrderList.push(data);
-        });
-      } catch (error) {
-        console.error("Error loading orders:", error);
-        alert("เกิดข้อผิดพลาดในการโหลดออเดอร์: " + error.message);
-      }
-    };
+        const INITIAL_PRODUCTS = [
+            { id: 101, barcode: '885101', name: 'Sig. Americano', price: 65, cost: 25, category: 'Coffee', stock: 50, image: '☕', color: 'from-amber-900 to-amber-700 text-amber-50' },
+            { id: 102, barcode: '885102', name: 'Caramel Macchiato', price: 85, cost: 35, category: 'Coffee', stock: 40, image: '🥛', color: 'from-amber-800 to-amber-600 text-amber-50' },
+            { id: 103, barcode: '885103', name: 'Premium Matcha', price: 90, cost: 40, category: 'Tea', stock: 25, image: '🍵', color: 'from-green-800 to-green-600 text-green-50' },
+            { id: 201, barcode: '885201', name: 'Butter Croissant', price: 65, cost: 30, category: 'Bakery', stock: 12, image: '🥐', color: 'from-yellow-600 to-yellow-400 text-yellow-50' },
+            { id: 301, barcode: '885301', name: 'Mineral Water', price: 15, cost: 5, category: 'Mart', stock: 100, image: '💧', color: 'from-blue-500 to-blue-300 text-blue-50' }
+        ];
 
-    window.updatePhoneByCourier = function() {
-      const courier = document.getElementById('courier').value;
-      const phoneSelect = document.getElementById('shopPhone');
-      phoneSelect.value = (courier === 'Anousith Express') ? '020 94036226' : '020 98052744';
-    };
+        const CATEGORIES = [
+            { id: 'All', name: 'ทั้งหมด', icon: 'store' },
+            { id: 'Coffee', name: 'กาแฟ', icon: 'coffee' },
+            { id: 'Tea', name: 'ชา', icon: 'store' },
+            { id: 'Bakery', name: 'เบเกอรี่', icon: 'store' },
+            { id: 'Mart', name: 'มินิมาร์ท', icon: 'package' },
+        ];
 
-    window.updateEditPhoneByCourier = function() {
-      const courier = document.getElementById('editCourier').value;
-      const phoneSelect = document.getElementById('editShopPhone');
-      phoneSelect.value = (courier === 'Anousith Express') ? '020 94036226' : '020 98052744';
-    };
+        // --- COMPONENTS ---
 
-    window.addOrder = async function() {
-      if (!currentUser) {
-        alert('กรุณาเข้าสู่ระบบก่อนเพิ่มออเดอร์');
-        return;
-      }
-      
-      const customer = document.getElementById('customerData').value.trim();
-      const courier = document.getElementById('courier').value;
-      const shopPhone = document.getElementById('shopPhone').value;
-      
-      if (!customer) {
-        alert('กรุณากรอกข้อมูลลูกค้า');
-        return;
-      }
-      
-      const phoneMatch = customer.match(/(020|030)\d{6,8}\b/);
-      if (!phoneMatch) {
-        alert('ไม่พบเบอร์โทรลูกค้า (รูปแบบ 020/030 ตามด้วยตัวเลข 6-8 หลัก)');
-        return;
-      }
-      const id = 'BN' + phoneMatch[0];
-      const date = new Date();
-      const barcode = Math.floor(100000000000 + Math.random() * 900000000000);
-      
-      try {
-        await addDoc(collection(db, "orders"), {
-          id,
-          customer,
-          courier,
-          date: date.toISOString(),
-          barcode,
-          shopPhone,
-          userId: currentUser.uid,
-          archived: false
-        });
-        
-        await loadOrders();
-        document.getElementById('customerData').value = '';
-      } catch (error) {
-        console.error("Error adding order:", error);
-        alert("เกิดข้อผิดพลาดในการเพิ่มออเดอร์: " + error.message);
-      }
-    };
-
-    window.renderOrders = function() {
-      const container = document.getElementById('orders');
-      container.innerHTML = '';
-      
-      if (orderList.length === 0) {
-        container.innerHTML = '<p style="text-align: center; color: #666;">ไม่มีออเดอร์ในขณะนี้</p>';
-        return;
-      }
-      
-      orderList.forEach((order, index) => {
-        const div = document.createElement('div');
-        div.className = 'order';
-        div.innerHTML = `
-          <input type="checkbox" data-index="${index}" checked>
-          <strong>Order ID:</strong> ${order.id}<br>
-          <strong>ขนส่ง:</strong> ${order.courier}<br>
-          <strong>เบอร์ร้าน:</strong> ${order.shopPhone}<br>
-          <strong>ลูกค้า:</strong><br> <pre>${order.customer}</pre>
-          <div class="action-buttons">
-            <button class="btn btn-primary" onclick="openEditOrderModal('${index}')">
-              <i class="fas fa-edit"></i> แก้ไข
-            </button>
-          </div>
-        `;
-        container.appendChild(div);
-      });
-    };
-
-    window.renderArchivedOrders = function() {
-      const container = document.getElementById('archivedOrders');
-      container.innerHTML = '';
-
-      archivedOrderList.forEach((order, index) => {
-        const orderDate = new Date(order.date);
-        const dateStr = orderDate.toLocaleDateString('lo-LA') + ' ' + orderDate.toLocaleTimeString();
-    
-        const div = document.createElement('div');
-        div.className = 'order';
-        div.innerHTML = `
-          <div class="order-header">
-            <strong>${order.id}</strong>
-            <span class="order-date">${dateStr}</span>
-          </div>
-          <div><strong>ขนส่ง:</strong> ${order.courier}</div>
-          <div><strong>เบอร์ร้าน:</strong> ${order.shopPhone}</div>
-          <div class="customer-data"><strong>ลูกค้า:</strong><pre>${order.customer}</pre></div>
-          <div class="action-buttons">
-            <button class="btn btn-primary" onclick="printBillFromArchive(${index})">
-              <i class="fas fa-print"></i> พิมพ์บิล
-            </button>
-            <button class="btn btn-success" onclick="unarchiveOrder('${order._docId}')">
-              <i class="fas fa-undo"></i> นำออกจากคลัง
-           </button>
-         </div>
-       `;
-       container.appendChild(div);
-     });
-    };
-
-    window.searchArchivedOrders = function() {
-      const orderIdQuery = document.getElementById('searchOrderId').value.trim().toLowerCase();
-      const startDate = document.getElementById('searchStartDate').value;
-      const endDate = document.getElementById('searchEndDate').value;
-      
-      let filteredOrders = [...archivedOrderList];
-      
-      // ค้นหาตามเลขออเดอร์
-      if (orderIdQuery) {
-        filteredOrders = filteredOrders.filter(order => 
-          order.id.toLowerCase().includes(orderIdQuery)
-        );
-      }
-      
-      // ค้นหาตามวันที่
-      if (startDate) {
-        const start = new Date(startDate);
-        filteredOrders = filteredOrders.filter(order => 
-          new Date(order.date) >= start
-        );
-      }
-      
-      if (endDate) {
-        const end = new Date(endDate);
-        end.setHours(23, 59, 59, 999); // ตั้งเวลาเป็นสิ้นวัน
-        filteredOrders = filteredOrders.filter(order => 
-          new Date(order.date) <= end
-        );
-      }
-      
-      renderFilteredArchivedOrders(filteredOrders);
-    };
-
-    window.renderFilteredArchivedOrders = function(orders) {
-      const container = document.getElementById('archivedOrders');
-      container.innerHTML = '';
-
-      if (orders.length === 0) {
-        container.innerHTML = '<p style="text-align: center; color: #666;">ไม่พบออเดอร์ที่ตรงกับการค้นหา</p>';
-        return;
-      }
-
-      orders.forEach((order, index) => {
-        const orderDate = new Date(order.date);
-        const dateStr = orderDate.toLocaleDateString('lo-LA') + ' ' + orderDate.toLocaleTimeString();
-        
-        const div = document.createElement('div');
-        div.className = 'order';
-        div.innerHTML = `
-          <div class="order-header">
-            <strong>${order.id}</strong>
-            <span class="order-date">${dateStr}</span>
-          </div>
-          <div><strong>ขนส่ง:</strong> ${order.courier}</div>
-          <div><strong>เบอร์ร้าน:</strong> ${order.shopPhone}</div>
-          <div class="customer-data"><strong>ลูกค้า:</strong><pre>${order.customer}</pre></div>
-          <div class="action-buttons">
-            <button class="btn btn-primary" onclick="printBillFromArchive(${archivedOrderList.findIndex(o => o._docId === order._docId)})">
-              <i class="fas fa-print"></i> พิมพ์บิล
-            </button>
-            <button class="btn btn-success" onclick="unarchiveOrder('${order._docId}')">
-              <i class="fas fa-undo"></i> นำออกจากคลัง
-            </button>
-          </div>
-        `;
-        container.appendChild(div);
-      });
-    };
-
-    window.clearSearch = function() {
-      document.getElementById('searchOrderId').value = '';
-      document.getElementById('searchStartDate').value = '';
-      document.getElementById('searchEndDate').value = '';
-      renderArchivedOrders();
-    };
-    
-    window.openEditOrderModal = function(index) {
-      const order = orderList[index];
-      document.getElementById('editCustomerData').value = order.customer;
-      document.getElementById('editCourier').value = order.courier;
-      document.getElementById('editShopPhone').value = order.shopPhone;
-      document.getElementById('editOrderId').value = order._docId;
-      openModal('editOrderModal');
-    };
-
-    window.updateOrder = async function() {
-      const docId = document.getElementById('editOrderId').value;
-      const customer = document.getElementById('editCustomerData').value.trim();
-      const courier = document.getElementById('editCourier').value;
-      const shopPhone = document.getElementById('editShopPhone').value;
-      const updateBtn = document.getElementById('updateOrderBtn');
-      const errorElement = document.getElementById('editOrderError');
-      
-      if (!customer) {
-        errorElement.textContent = 'กรุณากรอกข้อมูลลูกค้า';
-        return;
-      }
-      
-      try {
-        updateBtn.innerHTML = '<i class="fas fa-spinner spinner"></i> กำลังอัปเดต...';
-        await updateDoc(doc(db, "orders", docId), {
-          customer,
-          courier,
-          shopPhone
-        });
-        
-        closeModal('editOrderModal');
-        await loadOrders();
-      } catch (error) {
-        console.error("Error updating order:", error);
-        errorElement.textContent = 'เกิดข้อผิดพลาดในการอัปเดตออเดอร์';
-      } finally {
-        updateBtn.innerHTML = '<i class="fas fa-save"></i> บันทึกการเปลี่ยนแปลง';
-      }
-    };
-
-    window.selectAll = function(checked) {
-      document.querySelectorAll('#orders input[type=checkbox]').forEach(c => c.checked = checked);
-    };
-
-    window.generateBarcodeSVG = function(barcodeNumber) {
-      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      JsBarcode(svg, barcodeNumber.toString(), {
-        format: "CODE128", lineColor: "#000", width: 2, height: 50, displayValue: false
-      });
-      return svg.outerHTML;
-    };
-
-    window.printBill = function(order) {
-      const dateStr = new Date(order.date).toLocaleString();
-      const barcodeSVG = generateBarcodeSVG(order.barcode);
-      return `
-        <div class="bill" style="font-family: 'Noto Sans Lao', sans-serif; padding: 5px;">
-          <!-- ส่วนหัวบิล - กล่องข้อมูลร้าน -->
-          <div style="border: 2px solid #000; border-radius: 5px; padding: 8px; margin-bottom: 8px; background: #f8f9fa;">
-            <div style="display: flex; align-items: center; justify-content: space-between;">
-              <div class="logo" style="font-size: 28px; font-weight: bold; color: #4361ee;">BN Shop</div>
-              <div class="shop-info" style="text-align: right;">
-                <div style="font-weight: bold; font-size: 16px; border-bottom: 1px solid #000; padding-bottom: 3px; margin-bottom: 3px;">
-                  ຮ້ານ : BN Shop
+        const ImageUploader = ({ label, currentImage, onImageChange }) => {
+            const inputRef = useRef(null);
+            const handleFile = (e) => {
+                const file = e.target.files[0];
+                if(file){
+                    if(file.size > 500000) return alert("File too large (Max 500KB)");
+                    const reader = new FileReader();
+                    reader.onloadend = () => onImageChange(reader.result);
+                    reader.readAsDataURL(file);
+                }
+            };
+            return (
+                <div className="space-y-2">
+                    <label className="block text-sm font-bold text-slate-600">{label}</label>
+                    <div onClick={() => inputRef.current.click()} className="h-32 border-2 border-dashed border-slate-300 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 hover:border-blue-500 transition-all overflow-hidden relative">
+                        {currentImage ? 
+                            <img src={currentImage} className="w-full h-full object-contain" /> :
+                            <div className="text-center text-slate-400"><Lucide name="upload" className="mx-auto mb-1"/><span className="text-xs">Upload</span></div>
+                        }
+                        <input type="file" ref={inputRef} className="hidden" accept="image/*" onChange={handleFile}/>
+                    </div>
                 </div>
-                <div style="font-size: 14px;">
-                  ເບີໂທ : ${order.shopPhone}
+            );
+        };
+
+        const AuthScreen = ({ onLogin }) => {
+            const [isLogin, setIsLogin] = useState(true);
+            const [form, setForm] = useState({email:'', password:'', shopName:'', confirm:''});
+            const [err, setErr] = useState('');
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                setErr('');
+                
+                // Master Admin Check
+                if(isLogin && form.email === MASTER_ADMIN.email && form.password === MASTER_ADMIN.password) {
+                    onLogin({ role: 'admin', email: form.email, shopName: 'Master Admin Shop', status: 'active', expiryDate: '9999-12-31' });
+                    return;
+                }
+
+                const db = JSON.parse(localStorage.getItem('bn_pos_users') || '[]');
+                
+                if(isLogin) {
+                    const user = db.find(u => u.email === form.email && u.password === form.password);
+                    if(user) onLogin({...user, role:'user'});
+                    else setErr('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
+                } else {
+                    if(form.password !== form.confirm) return setErr('รหัสผ่านไม่ตรงกัน');
+                    if(db.find(u => u.email === form.email)) return setErr('อีเมลนี้ถูกใช้แล้ว');
+                    if(!form.shopName) return setErr('กรุณาใส่ชื่อร้าน');
+                    
+                    const newUser = { 
+                        email: form.email, password: form.password, shopName: form.shopName, 
+                        status: 'pending', expiryDate: null, joinedAt: new Date().toISOString() 
+                    };
+                    db.push(newUser);
+                    localStorage.setItem('bn_pos_users', JSON.stringify(db));
+                    onLogin({...newUser, role:'user'});
+                }
+            };
+
+            return (
+                <div className="fixed inset-0 bg-slate-900 flex items-center justify-center p-4">
+                    <div className="bg-white/10 backdrop-blur-md border border-white/20 p-8 rounded-3xl w-full max-w-md text-white shadow-2xl">
+                        <div className="text-center mb-6">
+                            <div className="w-16 h-16 bg-gradient-to-tr from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                                <Lucide name="store" size={32} className="text-white"/>
+                            </div>
+                            <h1 className="text-2xl font-bold">BN POS SaaS</h1>
+                            <p className="text-slate-300 text-sm">ระบบจัดการร้านค้าครบวงจร</p>
+                        </div>
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            {!isLogin && <input className="w-full p-3 rounded-xl bg-white/10 border border-white/20 placeholder-slate-400 focus:outline-none focus:border-blue-500 text-white" placeholder="ชื่อร้านค้า" value={form.shopName} onChange={e=>setForm({...form, shopName:e.target.value})} required />}
+                            <input type="email" className="w-full p-3 rounded-xl bg-white/10 border border-white/20 placeholder-slate-400 focus:outline-none focus:border-blue-500 text-white" placeholder="อีเมล" value={form.email} onChange={e=>setForm({...form, email:e.target.value})} required />
+                            <input type="password" className="w-full p-3 rounded-xl bg-white/10 border border-white/20 placeholder-slate-400 focus:outline-none focus:border-blue-500 text-white" placeholder="รหัสผ่าน" value={form.password} onChange={e=>setForm({...form, password:e.target.value})} required />
+                            {!isLogin && <input type="password" className="w-full p-3 rounded-xl bg-white/10 border border-white/20 placeholder-slate-400 focus:outline-none focus:border-blue-500 text-white" placeholder="ยืนยันรหัสผ่าน" value={form.confirm} onChange={e=>setForm({...form, confirm:e.target.value})} required />}
+                            
+                            {err && <div className="p-3 bg-red-500/20 text-red-200 text-sm rounded-xl flex gap-2"><Lucide name="alert"/> {err}</div>}
+                            
+                            <button className="w-full py-3 bg-blue-600 hover:bg-blue-700 rounded-xl font-bold transition-all shadow-lg">
+                                {isLogin ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก'}
+                            </button>
+                        </form>
+                        <button onClick={()=>{setIsLogin(!isLogin); setErr('')}} className="w-full mt-4 text-sm text-slate-400 hover:text-white">
+                            {isLogin ? 'ยังไม่มีบัญชี? สมัครสมาชิก' : 'กลับไปเข้าสู่ระบบ'}
+                        </button>
+                    </div>
                 </div>
-              </div>
+            );
+        };
+
+        const SubWall = ({ user, onLogout }) => (
+            <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+                <div className="bg-white p-8 rounded-3xl shadow-xl max-w-md w-full text-center">
+                    <div className="w-20 h-20 bg-orange-100 text-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Lucide name={user.status==='pending' ? 'history' : 'shield'} size={40}/>
+                    </div>
+                    <h2 className="text-2xl font-bold text-slate-800 mb-2">{user.status==='pending' ? 'รอการอนุมัติ' : 'บัญชีถูกระงับ/หมดอายุ'}</h2>
+                    <p className="text-slate-500 mb-6">กรุณาติดต่อผู้ดูแลระบบเพื่อเปิดใช้งาน<br/>Email: {MASTER_ADMIN.email}</p>
+                    <button onClick={onLogout} className="w-full py-3 bg-slate-200 hover:bg-slate-300 rounded-xl font-bold text-slate-600">ออกจากระบบ</button>
+                </div>
             </div>
-          </div>
+        );
 
-          <!-- ส่วนข้อมูลออเดอร์ -->
-          <div style="border: 1px solid #000; border-radius: 5px; padding: 8px; margin-bottom: 8px;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-              <div><strong>ວັນທີ:</strong> ${dateStr}</div>
-              <div><strong>ລະຫັດ:</strong> ${order.id.replace('BN', '')}</div>
-            </div>
-            <div style="border-top: 1px solid #000; padding-top: 5px;">
-              <strong>ຂົນສົ່ງ:</strong> ${order.courier}
-            </div>
-          </div>
+        const AdminPanel = () => {
+            const [users, setUsers] = useState(() => JSON.parse(localStorage.getItem('bn_pos_users') || '[]'));
+            
+            const updateStatus = (email, status, days=0) => {
+                const updated = users.map(u => {
+                    if(u.email !== email) return u;
+                    let exp = u.expiryDate ? new Date(u.expiryDate) : new Date();
+                    if(days > 0) {
+                        if(exp < new Date()) exp = new Date();
+                        exp.setDate(exp.getDate() + days);
+                    }
+                    return { ...u, status, expiryDate: status === 'active' ? exp.toISOString() : u.expiryDate };
+                });
+                setUsers(updated);
+                localStorage.setItem('bn_pos_users', JSON.stringify(updated));
+            };
 
-          <!-- ส่วนบาร์โค้ด (ไม่มีกรอบ, ชิดขอบบน) -->
-          <div style="margin-top: 0; margin-bottom: 5px; text-align: center;">
-            ${barcodeSVG}
-            <div class="barcode-number" style="font-family: monospace; font-size: 11px; margin-top: 0px; letter-spacing: 1px;">
-              ${order.barcode}
-            </div>
-          </div>
+            const delUser = (email) => {
+                if(confirm('ลบผู้ใช้นี้?')) {
+                    const updated = users.filter(u => u.email !== email);
+                    setUsers(updated);
+                    localStorage.setItem('bn_pos_users', JSON.stringify(updated));
+                }
+            };
 
-          <!-- ส่วนข้อมูลลูกค้า (ไม่มีกรอบ) -->
-          <div style="margin-bottom: 5px;">
-            <div style="font-weight: bold; margin-bottom: 3px;">
-              ຂໍ້ມູນລູກຄ້າ:
-            </div>
-            <pre style="margin: 0; white-space: pre-wrap; font-size: 14px; line-height: 1.3;">${order.customer.replace(/\n/g, '<br>')}</pre>
-          </div>
+            return (
+                <div className="p-8 h-full overflow-y-auto">
+                    <h2 className="text-3xl font-black text-slate-800 mb-6 flex items-center gap-2">
+                        <Lucide name="shield" className="text-blue-600"/> Master Admin Panel
+                    </h2>
+                    <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+                        <table className="w-full text-left">
+                            <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-sm">
+                                <tr>
+                                    <th className="p-4">ร้านค้า</th>
+                                    <th className="p-4">สถานะ</th>
+                                    <th className="p-4">หมดอายุ</th>
+                                    <th className="p-4 text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {users.map(u => (
+                                    <tr key={u.email} className="hover:bg-slate-50">
+                                        <td className="p-4">
+                                            <div className="font-bold text-slate-800">{u.shopName}</div>
+                                            <div className="text-xs text-slate-500">{u.email}</div>
+                                        </td>
+                                        <td className="p-4">
+                                            <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${u.status==='active'?'bg-green-100 text-green-700': u.status==='pending'?'bg-orange-100 text-orange-700':'bg-red-100 text-red-700'}`}>
+                                                {u.status}
+                                            </span>
+                                        </td>
+                                        <td className="p-4 text-sm text-slate-500">
+                                            {u.expiryDate ? new Date(u.expiryDate).toLocaleDateString() : '-'}
+                                        </td>
+                                        <td className="p-4 flex justify-center gap-2">
+                                            <button onClick={()=>updateStatus(u.email,'active',30)} className="p-2 bg-blue-100 text-blue-600 rounded hover:bg-blue-200" title="+30 Days"><Lucide name="calendar" size={16}/></button>
+                                            <button onClick={()=>updateStatus(u.email,'active',365)} className="p-2 bg-purple-100 text-purple-600 rounded hover:bg-purple-200" title="+1 Year"><Lucide name="trending" size={16}/></button>
+                                            <button onClick={()=>updateStatus(u.email,'suspended')} className="p-2 bg-orange-100 text-orange-600 rounded hover:bg-orange-200" title="Suspend"><Lucide name="userX" size={16}/></button>
+                                            <button onClick={()=>delUser(u.email)} className="p-2 bg-red-100 text-red-600 rounded hover:bg-red-200"><Lucide name="trash" size={16}/></button>
+                                        </td>
+                                    </tr>
+                                ))}
+                                {users.length === 0 && <tr><td colSpan="4" className="p-8 text-center text-slate-400">ไม่มีข้อมูลผู้ใช้</td></tr>}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            );
+        };
 
-          <!-- ส่วนท้ายบิล -->
-          <div style="text-align: center; font-weight: bold; color: #4361ee; margin-top: 5px; border-top: 1px solid #4361ee; padding-top: 5px;">
-            ຂອບໃຈ💗
-          </div>
-        </div>
-      `;
-    }
+        const DashboardPanel = ({ history, products }) => {
+            const sales = history.filter(h => h.status === 'completed');
+            const totalSales = sales.reduce((sum, order) => sum + order.total, 0);
+            
+            const totalCost = sales.reduce((sum, order) => {
+                const cost = order.items.reduce((c, i) => c + (i.cost || 0) * i.qty, 0);
+                return sum + cost;
+            }, 0);
+            const profit = totalSales - totalCost;
 
-    window.printBills = function(orders) {
-      const win = window.open('', '_blank');
-      win.document.write(`
-        <html><head><title>Print Bills</title><style>
-          @page { size: 80mm 150mm; margin: 0; }
-          body { margin: 0; padding: 0; font-family: 'Noto Sans Lao', sans-serif; }
-          .bill { width: 76mm; min-height: 130mm; padding: 10px; font-size: 14px; border: 1px solid #000; page-break-after: always; }
-          .logo { font-size: 32px; font-weight: bold; display: inline-block; margin-right: 10px; }
-          .shop-info { display: inline-block; vertical-align: middle; line-height: 1.4; white-space: nowrap; }
-          .header { margin-bottom: 10px; }
-          .section { margin-top: 10px; }
-          .barcode-container { text-align: center; margin: 12px 0; }
-          .barcode-number { text-align: center; font-family: monospace; font-size: 12px; margin-top: 5px; }
-          .thankyou { text-align: center; margin-top: 20px; font-weight: bold; }
-          pre { white-space: pre-wrap; word-wrap: break-word; margin: 0; line-height: 1.4; }
-        </style></head><body>
-      `);
-      orders.forEach(order => win.document.write(printBill(order)));
-      win.document.write('</body></html>');
-      win.document.close();
-      setTimeout(() => win.print(), 500);
-    };
+            // Simple HTML Chart
+            const last10 = sales.slice(0, 10).reverse();
+            const maxVal = Math.max(...last10.map(s=>s.total), 100);
 
-    window.printSelected = function() {
-      const checkboxes = document.querySelectorAll('#orders input[type=checkbox]');
-      const selected = Array.from(checkboxes).filter(c => c.checked).map(c => orderList[c.dataset.index]);
-      if (!selected.length) return alert('กรุณาเลือกออเดอร์');
-      printBills(selected);
-    };
+            return (
+                <div className="p-8 h-full overflow-y-auto">
+                    <h2 className="text-3xl font-black text-slate-800 mb-6">Dashboard</h2>
+                    <div className="grid grid-cols-3 gap-6 mb-8">
+                        <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                            <div className="text-slate-500 text-sm font-bold uppercase mb-2 flex items-center gap-2"><Lucide name="banknote"/> Total Sales</div>
+                            <div className="text-4xl font-black text-slate-800">{formatCurrency(totalSales)}</div>
+                        </div>
+                        <div className="bg-gradient-to-br from-indigo-600 to-purple-700 p-6 rounded-3xl shadow-lg text-white">
+                            <div className="text-indigo-200 text-sm font-bold uppercase mb-2 flex items-center gap-2"><Lucide name="trending"/> Net Profit</div>
+                            <div className="text-4xl font-black">{formatCurrency(profit)}</div>
+                        </div>
+                        <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+                            <div className="text-slate-500 text-sm font-bold uppercase mb-2 flex items-center gap-2"><Lucide name="alert"/> Low Stock</div>
+                            <div className="text-4xl font-black text-orange-500">{products.filter(p=>p.stock<10).length} Items</div>
+                        </div>
+                    </div>
+                    
+                    <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 h-80 mb-8 flex flex-col">
+                        <h3 className="font-bold mb-4 text-slate-700">Recent Sales Trend</h3>
+                        <div className="flex-1 flex items-end justify-between gap-2 px-2">
+                            {last10.length === 0 ? <p className="w-full text-center text-slate-400 my-auto">No sales data yet</p> : 
+                             last10.map((s,i) => (
+                                <div key={i} className="flex-1 flex flex-col items-center group relative">
+                                    <div className="w-full bg-blue-500 rounded-t-lg transition-all duration-500 hover:bg-blue-600" style={{height: `${(s.total/maxVal)*100}%`, minHeight:'4px'}}></div>
+                                    <div className="text-[10px] text-slate-400 mt-2 truncate w-full text-center">#{s.id.split('-')[1]}</div>
+                                    <div className="absolute -top-8 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                                        {formatCurrency(s.total)}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
 
-    window.printAll = function() {
-      if (!orderList.length) return alert('ไม่มีออเดอร์');
-      printBills(orderList);
-    };
+        const InventoryPanel = ({ products, onUpdate, onAdd, onDelete }) => {
+            const [isAdd, setIsAdd] = useState(false);
+            const [form, setForm] = useState({});
+            const [search, setSearch] = useState('');
 
-    window.printBillFromArchive = function(index) {
-      const order = archivedOrderList[index];
-      printBills([order]);
-    };
+            useEffect(() => {
+                let buffer = '';
+                let lastTime = 0;
+                const onKey = (e) => {
+                    const now = Date.now();
+                    if (now - lastTime > 100) buffer = '';
+                    lastTime = now;
+                    if (e.key === 'Enter') {
+                        if (buffer.length > 2) setSearch(buffer);
+                        buffer = '';
+                    } else if (e.key.length === 1) buffer += e.key;
+                };
+                window.addEventListener('keydown', onKey);
+                return () => window.removeEventListener('keydown', onKey);
+            }, []);
 
-    window.deleteSelected = async function() {
-      const checkboxes = document.querySelectorAll('#orders input[type=checkbox]');
-      const selected = Array.from(checkboxes).filter(c => c.checked);
-      if (!selected.length) return alert('กรุณาเลือกออเดอร์ที่จะลบ');
+            const filtered = products.filter(p => p.name.toLowerCase().includes(search.toLowerCase()) || (p.barcode && p.barcode.includes(search)));
 
-      const confirmDelete = confirm('คุณแน่ใจว่าจะลบออเดอร์ที่เลือก?');
-      if (!confirmDelete) return;
+            return (
+                <div className="p-8 h-full flex flex-col">
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-3xl font-black text-slate-800">Inventory</h2>
+                        <div className="flex gap-3">
+                            <div className="relative">
+                                <Lucide name="search" className="absolute left-3 top-3 text-slate-400" size={18}/>
+                                <input className="pl-10 pr-4 py-2 border rounded-xl w-64 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Search / Scan..." value={search} onChange={e=>setSearch(e.target.value)}/>
+                            </div>
+                            <button onClick={()=>{setIsAdd(true); setForm({category:'Mart'})}} className="px-4 py-2 bg-blue-600 text-white rounded-xl font-bold flex items-center gap-2 hover:bg-blue-700 shadow-lg"><Lucide name="plus"/> Add New</button>
+                        </div>
+                    </div>
 
-      try {
-        for (const c of selected) {
-          const index = c.dataset.index;
-          const docId = orderList[index]._docId;
-          await deleteDoc(doc(db, "orders", docId));
-        }
-        await loadOrders();
-      } catch (error) {
-        console.error("Error deleting orders:", error);
-        alert("เกิดข้อผิดพลาดในการลบออเดอร์: " + error.message);
-      }
-    };
+                    {isAdd && (
+                        <div className="mb-6 p-6 bg-white rounded-3xl shadow-lg border border-blue-100 animate-in">
+                            <h3 className="font-bold mb-4">Add Product</h3>
+                            <div className="grid grid-cols-6 gap-4">
+                                <div className="col-span-2"><label className="text-xs font-bold text-slate-500">Barcode</label><input className="w-full p-2 border rounded-lg" value={form.barcode||''} onChange={e=>setForm({...form, barcode:e.target.value})} autoFocus/></div>
+                                <div className="col-span-2"><label className="text-xs font-bold text-slate-500">Name</label><input className="w-full p-2 border rounded-lg" value={form.name||''} onChange={e=>setForm({...form, name:e.target.value})}/></div>
+                                <div className="col-span-1"><label className="text-xs font-bold text-slate-500">Category</label><select className="w-full p-2 border rounded-lg" value={form.category||'Mart'} onChange={e=>setForm({...form, category:e.target.value})}>{CATEGORIES.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
+                                <div className="col-span-1"><label className="text-xs font-bold text-slate-500">Stock</label><input type="number" className="w-full p-2 border rounded-lg" value={form.stock||0} onChange={e=>setForm({...form, stock:parseInt(e.target.value)})}/></div>
+                                <div className="col-span-1"><label className="text-xs font-bold text-slate-500">Cost</label><input type="number" className="w-full p-2 border rounded-lg" value={form.cost||0} onChange={e=>setForm({...form, cost:parseFloat(e.target.value)})}/></div>
+                                <div className="col-span-1"><label className="text-xs font-bold text-slate-500">Price</label><input type="number" className="w-full p-2 border rounded-lg" value={form.price||0} onChange={e=>setForm({...form, price:parseFloat(e.target.value)})}/></div>
+                            </div>
+                            <div className="flex justify-end gap-2 mt-4">
+                                <button onClick={()=>setIsAdd(false)} className="px-4 py-2 text-slate-500">Cancel</button>
+                                <button onClick={()=>{ onAdd({...form, id: Date.now(), image:'📦', color:'from-slate-200 to-slate-100'}); setIsAdd(false); setForm({}); }} className="px-6 py-2 bg-blue-600 text-white rounded-lg font-bold">Save</button>
+                            </div>
+                        </div>
+                    )}
 
-    window.archiveSelected = async function() {
-      const checkboxes = document.querySelectorAll('#orders input[type=checkbox]');
-      const selected = Array.from(checkboxes).filter(c => c.checked);
-      if (!selected.length) return alert('กรุณาเลือกออเดอร์ที่จะเก็บเข้าคลัง');
+                    <div className="bg-white rounded-3xl shadow-sm border border-slate-200 flex-1 overflow-auto">
+                        <table className="w-full text-left">
+                            <thead className="bg-slate-50 text-slate-500 font-bold text-sm sticky top-0">
+                                <tr><th className="p-4">Product</th><th className="p-4">Cost</th><th className="p-4">Price</th><th className="p-4 text-center">Stock</th><th className="p-4 text-center">Action</th></tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {filtered.map(p => (
+                                    <tr key={p.id} className="hover:bg-slate-50">
+                                        <td className="p-4">
+                                            <div className="font-bold text-slate-800">{p.name}</div>
+                                            <div className="text-xs text-slate-400 font-mono">{p.barcode || '-'}</div>
+                                        </td>
+                                        <td className="p-4 text-slate-500">{formatCurrency(p.cost || 0)}</td>
+                                        <td className="p-4 font-bold text-slate-800">{formatCurrency(p.price)}</td>
+                                        <td className="p-4 text-center"><span className={`px-2 py-1 rounded text-xs font-bold ${p.stock<10 ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>{p.stock}</span></td>
+                                        <td className="p-4 flex justify-center gap-2">
+                                            <button onClick={()=>onDelete(p.id)} className="p-2 text-slate-400 hover:text-red-500 rounded bg-slate-100"><Lucide name="trash" size={16}/></button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            );
+        };
 
-      const confirmArchive = confirm('คุณแน่ใจว่าจะเก็บออเดอร์ที่เลือกเข้าคลัง?');
-      if (!confirmArchive) return;
+        const App = () => {
+            const [currentUser, setCurrentUser] = useState(null);
+            const [activeTab, setActiveTab] = useState('pos');
+            
+            // --- DATA LOAD/SAVE ---
+            const [products, setProducts] = useState(() => JSON.parse(localStorage.getItem(`bn_pos_${currentUser?.email}_products`) || JSON.stringify(INITIAL_PRODUCTS)));
+            const [history, setHistory] = useState(() => JSON.parse(localStorage.getItem(`bn_pos_${currentUser?.email}_history`) || '[]'));
+            const [settings, setSettings] = useState(() => JSON.parse(localStorage.getItem(`bn_pos_${currentUser?.email}_settings`) || JSON.stringify({ shopName: currentUser?.shopName || 'My Shop', logo: '', address: '', phone: '', promptPayQr: '' })));
+            const [heldOrders, setHeldOrders] = useState(() => JSON.parse(localStorage.getItem(`bn_pos_${currentUser?.email}_held`) || '[]'));
 
-      try {
-        for (const c of selected) {
-          const index = c.dataset.index;
-          const docId = orderList[index]._docId;
-          await updateDoc(doc(db, "orders", docId), {
-            archived: true
-          });
-        }
-        await loadOrders();
-        alert('เก็บออเดอร์เข้าคลังเรียบร้อยแล้ว');
-      } catch (error) {
-        console.error("Error archiving orders:", error);
-        alert("เกิดข้อผิดพลาดในการเก็บออเดอร์เข้าคลัง: " + error.message);
-      }
-    };
+            useEffect(() => { 
+                if(!currentUser) return;
+                const prefix = `bn_pos_${currentUser.email}`;
+                localStorage.setItem(`${prefix}_products`, JSON.stringify(products));
+                localStorage.setItem(`${prefix}_history`, JSON.stringify(history));
+                localStorage.setItem(`${prefix}_settings`, JSON.stringify(settings));
+                localStorage.setItem(`${prefix}_held`, JSON.stringify(heldOrders));
+            }, [products, history, settings, heldOrders, currentUser]);
 
-    window.unarchiveOrder = async function(docId) {
-      try {
-        await updateDoc(doc(db, "orders", docId), {
-          archived: false
-        });
-        await loadOrders();
-        alert('นำออเดอร์ออกจากคลังเรียบร้อยแล้ว');
-      } catch (error) {
-        console.error("Error unarchiving order:", error);
-        alert("เกิดข้อผิดพลาดในการนำออเดอร์ออกจากคลัง: " + error.message);
-      }
-    };
+            // --- POS STATE ---
+            const [cart, setCart] = useState([]);
+            const [member, setMember] = useState(null);
+            const [showPay, setShowPay] = useState(false);
+            const [lastOrder, setLastOrder] = useState(null);
+            const [search, setSearch] = useState('');
+            const [activeCat, setActiveCat] = useState('All');
+            const [showHeld, setShowHeld] = useState(false);
 
-    window.showArchive = function() {
-      document.getElementById('currentOrdersSection').style.display = 'none';
-      document.getElementById('archiveSection').style.display = 'block';
-      document.getElementById('searchOrderId').value = '';
-      document.getElementById('searchStartDate').value = '';
-      document.getElementById('searchEndDate').value = '';
-      renderArchivedOrders();
-    };
+            // --- BARCODE SCANNER (POS) ---
+            useEffect(() => {
+                if(activeTab !== 'pos' || showPay) return;
+                let buffer = '';
+                let lastTime = 0;
+                const onKey = (e) => {
+                    const now = Date.now();
+                    if (now - lastTime > 100) buffer = '';
+                    lastTime = now;
+                    if (e.key === 'Enter') {
+                        if (buffer.length > 2) {
+                            const p = products.find(prod => prod.barcode === buffer);
+                            if(p) addToCart(p);
+                            buffer = '';
+                        }
+                    } else if (e.key.length === 1) buffer += e.key;
+                };
+                window.addEventListener('keydown', onKey);
+                return () => window.removeEventListener('keydown', onKey);
+            }, [activeTab, showPay, products]);
 
-    window.backToCurrentOrders = function() {
-      document.getElementById('currentOrdersSection').style.display = 'block';
-      document.getElementById('archiveSection').style.display = 'none';
-    };
-  </script>
+            const addToCart = (p) => {
+                if(p.stock <= 0) return alert("Out of Stock");
+                setCart(prev => {
+                    const ex = prev.find(i => i.id === p.id);
+                    if(ex) {
+                        if(ex.qty >= p.stock) return prev;
+                        return prev.map(i => i.id === p.id ? {...i, qty: i.qty+1} : i);
+                    }
+                    return [...prev, {...p, qty: 1}];
+                });
+            };
+
+            const updateQty = (id, d) => setCart(prev => prev.map(i => i.id === id ? {...i, qty: Math.max(1, i.qty+d)} : i));
+            
+            const subtotal = cart.reduce((a,c)=>a+c.price*c.qty, 0);
+            const discount = member ? subtotal * 0.05 : 0;
+            const total = subtotal - discount;
+
+            const handlePay = (method) => {
+                const order = {
+                    id: `#BN-${Math.floor(Math.random()*100000)}`,
+                    date: new Date().toLocaleString('th-TH'),
+                    items: cart.map(c => ({...c, cost: c.cost || 0})), // Snapshot cost
+                    subtotal, discount, total, method, status: 'completed'
+                };
+                setHistory([order, ...history]);
+                setProducts(prev => prev.map(p => {
+                    const inCart = cart.find(c => c.id === p.id);
+                    return inCart ? { ...p, stock: p.stock - inCart.qty } : p;
+                }));
+                setLastOrder(order);
+                setCart([]);
+                setShowPay(false);
+                setMember(null);
+            };
+
+            const holdOrder = () => {
+                setHeldOrders([...heldOrders, { id: Date.now(), items: cart, time: new Date().toLocaleTimeString() }]);
+                setCart([]);
+            };
+
+            const recallOrder = (h) => {
+                if(cart.length > 0 && !confirm("Replace current cart?")) return;
+                setCart(h.items);
+                setHeldOrders(heldOrders.filter(o => o.id !== h.id));
+                setShowHeld(false);
+            };
+
+            const ProductCard = ({ product, onAdd, currentStock }) => {
+                const isOutOfStock = currentStock <= 0;
+                return (
+                    <div onClick={() => !isOutOfStock && onAdd(product)} className={`relative bg-white rounded-3xl p-4 shadow-sm border border-slate-100 transition-all duration-300 group flex flex-col h-full overflow-hidden cursor-pointer hover:shadow-xl hover:-translate-y-1 ${isOutOfStock ? 'opacity-60 grayscale' : ''}`}>
+                        {isOutOfStock && <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/60 backdrop-blur-sm"><span className="bg-red-500 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg">Sold Out</span></div>}
+                        <div className={`h-32 rounded-2xl flex items-center justify-center text-5xl mb-4 shadow-inner bg-gradient-to-br ${product.color}`}>{product.image}</div>
+                        <div className="mt-auto">
+                            <h3 className="font-bold text-slate-800 truncate">{product.name}</h3>
+                            <div className="flex justify-between items-center text-xs text-slate-500 mt-1"><span>{product.category}</span><span>Stock: {currentStock}</span></div>
+                            <div className="pt-2 text-xl font-black text-slate-800">{formatCurrency(product.price)}</div>
+                        </div>
+                    </div>
+                );
+            };
+
+            if (!currentUser) return <AuthScreen onLogin={(u) => { setCurrentUser(u); setProducts(JSON.parse(localStorage.getItem(`bn_pos_${u.email}_products`) || JSON.stringify(INITIAL_PRODUCTS))); }} />;
+            
+            const isExpired = currentUser.expiryDate && new Date(currentUser.expiryDate) < new Date();
+            if (currentUser.role !== 'admin' && (currentUser.status !== 'active' || isExpired)) {
+                return <SubWall user={currentUser} onLogout={()=>setCurrentUser(null)} />;
+            }
+
+            return (
+                <div className="flex h-screen overflow-hidden">
+                    {/* Sidebar */}
+                    <div className="w-24 bg-white/80 backdrop-blur-xl border-r border-slate-200 flex flex-col items-center py-6 z-30 shrink-0 no-print">
+                        <div className="w-14 h-14 rounded-2xl overflow-hidden mb-6 bg-slate-100 shadow-md">
+                            {settings.logo ? <img src={settings.logo} className="w-full h-full object-cover"/> : <div className="w-full h-full flex items-center justify-center text-blue-600 font-bold">BN</div>}
+                        </div>
+                        <nav className="flex-1 flex flex-col gap-4 w-full px-2">
+                            {[
+                                { id: 'pos', icon: 'home', label: 'ขาย' },
+                                { id: 'orders', icon: 'history', label: 'บิล' },
+                                { id: 'inventory', icon: 'package', label: 'สต็อก' },
+                                { id: 'dashboard', icon: 'dashboard', label: 'สรุป' },
+                                { id: 'settings', icon: 'settings', label: 'ตั้งค่า' }
+                            ].map(item => (
+                                <button key={item.id} onClick={()=>setActiveTab(item.id)} className={`p-3 rounded-2xl flex flex-col items-center transition-all ${activeTab===item.id ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-100'}`}>
+                                    <Lucide name={item.icon}/>
+                                    <span className="text-[10px] mt-1 font-bold">{item.label}</span>
+                                </button>
+                            ))}
+                            {currentUser.role === 'admin' && (
+                                <button onClick={()=>setActiveTab('admin')} className={`p-3 rounded-2xl flex flex-col items-center transition-all ${activeTab==='admin' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-100'}`}>
+                                    <Lucide name="shield"/>
+                                    <span className="text-[10px] mt-1 font-bold">Admin</span>
+                                </button>
+                            )}
+                        </nav>
+                        <button onClick={()=>setCurrentUser(null)} className="p-3 text-slate-400 hover:text-red-500 rounded-2xl"><Lucide name="logout"/></button>
+                    </div>
+
+                    {/* Main Content */}
+                    <div className="flex-1 flex overflow-hidden relative no-print">
+                        {activeTab === 'pos' ? (
+                            <>
+                                <div className="flex-1 flex flex-col min-w-0 z-10 bg-slate-50/50">
+                                    <header className="px-8 py-6 flex justify-between items-center">
+                                        <div>
+                                            <h1 className="text-3xl font-black text-slate-800 tracking-tight">{settings.shopName}</h1>
+                                            <p className="text-slate-400 text-sm">Welcome back, {currentUser.role}</p>
+                                        </div>
+                                        <div className="flex gap-4">
+                                            <div className="relative">
+                                                <Lucide name="search" className="absolute left-3 top-3 text-slate-400" size={20}/>
+                                                <input className="pl-10 pr-4 py-3 rounded-2xl border-none shadow-sm w-72 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Search product..." value={search} onChange={e=>setSearch(e.target.value)}/>
+                                            </div>
+                                        </div>
+                                    </header>
+                                    
+                                    <div className="px-8 pb-4 flex gap-3 overflow-x-auto no-scrollbar">
+                                        {CATEGORIES.map(c => (
+                                            <button key={c.id} onClick={()=>setActiveCat(c.id)} className={`px-6 py-3 rounded-2xl font-bold text-sm shadow-sm transition-all flex items-center gap-2 ${activeCat===c.id ? 'bg-slate-800 text-white scale-105' : 'bg-white text-slate-500 hover:bg-slate-100'}`}>
+                                                <Lucide name={c.icon} size={18}/> {c.name}
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    <div className="flex-1 overflow-y-auto px-8 pb-20">
+                                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                                            {products
+                                                .filter(p => (activeCat==='All' || p.category===activeCat) && p.name.toLowerCase().includes(search.toLowerCase()))
+                                                .map(p => <ProductCard key={p.id} product={p} onAdd={addToCart} currentStock={p.stock} />)
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Cart Sidebar */}
+                                <div className="w-[420px] bg-white border-l border-slate-200 flex flex-col shadow-2xl z-20">
+                                    <div className="p-6 border-b border-slate-100">
+                                        <div className="flex justify-between items-center mb-4">
+                                            <h2 className="text-xl font-black text-slate-800 flex items-center gap-2">Current Order <span className="bg-blue-100 text-blue-600 px-2 py-0.5 rounded-lg text-sm">{cart.reduce((a,c)=>a+c.qty,0)}</span></h2>
+                                            <div className="flex gap-2">
+                                                <button onClick={holdOrder} disabled={cart.length===0} className="p-2 bg-orange-100 text-orange-600 rounded-xl hover:bg-orange-200 disabled:opacity-50"><Lucide name="pause"/></button>
+                                                <button onClick={()=>setShowHeld(true)} className="p-2 bg-blue-100 text-blue-600 rounded-xl hover:bg-blue-200 relative">
+                                                    <Lucide name="play"/>
+                                                    {heldOrders.length > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-[10px] flex items-center justify-center font-bold">{heldOrders.length}</span>}
+                                                </button>
+                                                <button onClick={()=>setCart([])} className="p-2 bg-red-100 text-red-600 rounded-xl hover:bg-red-200"><Lucide name="trash"/></button>
+                                            </div>
+                                        </div>
+                                        <div onClick={()=>setMember(member?null:{name:'VIP Customer'})} className={`p-4 rounded-2xl border-2 border-dashed cursor-pointer flex items-center gap-3 ${member ? 'border-green-500 bg-green-50' : 'border-slate-200 hover:bg-slate-50'}`}>
+                                            <div className={`p-2 rounded-full ${member ? 'bg-green-500 text-white' : 'bg-slate-200 text-slate-400'}`}><Lucide name="user"/></div>
+                                            <div className="flex-1 font-bold text-slate-700">{member ? member.name : 'Add Member (5% Off)'}</div>
+                                            {member && <Lucide name="check" className="text-green-500"/>}
+                                        </div>
+                                    </div>
+
+                                    <div className="flex-1 overflow-y-auto p-6 space-y-3">
+                                        {cart.length === 0 ? 
+                                            <div className="h-full flex flex-col items-center justify-center text-slate-300 opacity-60"><Lucide name="shoppingCart" size={48}/><p className="mt-2 font-bold">Cart is Empty</p></div> 
+                                            : 
+                                            cart.map(i => (
+                                                <div key={i.id} className="flex gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-100 animate-in">
+                                                    <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-xl shadow-sm">{i.image}</div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="font-bold text-slate-800 truncate">{i.name}</div>
+                                                        <div className="text-blue-600 font-bold">฿{i.price * i.qty}</div>
+                                                    </div>
+                                                    <div className="flex items-center gap-2 bg-white rounded-xl px-2 shadow-sm border border-slate-100">
+                                                        <button onClick={()=>updateQty(i.id, -1)} className="text-slate-400 hover:text-blue-600"><Lucide name="minus" size={16}/></button>
+                                                        <span className="w-6 text-center font-bold text-sm">{i.qty}</span>
+                                                        <button onClick={()=>updateQty(i.id, 1)} className="text-slate-400 hover:text-blue-600"><Lucide name="plus" size={16}/></button>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        }
+                                    </div>
+
+                                    <div className="p-6 bg-white border-t border-slate-100 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] rounded-t-[2rem]">
+                                        <div className="space-y-2 mb-4 text-sm font-medium text-slate-500">
+                                            <div className="flex justify-between"><span>Subtotal</span><span>{formatCurrency(subtotal)}</span></div>
+                                            {member && <div className="flex justify-between text-green-600"><span>Discount (5%)</span><span>-{formatCurrency(discount)}</span></div>}
+                                            <div className="flex justify-between text-xl font-black text-slate-800 pt-2 border-t border-dashed"><span>Total</span><span>{formatCurrency(total)}</span></div>
+                                        </div>
+                                        <button onClick={()=>setShowPay(true)} disabled={cart.length===0} className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl font-bold shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                                            Charge <Lucide name="arrowUpRight"/>
+                                        </button>
+                                    </div>
+                                </div>
+                            </>
+                        ) : activeTab === 'inventory' ? (
+                            <InventoryPanel products={products} onUpdate={p=>setProducts(products.map(old=>old.id===p.id?p:old))} onAdd={p=>setProducts([...products,p])} onDelete={id=>setProducts(products.filter(p=>p.id!==id))} />
+                        ) : activeTab === 'dashboard' ? (
+                            <DashboardPanel history={history} products={products} />
+                        ) : activeTab === 'settings' ? (
+                            <div className="p-8 h-full bg-slate-50/50">
+                                <h2 className="text-3xl font-black text-slate-800 mb-8">Settings</h2>
+                                <div className="bg-white p-8 rounded-3xl shadow-sm max-w-2xl border border-slate-100 space-y-6">
+                                    <div><label className="font-bold mb-2 block">Shop Name</label><input className="w-full p-3 border rounded-xl" value={settings.shopName} onChange={e=>setSettings({...settings, shopName:e.target.value})}/></div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <ImageUploader label="Shop Logo" currentImage={settings.logo} onImageChange={i=>setSettings({...settings, logo:i})}/>
+                                        <ImageUploader label="PromptPay QR" currentImage={settings.promptPayQr} onImageChange={i=>setSettings({...settings, promptPayQr:i})}/>
+                                    </div>
+                                    <div><label className="font-bold mb-2 block">Address</label><textarea className="w-full p-3 border rounded-xl" value={settings.address} onChange={e=>setSettings({...settings, address:e.target.value})}/></div>
+                                    <button onClick={()=>alert('Saved!')} className="px-8 py-3 bg-blue-600 text-white rounded-xl font-bold shadow-lg">Save Changes</button>
+                                </div>
+                            </div>
+                        ) : activeTab === 'admin' ? (
+                            <AdminPanel />
+                        ) : (
+                            <div className="p-8 h-full bg-slate-50/50">
+                                <h2 className="text-3xl font-black text-slate-800 mb-8">History</h2>
+                                <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+                                    <table className="w-full text-left">
+                                        <thead className="bg-slate-50 text-slate-500 font-bold text-sm"><tr><th className="p-4">Order ID</th><th className="p-4">Date</th><th className="p-4">Total</th><th className="p-4">Payment</th></tr></thead>
+                                        <tbody className="divide-y divide-slate-100">{history.map(h=><tr key={h.id} className="hover:bg-slate-50"><td className="p-4 font-bold text-blue-600">{h.id}</td><td className="p-4 text-slate-500">{h.date}</td><td className="p-4 font-black">{formatCurrency(h.total)}</td><td className="p-4"><span className="bg-slate-100 px-2 py-1 rounded text-xs font-bold uppercase">{h.method}</span></td></tr>)}</tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Modals */}
+                    {showHeld && (
+                        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+                            <div className="bg-white p-6 rounded-3xl w-96 shadow-2xl">
+                                <div className="flex justify-between items-center mb-4"><h3 className="font-bold text-lg">Held Orders</h3><button onClick={()=>setShowHeld(false)}><Lucide name="x"/></button></div>
+                                <div className="space-y-2 max-h-96 overflow-y-auto">
+                                    {heldOrders.length===0 && <p className="text-slate-400 text-center py-4">No held orders</p>}
+                                    {heldOrders.map(h => (
+                                        <div key={h.id} onClick={()=>recallOrder(h)} className="p-3 border rounded-xl hover:bg-blue-50 cursor-pointer flex justify-between items-center">
+                                            <div><div className="font-bold">{h.time}</div><div className="text-xs text-slate-500">{h.items.length} items</div></div>
+                                            <div className="font-bold text-blue-600">{formatCurrency(h.items.reduce((a,c)=>a+c.price*c.qty,0))}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {showPay && (
+                        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-in">
+                            <div className="bg-white p-8 rounded-[2.5rem] w-full max-w-lg shadow-2xl">
+                                <div className="text-center mb-8">
+                                    <h2 className="text-slate-400 font-bold uppercase tracking-widest text-xs mb-2">Total Amount</h2>
+                                    <div className="text-5xl font-black text-slate-800">{formatCurrency(total)}</div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4 mb-6">
+                                    <button onClick={()=>handlePay('cash')} className="p-6 border-2 border-slate-100 rounded-3xl hover:border-green-500 hover:bg-green-50 transition-all group flex flex-col items-center gap-3">
+                                        <div className="p-3 bg-green-100 text-green-600 rounded-full group-hover:scale-110 transition-transform"><Lucide name="banknote" size={32}/></div>
+                                        <span className="font-bold text-slate-700">Cash</span>
+                                    </button>
+                                    <button onClick={()=>handlePay('qr')} className="p-6 border-2 border-slate-100 rounded-3xl hover:border-blue-500 hover:bg-blue-50 transition-all group flex flex-col items-center gap-3 relative overflow-hidden">
+                                        {settings.promptPayQr ? 
+                                            <><img src={settings.promptPayQr} className="absolute inset-0 w-full h-full object-cover opacity-30"/><span className="font-bold text-slate-700 z-10">Scan QR</span></> : 
+                                            <><div className="p-3 bg-blue-100 text-blue-600 rounded-full"><Lucide name="scan" size={32}/></div><span className="font-bold text-slate-700">PromptPay</span></>
+                                        }
+                                    </button>
+                                </div>
+                                <button onClick={()=>setShowPay(false)} className="w-full py-4 bg-slate-100 text-slate-600 font-bold rounded-2xl hover:bg-slate-200">Cancel</button>
+                            </div>
+                        </div>
+                    )}
+
+                    {lastOrder && (
+                        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm animate-in fade-in">
+                            <div className="bg-white w-full max-w-[380px] max-h-[90vh] flex flex-col rounded-xl shadow-2xl overflow-hidden relative">
+                                
+                                {/* Close Button */}
+                                <button 
+                                    onClick={() => setLastOrder(null)} 
+                                    className="absolute top-2 right-2 p-2 bg-slate-100 hover:bg-red-100 text-slate-500 hover:text-red-500 rounded-full z-10 print:hidden"
+                                >
+                                    <Lucide name="x" size={20}/>
+                                </button>
+
+                                {/* Scrollable Receipt Content */}
+                                <div className="overflow-y-auto p-6 flex-1" id="receipt-content">
+                                    <div className="text-center mb-6">
+                                        {settings.logo ? 
+                                            <img src={settings.logo} className="h-16 mx-auto mb-2 object-contain" /> : 
+                                            <div className="w-12 h-12 bg-slate-900 rounded-full mx-auto mb-2 flex items-center justify-center text-white font-bold text-xl">BN</div>
+                                        }
+                                        <h2 className="text-xl font-bold text-slate-900">{settings.shopName}</h2>
+                                        <p className="text-xs text-slate-500 mt-1">{settings.address || 'No Address'}</p>
+                                        <p className="text-xs text-slate-500">Tel: {settings.phone || '-'}</p>
+                                    </div>
+
+                                    <div className="border-b-2 border-dashed border-slate-300 my-4"></div>
+
+                                    <div className="flex justify-between text-xs text-slate-500 mb-2">
+                                        <span>Date: {lastOrder.date.split(',')[0]}</span>
+                                        <span>Time: {lastOrder.date.split(',')[1]}</span>
+                                    </div>
+                                    <div className="flex justify-between text-xs text-slate-500 mb-4">
+                                        <span>Order: {lastOrder.id}</span>
+                                        <span>Staff: {currentUser?.role || 'Admin'}</span>
+                                    </div>
+
+                                    <div className="flex flex-col gap-2 mb-4">
+                                        {lastOrder.items.map((item, idx) => (
+                                            <div key={idx} className="flex justify-between text-sm">
+                                                <div className="flex-1">
+                                                    <span className="text-slate-800 font-medium">{item.name}</span>
+                                                    <div className="text-xs text-slate-500">x{item.qty} @ {formatCurrency(item.price)}</div>
+                                                </div>
+                                                <span className="font-bold text-slate-900">{formatCurrency(item.price * item.qty)}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <div className="border-b-2 border-dashed border-slate-300 my-4"></div>
+
+                                    <div className="space-y-1">
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-slate-600">Subtotal</span>
+                                            <span className="font-bold">{formatCurrency(lastOrder.subtotal)}</span>
+                                        </div>
+                                        {lastOrder.discount > 0 && (
+                                            <div className="flex justify-between text-sm text-green-600">
+                                                <span>Discount</span>
+                                                <span>-{formatCurrency(lastOrder.discount)}</span>
+                                            </div>
+                                        )}
+                                        <div className="flex justify-between text-xl font-black text-slate-900 mt-2">
+                                            <span>TOTAL</span>
+                                            <span>{formatCurrency(lastOrder.total)}</span>
+                                        </div>
+                                        <div className="flex justify-between text-xs text-slate-500 mt-1 uppercase">
+                                            <span>Payment Type</span>
+                                            <span>{lastOrder.method}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-8 text-center">
+                                        <p className="text-slate-900 font-bold">Thank you!</p>
+                                        <p className="text-xs text-slate-400 mt-1">Powered by BN POS</p>
+                                        <div className="mt-4 h-12 bg-slate-100 rounded flex items-center justify-center text-xs text-slate-400 tracking-widest font-mono">
+                                            ||| ||||| || |||| |||
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Footer Actions */}
+                                <div className="p-4 bg-slate-50 border-t border-slate-200 flex gap-3 print:hidden">
+                                    <button 
+                                        onClick={() => window.print()} 
+                                        className="flex-1 py-3 bg-white border border-slate-300 text-slate-700 font-bold rounded-xl shadow-sm hover:bg-slate-100 flex items-center justify-center gap-2"
+                                    >
+                                        <Lucide name="printer" size={18}/> พิมพ์ใบเสร็จ
+                                    </button>
+                                    <button 
+                                        onClick={() => setLastOrder(null)} 
+                                        className="flex-1 py-3 bg-blue-600 text-white font-bold rounded-xl shadow-md hover:bg-blue-700 flex items-center justify-center gap-2"
+                                    >
+                                        <Lucide name="plus" size={18}/> ขายต่อ
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
 </body>
 </html>
-    
