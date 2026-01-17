@@ -26,12 +26,18 @@
         .animate-in { animation: fadeIn 0.3s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* Print Styles */
+        /* --- FIXED PRINT STYLES --- */
         @media print {
-            body * { visibility: hidden; }
-            #receipt-content, #receipt-content * { visibility: visible; }
+            /* Hide the main body but keep the box model valid */
+            body { 
+                visibility: hidden; 
+                background: white;
+            }
+
+            /* Target the specific receipt content */
             #receipt-content {
-                position: absolute;
+                visibility: visible;
+                position: absolute; /* Anchor to the top-left of the paper */
                 left: 0;
                 top: 0;
                 width: 100%;
@@ -39,9 +45,38 @@
                 padding: 0;
                 background: white;
                 color: black;
+                
+                /* CRITICAL: Allow content to expand fully, removing scrollbars */
+                overflow: visible !important; 
+                height: auto !important;
+                max-height: none !important;
+                
+                /* Ensure it sits on top of everything */
+                z-index: 9999;
             }
-            .print\:hidden { display: none !important; }
-            .no-print { display: none !important; }
+
+            /* Ensure all children of the receipt are visible */
+            #receipt-content * {
+                visibility: visible;
+            }
+
+            /* Explicitly hide helper elements */
+            .print\:hidden, .no-print { 
+                display: none !important; 
+            }
+            
+            /* Remove shadows and borders for cleaner print */
+            * {
+                box-shadow: none !important;
+                border: none !important; 
+            }
+            /* Add back border only for the receipt separator lines */
+            #receipt-content .border-b-2 {
+                border-bottom: 2px dashed #000 !important;
+            }
+            #receipt-content .border-t {
+                border-top: 1px dashed #000 !important;
+            }
         }
     </style>
 </head>
