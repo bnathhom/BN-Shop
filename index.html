@@ -2,355 +2,1661 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BN POS System - SaaS Edition</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>HSK 4 Masterclass - Global Edition</title>
     
-    <!-- 1. ติดตั้ง Tailwind CSS -->
+    <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- 2. ติดตั้ง React และ ReactDOM -->
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    
-    <!-- 3. ติดตั้ง Babel สำหรับแปลงโค้ด React -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Sans+Thai:wght@300;400;600;800&family=Noto+Sans+Lao:wght@300;400;600&family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- Confetti Library for Celebration -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
-    <!-- 4. ฟอนต์สวยๆ -->
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;700&display=swap" rel="stylesheet">
-
+    <!-- Config & Styles -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'china-red': '#E60012',
+                        'china-gold': '#FFD700',
+                        'jade-dark': '#005f4b',
+                        'jade-light': '#00a884',
+                        'paper': '#f8f4e6',
+                        'ink': '#2c2c2c'
+                    },
+                    fontFamily: {
+                        'thai': ['"Noto Sans Thai"', 'sans-serif'],
+                        'lao': ['"Noto Sans Lao"', 'sans-serif'],
+                        'chinese': ['"Ma Shan Zheng"', 'cursive'],
+                        'body': ['"Sarabun"', '"Noto Sans Lao"', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        body { font-family: 'Sarabun', sans-serif; background-color: #F8FAFC; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        /* Animation Classes */
-        .fade-in { animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        body {
+            background-color: #f0f2f5;
+            background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
+            background-size: 20px 20px;
+            overscroll-behavior-y: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+        }
+
+        /* --- FLASHCARD STYLES (Stable) --- */
+        .card-container {
+            perspective: 1000px;
+            width: 100%;
+            height: 400px;
+            position: relative;
+        }
+        
+        .card-body {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            border-radius: 1rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-container.flipped .card-body {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: 1rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: white;
+            border: 1px solid #f3f4f6;
+            overflow: hidden;
+        }
+
+        .card-front { z-index: 2; }
+        .card-back {
+            transform: rotateY(180deg);
+            background: linear-gradient(135deg, #fff 0%, #fff5f5 100%);
+            z-index: 1;
+        }
+        
+        /* Writing Canvas */
+        .writing-canvas {
+            touch-action: none;
+            cursor: crosshair;
+            background-image: linear-gradient(to right, rgba(200,0,0,0.1) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(200,0,0,0.1) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        .btn-press:active { transform: scale(0.95); }
+        .pb-safe { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
+        .pt-safe { padding-top: env(safe-area-inset-top); }
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Pulse animation for new cards */
+        @keyframes pulse-subtle {
+            0%, 100% { box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); }
+            50% { box-shadow: 0 10px 30px -5px rgba(230, 0, 18, 0.2); }
+        }
+        .pulse-subtle { animation: pulse-subtle 2s infinite; }
+        
+        .hidden-visually {
+            display: none !important;
+        }
+
+        /* Loading Screen Animation */
+        @keyframes loadProgress {
+            0% { width: 0%; }
+            100% { width: 100%; }
+        }
+        .animate-bounce-slow {
+            animation: bounce 2s infinite;
+        }
+        
+        /* Rank Badge Gradient */
+        .rank-badge-bg {
+            background: linear-gradient(135deg, #FFD700 0%, #FDB931 100%);
+        }
     </style>
 </head>
-<body>
-    <div id="root"></div>
+<body class="font-thai text-ink antialiased h-[100dvh] flex flex-col overflow-hidden">
 
-    <script type="text/babel">
-        const { useState, useEffect, useMemo, useRef } = React;
-
-        // --- ICON COMPONENTS (จำลอง Lucide React) ---
-        const IconBase = ({ children, size = 24, className = "", ...props }) => (
-            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>{children}</svg>
-        );
+    <!-- GAME-STYLE LOADING SCREEN -->
+    <div id="game-loading-screen" class="fixed inset-0 z-[200] bg-paper flex flex-col items-center justify-center hidden transition-opacity duration-500">
+        <div class="relative">
+            <div class="absolute inset-0 bg-china-red blur-xl opacity-20 rounded-full animate-pulse"></div>
+            <div class="w-24 h-24 bg-china-red rounded-full flex items-center justify-center text-white text-4xl font-chinese mb-8 shadow-xl relative z-10 animate-bounce-slow">中</div>
+        </div>
         
-        const Icons = {
-            Store: (p) => <IconBase {...p}><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M22 7v3a2 2 0 0 1-2 2v0a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12v0a2 2 0 0 1-2-2V7"/></IconBase>,
-            Coffee: (p) => <IconBase {...p}><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></IconBase>,
-            Utensils: (p) => <IconBase {...p}><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></IconBase>,
-            Zap: (p) => <IconBase {...p}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></IconBase>,
-            Package: (p) => <IconBase {...p}><path d="m16.5 9.4-9-5.19"/><path d="m21 16-9 5.19-9-5.19"/><path d="m3.29 7 9-5.19 9 5.19"/><line x1="12" y1="2" x2="12" y2="22"/><path d="m12 22 9-5.19V7l-9 5.19-9-5.19v9.81Z"/></IconBase>,
-            ShoppingCart: (p) => <IconBase {...p}><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></IconBase>,
-            Plus: (p) => <IconBase {...p}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></IconBase>,
-            Minus: (p) => <IconBase {...p}><line x1="5" y1="12" x2="19" y2="12"/></IconBase>,
-            Trash2: (p) => <IconBase {...p}><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></IconBase>,
-            Search: (p) => <IconBase {...p}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></IconBase>,
-            X: (p) => <IconBase {...p}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></IconBase>,
-            Receipt: (p) => <IconBase {...p}><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1-2-1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17V7"/></IconBase>,
-            CreditCard: (p) => <IconBase {...p}><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></IconBase>,
-            Banknote: (p) => <IconBase {...p}><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></IconBase>,
-            QrCode: (p) => <IconBase {...p}><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/></IconBase>,
-            Home: (p) => <IconBase {...p}><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></IconBase>,
-            History: (p) => <IconBase {...p}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></IconBase>,
-            LayoutDashboard: (p) => <IconBase {...p}><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></IconBase>,
-            Settings: (p) => <IconBase {...p}><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.35a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></IconBase>,
-            LogOut: (p) => <IconBase {...p}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></IconBase>,
-            Clock: (p) => <IconBase {...p}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></IconBase>,
-            User: (p) => <IconBase {...p}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></IconBase>,
-            Lock: (p) => <IconBase {...p}><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></IconBase>,
-            CheckCircle: (p) => <IconBase {...p}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></IconBase>,
-            Printer: (p) => <IconBase {...p}><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></IconBase>,
-            Save: (p) => <IconBase {...p}><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></IconBase>,
-            Edit3: (p) => <IconBase {...p}><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></IconBase>,
-            TrendingUp: (p) => <IconBase {...p}><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></IconBase>,
-            AlertCircle: (p) => <IconBase {...p}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></IconBase>,
-            Download: (p) => <IconBase {...p}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></IconBase>,
-            PlusCircle: (p) => <IconBase {...p}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></IconBase>,
-            UploadCloud: (p) => <IconBase {...p}><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></IconBase>,
-            ShieldCheck: (p) => <IconBase {...p}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></IconBase>,
-            Calendar: (p) => <IconBase {...p}><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></IconBase>,
-            UserCheck: (p) => <IconBase {...p}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></IconBase>,
-            UserX: (p) => <IconBase {...p}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="17" y1="8" x2="22" y2="13"/><line x1="22" y1="8" x2="17" y2="13"/></IconBase>,
-            MapPin: (p) => <IconBase {...p}><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></IconBase>,
-            BadgePercent: (p) => <IconBase {...p}><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.78 4.78 4 4 0 0 1-6.74 0 4 4 0 0 1-4.78-4.78 4 4 0 0 1 0-6.74Z"/><path d="m15 9-6 6"/><path d="M9 9h.01"/><path d="M15 15h.01"/></IconBase>,
-            Scan: (p) => <IconBase {...p}><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/></IconBase>,
-            ArrowUpRight: (p) => <IconBase {...p}><path d="M7 7h10v10"/><path d="M7 17 17 7"/></IconBase>
+        <h2 class="text-3xl font-bold text-gray-800 mb-2 font-chinese tracking-widest">HSK 4 MASTER</h2>
+        <p class="text-sm text-gray-500 mb-8" id="loading-status-text">กำลังเตรียมห้องเรียน...</p>
+        
+        <div class="w-64 h-3 bg-gray-200 rounded-full overflow-hidden relative shadow-inner">
+            <div id="loading-bar-fill" class="absolute top-0 left-0 h-full bg-china-red transition-all duration-300 ease-out" style="width: 0%"></div>
+        </div>
+        <div id="loading-percent" class="text-xs text-gray-400 mt-2 font-mono">0%</div>
+    </div>
+
+    <!-- LOGIN MODAL -->
+    <div id="auth-modal" class="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 fade-in">
+        <div class="glass-panel p-8 rounded-3xl w-full max-w-sm text-center relative overflow-hidden transition-all duration-300">
+            <div class="absolute top-0 left-0 w-full h-2 bg-china-red"></div>
+            <div class="w-20 h-20 bg-china-red rounded-full mx-auto flex items-center justify-center text-white text-4xl font-chinese mb-4 shadow-lg">中</div>
+            <h2 class="text-2xl font-bold mb-1 text-gray-800">HSK 4 Masterclass</h2>
+            <p class="text-sm text-gray-500 mb-6" data-i18n="app_subtitle">เรียนจีนฉบับเร่งรัดใน 1 เดือน</p>
+            
+            <div class="space-y-4">
+                <!-- Login Fields -->
+                <div id="login-form-container" class="space-y-4">
+                    <input type="email" id="login-email" class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-china-red focus:bg-white outline-none transition" placeholder="อีเมล (Email)...">
+                    <input type="password" id="login-password" class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-china-red focus:bg-white outline-none transition" placeholder="รหัสผ่าน (Password)...">
+                    
+                    <!-- Register-only Field -->
+                    <input type="text" id="register-name" class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:ring-2 focus:ring-china-red focus:bg-white outline-none transition hidden-visually" placeholder="ชื่อเล่น (Display Name)...">
+
+                    <button id="btn-submit-auth" onclick="window.auth.handleAuth()" class="w-full bg-china-red text-white py-3 rounded-xl font-bold shadow-lg hover:bg-red-700 btn-press transition flex items-center justify-center gap-2">
+                        <span id="btn-text-auth">เข้าสู่ระบบ</span> <i class="fas fa-sign-in-alt"></i>
+                    </button>
+                    
+                    <div class="text-sm text-gray-500 mt-2">
+                        <span id="auth-toggle-text">ยังไม่มีบัญชี?</span>
+                        <button onclick="window.auth.toggleMode()" class="text-china-red font-bold hover:underline ml-1" id="auth-toggle-btn">สมัครสมาชิก</button>
+                    </div>
+                    
+                    <div id="auth-error" class="text-red-600 text-xs text-center mt-2 hidden-visually bg-red-50 p-2 rounded-lg border border-red-200"></div>
+                </div>
+                
+                <!-- Loading State (Mini Spinner removed, using full screen instead) -->
+                <div id="auth-loading" class="hidden-visually flex flex-col items-center justify-center py-4">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-china-red mb-2"></div>
+                    <span class="text-sm text-gray-500">กำลังเชื่อมต่อ...</span>
+                </div>
+            </div>
+            
+            <div class="flex justify-center gap-3 mt-6 border-t pt-4">
+                <button onclick="window.auth.setLang('th')" class="text-2xl hover:scale-110 transition">🇹🇭</button>
+                <button onclick="window.auth.setLang('en')" class="text-2xl hover:scale-110 transition">🇬🇧</button>
+                <button onclick="window.auth.setLang('cn')" class="text-2xl hover:scale-110 transition">🇨🇳</button>
+                <button onclick="window.auth.setLang('la')" class="text-2xl hover:scale-110 transition">🇱🇦</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP -->
+    <div id="app-container" class="hidden flex flex-col h-full">
+        
+        <!-- Mobile Navigation -->
+        <nav class="fixed bottom-0 w-full bg-white border-t border-gray-200 z-50 md:hidden pb-safe">
+            <div class="flex justify-around py-3 text-xs font-semibold text-gray-500">
+                <button onclick="app.navigate('dashboard')" class="flex flex-col items-center gap-1 active:text-china-red nav-btn" data-target="dashboard">
+                    <i class="fas fa-home text-xl"></i> <span data-i18n="nav_home">หน้าหลัก</span>
+                </button>
+                <button onclick="app.navigate('learn')" class="flex flex-col items-center gap-1 active:text-china-red nav-btn" data-target="learn">
+                    <i class="fas fa-book-open text-xl"></i> <span data-i18n="nav_learn">บทเรียน</span>
+                </button>
+                <button onclick="app.navigate('practice')" class="flex flex-col items-center gap-1 active:text-china-red nav-btn" data-target="practice">
+                    <i class="fas fa-dumbbell text-xl"></i> <span data-i18n="nav_practice">ฝึกฝน</span>
+                </button>
+                <button onclick="app.navigate('profile')" class="flex flex-col items-center gap-1 active:text-china-red nav-btn" data-target="profile">
+                    <i class="fas fa-user-astronaut text-xl"></i> <span data-i18n="nav_profile">โปรไฟล์</span>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Desktop Sidebar -->
+        <aside class="hidden md:flex flex-col w-64 bg-white border-r h-full fixed left-0 top-0 z-50 shadow-lg">
+            <div class="p-6 border-b flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-china-red flex items-center justify-center text-white font-bold text-xl font-chinese">中</div>
+                <div>
+                    <h1 class="font-bold text-lg text-china-red">HSK 4 Master</h1>
+                    <p class="text-xs text-gray-500">Global Edition</p>
+                </div>
+            </div>
+            <nav class="flex-1 p-4 space-y-2">
+                <button onclick="app.navigate('dashboard')" class="w-full text-left px-4 py-3 rounded-xl hover:bg-red-50 hover:text-china-red transition flex items-center gap-3 nav-btn-desktop" data-target="dashboard">
+                    <i class="fas fa-chart-pie w-6"></i> <span data-i18n="nav_home">แดชบอร์ด</span>
+                </button>
+                <button onclick="app.navigate('learn')" class="w-full text-left px-4 py-3 rounded-xl hover:bg-red-50 hover:text-china-red transition flex items-center gap-3 nav-btn-desktop" data-target="learn">
+                    <i class="fas fa-layer-group w-6"></i> <span data-i18n="nav_learn">คอร์ส 30 วัน</span>
+                </button>
+                <button onclick="app.navigate('practice')" class="w-full text-left px-4 py-3 rounded-xl hover:bg-red-50 hover:text-china-red transition flex items-center gap-3 nav-btn-desktop" data-target="practice">
+                    <i class="fas fa-brain w-6"></i> <span data-i18n="nav_practice">ห้องฝึกฝน</span>
+                </button>
+                <button onclick="app.navigate('profile')" class="w-full text-left px-4 py-3 rounded-xl hover:bg-red-50 hover:text-china-red transition flex items-center gap-3 nav-btn-desktop" data-target="profile">
+                    <i class="fas fa-cog w-6"></i> <span data-i18n="nav_profile">ตั้งค่า</span>
+                </button>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main id="main-container" class="flex-1 md:ml-64 h-full overflow-y-auto pb-24 md:pb-0 scroll-smooth relative">
+            <header class="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b px-6 py-4 flex justify-between items-center">
+                <h2 id="page-title" class="text-xl font-bold text-gray-800">HSK 4</h2>
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-2 bg-red-100 text-china-red px-3 py-1 rounded-full text-sm font-bold">
+                        <i class="fas fa-fire"></i> <span id="streak-counter">0</span> <span data-i18n="days">วัน</span>
+                    </div>
+                </div>
+            </header>
+
+            <div id="views" class="p-4 md:p-8 max-w-5xl mx-auto">
+                
+                <!-- Dashboard -->
+                <div id="view-dashboard" class="space-y-6 fade-in">
+                    <div class="bg-gradient-to-r from-china-red to-red-700 rounded-3xl p-6 md:p-10 text-white shadow-xl relative overflow-hidden">
+                        <div class="absolute right-0 top-0 opacity-10 font-chinese text-9xl transform translate-x-10 -translate-y-10 select-none">加油</div>
+                        <div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                            <div>
+                                <h3 class="text-3xl font-bold mb-2"><span data-i18n="hello">สวัสดี</span>, <span id="user-display-name">นักเรียน</span>!</h3>
+                                <p class="text-red-100 max-w-lg mb-2" data-i18n="dashboard_msg">พร้อมที่จะพิชิตคำศัพท์ HSK 4 ทั้งหมดภายใน 30 วันแล้วหรือยัง?</p>
+                                
+                                <!-- ADDED: Rank Display -->
+                                <div class="inline-flex items-center gap-2 bg-black/20 px-3 py-1 rounded-lg text-sm text-white backdrop-blur-sm border border-white/20">
+                                    <i class="fas fa-crown text-yellow-400"></i> <span id="user-rank-name">ผู้เริ่มต้น</span> <span class="opacity-50">|</span> <span id="user-level-display">Lv. 1</span>
+                                </div>
+                            </div>
+                            
+                            <button onclick="app.startDailySession()" class="bg-white text-china-red px-8 py-3 rounded-full font-bold shadow-lg hover:shadow-xl hover:scale-105 transition transform btn-press whitespace-nowrap">
+                                <span data-i18n="start_today">เริ่มบทเรียนวันนี้</span> <i class="fas fa-arrow-right ml-2"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- ADDED: Level Progress Bar -->
+                    <div class="glass-panel p-4 rounded-2xl flex items-center gap-4">
+                        <div class="w-12 h-12 bg-china-gold rounded-full flex items-center justify-center text-white font-bold shadow-md rank-badge-bg">
+                            <span id="progress-level-circle">1</span>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex justify-between text-xs text-gray-500 mb-1">
+                                <span>XP Progress</span>
+                                <span id="xp-text-display">0 / 100</span>
+                            </div>
+                            <div class="h-3 bg-gray-100 rounded-full overflow-hidden">
+                                <div id="xp-progress-bar" class="h-full bg-china-gold transition-all duration-500" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="glass-panel p-4 rounded-2xl flex flex-col items-center justify-center">
+                            <div class="text-3xl font-bold text-jade-dark mb-1" id="stat-learned">0</div>
+                            <div class="text-xs text-gray-500" data-i18n="stat_learned">เรียนแล้ว</div>
+                        </div>
+                        <div class="glass-panel p-4 rounded-2xl flex flex-col items-center justify-center">
+                            <div class="text-3xl font-bold text-china-gold mb-1" id="stat-mastered">0</div>
+                            <div class="text-xs text-gray-500" data-i18n="stat_mastered">จำแม่น</div>
+                        </div>
+                        <div class="glass-panel p-4 rounded-2xl flex flex-col items-center justify-center">
+                            <div class="text-3xl font-bold text-blue-600 mb-1" id="stat-accuracy">0%</div>
+                            <div class="text-xs text-gray-500" data-i18n="stat_accuracy">ความแม่นยำ</div>
+                        </div>
+                         <div class="glass-panel p-4 rounded-2xl flex flex-col items-center justify-center">
+                            <div class="text-3xl font-bold text-purple-600 mb-1" id="stat-xp">0</div>
+                            <div class="text-xs text-gray-500">XP Total</div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 class="font-bold text-lg mb-4 flex items-center gap-2">
+                            <span class="w-1 h-6 bg-china-red rounded-full"></span> <span data-i18n="recommended">คำศัพท์แนะนำวันนี้</span>
+                        </h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="daily-vocab-list"></div>
+                    </div>
+                </div>
+
+                <!-- Learn -->
+                <div id="view-learn" class="hidden space-y-6 fade-in">
+                    <h3 class="text-2xl font-bold" data-i18n="course_map">แผนการเรียน 30 วัน</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="course-roadmap"></div>
+                </div>
+
+                <!-- Practice -->
+                <div id="view-practice" class="hidden space-y-6 fade-in">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div onclick="app.startPractice('flashcard')" class="glass-panel p-6 rounded-3xl cursor-pointer hover:border-china-red transition group relative overflow-hidden">
+                            <div class="absolute top-0 right-0 p-4 opacity-20 group-hover:opacity-40 transition group-hover:scale-110 transform duration-500">
+                                <i class="fas fa-clone text-8xl text-china-red"></i>
+                            </div>
+                            <h4 class="text-xl font-bold mb-2 group-hover:text-china-red">Flashcards</h4>
+                            <p class="text-sm text-gray-500" data-i18n="desc_flashcard">ทบทวนคำศัพท์ด้วยบัตรคำ</p>
+                        </div>
+                        <div onclick="app.startPractice('writing')" class="glass-panel p-6 rounded-3xl cursor-pointer hover:border-jade-dark transition group relative overflow-hidden">
+                             <div class="absolute top-0 right-0 p-4 opacity-20 group-hover:opacity-40 transition group-hover:scale-110 transform duration-500">
+                                <i class="fas fa-pen-nib text-8xl text-jade-dark"></i>
+                            </div>
+                            <h4 class="text-xl font-bold mb-2 group-hover:text-jade-dark">Writing</h4>
+                            <p class="text-sm text-gray-500" data-i18n="desc_writing">ฝึกเขียนอักษรจีน</p>
+                        </div>
+                        <div onclick="app.startPractice('quiz')" class="glass-panel p-6 rounded-3xl cursor-pointer hover:border-blue-500 transition group relative overflow-hidden">
+                             <div class="absolute top-0 right-0 p-4 opacity-20 group-hover:opacity-40 transition group-hover:scale-110 transform duration-500">
+                                <i class="fas fa-bolt text-8xl text-blue-500"></i>
+                            </div>
+                            <h4 class="text-xl font-bold mb-2 group-hover:text-blue-500">Speed Quiz</h4>
+                            <p class="text-sm text-gray-500" data-i18n="desc_quiz">ทดสอบความไว</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Profile -->
+                <div id="view-profile" class="hidden space-y-6 fade-in">
+                    <div class="glass-panel p-8 rounded-3xl text-center">
+                        <div class="w-24 h-24 bg-china-red rounded-full mx-auto flex items-center justify-center text-white text-4xl font-chinese mb-4">我</div>
+                        <h3 class="text-2xl font-bold" id="profile-name-display">User</h3>
+                        <p class="text-gray-500" id="profile-email-display">user@example.com</p>
+                        
+                        <!-- Profile Rank -->
+                        <div class="mt-4 inline-block bg-yellow-100 text-yellow-700 px-4 py-2 rounded-full font-bold">
+                            <span id="profile-rank-display">ผู้เริ่มต้น</span> (Lv. <span id="profile-level-display">1</span>)
+                        </div>
+                    </div>
+
+                    <div class="glass-panel p-6 rounded-3xl space-y-6">
+                        <h4 class="font-bold border-b pb-2" data-i18n="settings">การตั้งค่า</h4>
+                        
+                        <div>
+                            <label class="block text-sm text-gray-500 mb-1" data-i18n="change_name">เปลี่ยนชื่อ</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="setting-name" class="flex-1 border rounded-lg px-3 py-2 outline-none focus:border-china-red">
+                                <button onclick="app.updateProfile()" class="bg-gray-800 text-white px-4 rounded-lg" data-i18n="save">บันทึก</button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm text-gray-500 mb-1" data-i18n="change_lang">เปลี่ยนภาษา</label>
+                            <div class="grid grid-cols-4 gap-2">
+                                <button onclick="auth.changeLangInside('th')" class="p-2 border rounded hover:bg-gray-50">🇹🇭</button>
+                                <button onclick="auth.changeLangInside('en')" class="p-2 border rounded hover:bg-gray-50">🇬🇧</button>
+                                <button onclick="auth.changeLangInside('cn')" class="p-2 border rounded hover:bg-gray-50">🇨🇳</button>
+                                <button onclick="auth.changeLangInside('la')" class="p-2 border rounded hover:bg-gray-50">🇱🇦</button>
+                            </div>
+                        </div>
+
+                        <button onclick="window.auth.logout()" class="w-full text-red-600 border border-red-200 p-3 rounded-xl mt-4 hover:bg-red-50" data-i18n="logout">
+                            ออกจากระบบ
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- SESSION OVERLAY (Fixed Layout) -->
+    <div id="session-overlay" class="fixed inset-0 bg-gray-100 z-[60] hidden flex flex-col">
+        <div class="bg-white px-4 py-3 border-b flex justify-between items-center shadow-sm z-50">
+            <button onclick="app.endSession()" class="text-gray-400 hover:text-red-500 transition"><i class="fas fa-times text-xl"></i></button>
+            <div class="flex-1 mx-4">
+                <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div id="session-progress" class="h-full bg-china-red transition-all duration-300" style="width: 0%"></div>
+                </div>
+            </div>
+            <div class="font-bold text-gray-700" id="session-counter">0/0</div>
+        </div>
+
+        <div id="session-content" class="flex-1 flex flex-col items-center justify-center p-4 relative overflow-y-auto w-full">
+            
+            <!-- FIXED FLASHCARD COMPONENT -->
+            <div id="comp-flashcard" class="hidden w-full max-w-md h-[400px] card-container cursor-pointer" onclick="app.flipCard()">
+                <div class="card-body bg-white">
+                    <!-- Front -->
+                    <div class="card-face card-front bg-white">
+                        <span class="text-xs text-gray-400 absolute top-4 left-4" data-i18n="tap_flip">แตะเพื่อดูเฉลย</span>
+                        <button onclick="event.stopPropagation(); app.speak()" class="absolute top-4 right-4 text-gray-400 hover:text-china-red btn-press w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center border border-gray-200">
+                            <i class="fas fa-volume-up"></i>
+                        </button>
+                        <div class="text-6xl md:text-8xl font-chinese text-ink mb-4" id="fc-hanzi"></div>
+                        <div class="text-xl text-gray-500 font-serif" id="fc-pinyin"></div>
+                    </div>
+                    <!-- Back -->
+                    <div class="card-face card-back">
+                        <div class="text-4xl font-chinese text-china-red/10 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" id="fc-hanzi-bg"></div>
+                        <div class="relative z-10 px-6 w-full text-center">
+                            <h3 class="text-2xl font-bold text-gray-800 mb-4" id="fc-meaning"></h3>
+                            <!-- Sentence Box -->
+                            <div id="fc-sentence-box" class="bg-white/80 border-l-4 border-china-red p-3 text-left rounded shadow-sm">
+                                <p class="text-lg text-gray-700 font-chinese mb-1" id="fc-sentence"></p>
+                                <p class="text-xs text-gray-500" id="fc-sentence-meaning"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- WRITING -->
+            <div id="comp-writing" class="hidden flex flex-col items-center w-full max-w-md">
+                 <div class="flex justify-between w-full mb-2 px-2 items-center">
+                    <span class="text-lg font-bold text-gray-700">เขียน: <span id="wr-meaning" class="text-china-red"></span></span>
+                    <button onclick="app.speak()" class="text-gray-400 hover:text-china-red"><i class="fas fa-volume-up"></i></button>
+                 </div>
+                 <div class="relative w-[300px] h-[300px] mx-auto bg-white rounded-xl shadow-lg border-2 border-gray-200">
+                     <div id="wr-guide" class="absolute inset-0 flex items-center justify-center text-9xl font-chinese text-gray-200 pointer-events-none select-none z-0 opacity-0 transition-opacity duration-500"></div>
+                     <canvas id="hanzi-canvas" width="300" height="300" class="writing-canvas z-10 relative w-full h-full rounded-xl"></canvas>
+                 </div>
+                 <div class="flex gap-4 mt-6 w-full">
+                     <button onclick="app.writingCanvas.clear()" class="flex-1 py-3 rounded-xl bg-gray-200 font-bold text-gray-600 btn-press" data-i18n="clear">ลบ</button>
+                     <button onclick="app.revealWriting()" class="flex-1 py-3 rounded-xl bg-jade-light text-white font-bold shadow-lg btn-press" data-i18n="check">เฉลย</button>
+                 </div>
+            </div>
+
+            <!-- QUIZ -->
+            <div id="comp-quiz" class="hidden w-full max-w-md">
+                <div class="bg-white rounded-3xl p-8 shadow-xl text-center mb-6 relative">
+                    <button onclick="app.speak()" class="absolute top-4 right-4 text-gray-300 hover:text-china-red"><i class="fas fa-volume-up"></i></button>
+                    <div class="text-5xl font-chinese mb-2" id="qz-question"></div>
+                </div>
+                <div class="grid grid-cols-1 gap-3" id="qz-options"></div>
+            </div>
+        </div>
+
+        <div id="session-controls" class="bg-white p-4 border-t hidden pb-safe z-50 shadow-inner">
+            <div class="flex justify-between gap-3 max-w-md mx-auto">
+                <button onclick="app.handleAnswer('hard')" class="flex-1 bg-red-100 text-red-600 py-3 rounded-xl font-bold hover:bg-red-200 btn-press">
+                    <span data-i18n="hard">ยาก</span> <span class="block text-xs font-normal opacity-70">1 min</span>
+                </button>
+                <button onclick="app.handleAnswer('good')" class="flex-1 bg-blue-100 text-blue-600 py-3 rounded-xl font-bold hover:bg-blue-200 btn-press">
+                    <span data-i18n="good">พอได้</span> <span class="block text-xs font-normal opacity-70">10 mins</span>
+                </button>
+                <button onclick="app.handleAnswer('easy')" class="flex-1 bg-green-100 text-green-600 py-3 rounded-xl font-bold hover:bg-green-200 btn-press">
+                    <span data-i18n="easy">ง่าย</span> <span class="block text-xs font-normal opacity-70">3 days</span>
+                </button>
+            </div>
+        </div>
+        
+        <div id="session-next-btn" class="bg-white p-4 border-t hidden pb-safe z-50 shadow-inner">
+            <button onclick="app.nextCard()" class="w-full bg-china-red text-white py-3 rounded-xl font-bold shadow-lg btn-press max-w-md mx-auto block">
+                <span data-i18n="next">ถัดไป</span> <i class="fas fa-chevron-right ml-1"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- MAIN LOGIC WITH FIREBASE -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- FIREBASE CONFIGURATION ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyA_6-T3-xZXQNA4abv0U6onyYyHmrPbEP0",
+            authDomain: "hsk4-web.firebaseapp.com",
+            projectId: "hsk4-web",
+            storageBucket: "hsk4-web.firebasestorage.app",
+            messagingSenderId: "342394634384",
+            appId: "1:342394634384:web:ceccfe5985498feda3d815"
         };
+
+        const fbApp = initializeApp(firebaseConfig);
+        const fbAuth = getAuth(fbApp);
+        const fbDb = getFirestore(fbApp);
+        // FIX: Use __app_id from environment if available, otherwise use config
+        const appId = typeof __app_id !== 'undefined' ? __app_id : (firebaseConfig.projectId || "hsk4-web");
 
         // --- CONSTANTS ---
-        const MASTER_ADMIN = {
-            email: 'bnathhomsombath@gmail.com',
-            password: 'Asdf123#' 
+        const STORAGE_PREFIX = 'hsk4_masterclass_';
+        const STORAGE_USER_DATA = STORAGE_PREFIX + 'user_data'; 
+
+        // --- 1. LANGUAGE DATA ---
+        const i18nData = {
+            // ... (Same as before)
+            th: {
+                app_subtitle: "เรียนจีนฉบับเร่งรัดใน 1 เดือน", username: "ชื่อผู้ใช้", start_learning: "เริ่มเรียนทันที", nav_home: "หน้าหลัก", nav_learn: "บทเรียน", nav_practice: "ฝึกฝน", nav_profile: "โปรไฟล์", hello: "สวัสดี", dashboard_msg: "พร้อมที่จะพิชิตคำศัพท์ HSK 4 ทั้งหมดภายใน 30 วันแล้วหรือยัง?", start_today: "เริ่มบทเรียนวันนี้", stat_learned: "เรียนแล้ว", stat_mastered: "จำแม่น", stat_accuracy: "ความแม่นยำ", recommended: "คำศัพท์แนะนำวันนี้", course_map: "แผนการเรียน 30 วัน", desc_flashcard: "ทบทวนคำศัพท์ด้วยบัตรคำ", desc_writing: "ฝึกเขียนอักษรจีน", desc_quiz: "ทดสอบความไว", settings: "การตั้งค่า", change_name: "เปลี่ยนชื่อ", change_lang: "เปลี่ยนภาษา", save: "บันทึก", logout: "ออกจากระบบ", tap_flip: "แตะเพื่อดูเฉลย", clear: "ลบ", check: "เฉลย / ตรวจ", hard: "ยาก / จำไม่ได้", good: "พอได้", easy: "ง่าย / จำได้", next: "ถัดไป", days: "วัน", login_btn: "เข้าสู่ระบบ", register_btn: "สมัครสมาชิก", no_account: "ยังไม่มีบัญชี?", have_account: "มีบัญชีแล้ว?", email_ph: "อีเมล (Email)...", pass_ph: "รหัสผ่าน (Password)...",
+                rank_1: "ผู้เริ่มต้น", rank_2: "นักเรียนฝึกหัด", rank_3: "หนอนหนังสือ", rank_4: "บัณฑิต", rank_5: "อาจารย์", rank_6: "ปรมาจารย์"
+            },
+            en: {
+                app_subtitle: "The Ultimate Learning Experience", username: "Username", start_learning: "Start Learning", nav_home: "Home", nav_learn: "Course", nav_practice: "Practice", nav_profile: "Profile", hello: "Hello", dashboard_msg: "Ready to master HSK 4 in 30 days?", start_today: "Start Session", stat_learned: "Learned", stat_mastered: "Mastered", stat_accuracy: "Accuracy", recommended: "Recommended", course_map: "30-Day Roadmap", desc_flashcard: "SRS Review", desc_writing: "Stroke Order", desc_quiz: "Speed Quiz", settings: "Settings", change_name: "Display Name", change_lang: "Language", save: "Save", logout: "Logout", tap_flip: "Tap to Flip", clear: "Clear", check: "Reveal / Check", hard: "Hard", good: "Good", easy: "Easy", next: "Next", days: "Days", login_btn: "Login", register_btn: "Register", no_account: "No account?", have_account: "Have an account?", email_ph: "Email...", pass_ph: "Password...",
+                rank_1: "Beginner", rank_2: "Apprentice", rank_3: "Bookworm", rank_4: "Scholar", rank_5: "Master", rank_6: "Grandmaster"
+            },
+            cn: {
+                app_subtitle: "一个月掌握HSK 4级词汇", username: "用户名", start_learning: "开始学习", nav_home: "主页", nav_learn: "课程", nav_practice: "练习", nav_profile: "我的", hello: "你好", dashboard_msg: "准备好在30天内掌握HSK 4了吗？", start_today: "今日学习", stat_learned: "已学", stat_mastered: "掌握", stat_accuracy: "准确率", recommended: "今日推荐", course_map: "30天学习计划", desc_flashcard: "卡片复习", desc_writing: "汉字书写", desc_quiz: "快速测验", settings: "设置", change_name: "显示名称", change_lang: "语言", save: "保存", logout: "退出登录", tap_flip: "点击翻转", clear: "清除", check: "检查", hard: "困难", good: "还行", easy: "简单", next: "下一个", days: "天", login_btn: "登录", register_btn: "注册", no_account: "没有账号？", have_account: "已有账号？", email_ph: "邮箱...", pass_ph: "密码...",
+                rank_1: "初学者", rank_2: "学徒", rank_3: "书虫", rank_4: "学者", rank_5: "大师", rank_6: "宗师"
+            },
+            la: {
+                app_subtitle: "ຮຽນພາສາຈີນແບບເລັ່ງລັດພາຍໃນ 1 ເດືອນ", username: "ຊື່ຜູ້ໃຊ້", start_learning: "ເລີ່ມຮຽນ", nav_home: "ໜ້າຫຼັກ", nav_learn: "ບົດຮຽນ", nav_practice: "ຝຶກຝົນ", nav_profile: "ໂປຣໄຟລ໌", hello: "ສະບາຍດີ", dashboard_msg: "ພ້ອມທີ່ຈະພິຊິດ HSK 4 ພາຍໃນ 30 ມື້ແລ້ວບໍ?", start_today: "ເລີ່ມມື້ນີ້", stat_learned: "ຮຽນແລ້ວ", stat_mastered: "ຈື່ໄດ້ແລ້ວ", stat_accuracy: "ຄວາມຖືກຕ້ອງ", recommended: "ຄຳແນະນຳມື້ນີ້", course_map: "ແຜນການຮຽນ 30 ມື້", desc_flashcard: "ທົບທວນດ້ວຍ SRS", desc_writing: "ຝຶກຂຽນ", desc_quiz: "ທົດສອບຄວາມໄວ", settings: "ການຕັ້ງຄ່າ", change_name: "ປ່ຽນຊື່", change_lang: "ພາສາ", save: "ບັນທຶກ", logout: "ອອກຈາກລະບົບ", tap_flip: "ແຕະເພື່ອເບິ່ງຄຳຕອບ", clear: "ລຶບ", check: "ສະເລີຍ", hard: "ຍາກ", good: "ພໍໄດ້", easy: "ງ່າຍ", next: "ຕໍ່ໄປ", days: "ມື້", login_btn: "ເຂົ້າສູ່ລະບົບ", register_btn: "ລົງທະບຽນ", no_account: "ຍັງບໍ່ມີບັນຊີ?", have_account: "ມີບັນຊີແລ້ວ?", email_ph: "ອີເມວ...", pass_ph: "ລະຫັດຜ່ານ...",
+                rank_1: "ຜູ້ເລີ່ມຕົ້ນ", rank_2: "ນັກຮຽນຝຶກຫັດ", rank_3: "ໜອນໜັງສື", rank_4: "ບັນດິດ", rank_5: "ອາຈານ", rank_6: "ປໍລະມາຈານ"
+            }
         };
 
-        // --- HELPER ---
-        const formatCurrency = (amount) => {
-            return new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(amount);
-        };
-
-        const INITIAL_PRODUCTS = [
-            { id: 101, barcode: '885101', name: 'Sig. Americano', price: 65, cost: 25, category: 'Coffee', stock: 50, image: '☕', color: 'from-amber-900 to-amber-700 text-amber-50' },
-            { id: 102, barcode: '885102', name: 'Caramel Macchiato', price: 85, cost: 35, category: 'Coffee', stock: 40, image: '🥛', color: 'from-amber-800 to-amber-600 text-amber-50' },
-            { id: 103, barcode: '885103', name: 'Premium Matcha', price: 90, cost: 40, category: 'Tea', stock: 25, image: '🍵', color: 'from-green-800 to-green-600 text-green-50' },
-            { id: 201, barcode: '885201', name: 'Butter Croissant', price: 65, cost: 30, category: 'Bakery', stock: 12, image: '🥐', color: 'from-yellow-600 to-yellow-400 text-yellow-50' },
-            { id: 301, barcode: '885301', name: 'Mineral Water', price: 15, cost: 5, category: 'Mart', stock: 100, image: '💧', color: 'from-blue-500 to-blue-300 text-blue-50' },
+        // --- 2. MULTI-LANGUAGE VOCABULARY DATA ---
+        const hsk4Data = [
+            // ... (Same data)
+            {
+                id: 1, hanzi: "阿姨", pinyin: "āyí",
+                definitions: {
+                    th: { meaning: "น้า, ป้า", sentence_meaning: "คุณน้าคะ เสื้อตัวนี้ราคาเท่าไหร่?" },
+                    en: { meaning: "Aunt", sentence_meaning: "Auntie, how much is this dress?" },
+                    cn: { meaning: "阿姨", sentence_meaning: "阿姨，这件衣服多少钱？" },
+                    la: { meaning: "ນ້າສາວ, ປ້າ", sentence_meaning: "ນ້າສາວ, ເສື້ອນີ້ລາຄາເທົ່າໃດ?" }
+                },
+                sentence: "阿姨，这件衣服多少钱？"
+            },
+            {
+                id: 2, hanzi: "爱国", pinyin: "àiguó",
+                definitions: {
+                    th: { meaning: "รักชาติ", sentence_meaning: "พลเมืองทุกคนควรมีความรักชาติ" },
+                    en: { meaning: "Patriotic", sentence_meaning: "Every citizen should be patriotic." },
+                    cn: { meaning: "爱国", sentence_meaning: "每个公民都应该爱国。" },
+                    la: { meaning: "ຮັກຊາດ", sentence_meaning: "ພົນລະເມືອງທຸກຄົນຄວນຮັກຊາດ." }
+                },
+                sentence: "每个公民都应该爱国。"
+            },
+            {
+                id: 3, hanzi: "爱护", pinyin: "àihù",
+                definitions: {
+                    th: { meaning: "รักและปกป้อง", sentence_meaning: "พวกเราต้องช่วยกันดูแลรักษาของสาธารณะ" },
+                    en: { meaning: "Cherish, Protect", sentence_meaning: "We must cherish public property." },
+                    cn: { meaning: "爱护", sentence_meaning: "我们要爱护公物。" },
+                    la: { meaning: "ຮັກຫອມ, ປົກປ້ອງ", sentence_meaning: "ພວກເຮົາຕ້ອງຊ່ວຍກັນປົກປັກຮັກສາຂອງສາທາລະນະ." }
+                },
+                sentence: "我们要爱护公物。"
+            },
+            {
+                id: 4, hanzi: "安", pinyin: "àn",
+                definitions: {
+                    th: { meaning: "สงบ, สบาย", sentence_meaning: "ขอให้คุณเดินทางโดยสวัสดิภาพ" },
+                    en: { meaning: "Safe, Calm", sentence_meaning: "Have a safe journey." },
+                    cn: { meaning: "安", sentence_meaning: "祝你一路平安。" },
+                    la: { meaning: "ສະຫງົບ, ສະບາຍ", sentence_meaning: "ຂໍໃຫ້ເດີນທາງດ້ວຍຄວາມປອດໄພ." }
+                },
+                sentence: "祝你一路平安。"
+            },
+            {
+                id: 5, hanzi: "安置", pinyin: "ānzhì",
+                definitions: {
+                    th: { meaning: "จัดหาที่พัก", sentence_meaning: "รัฐบาลได้จัดหาที่พักให้ผู้ประสบภัยอย่างเหมาะสม" },
+                    en: { meaning: "Resettle", sentence_meaning: "The government properly resettled the victims." },
+                    cn: { meaning: "安置", sentence_meaning: "政府妥善安置了灾民。" },
+                    la: { meaning: "ຈັດຫາບ່ອນຢູ່", sentence_meaning: "ລັດຖະບານໄດ້ຈັດຫາບ່ອນຢູ່ໃຫ້ຜູ້ປະສົບໄພຢ່າງເໝາະສົມ." }
+                },
+                sentence: "政府妥善安置了灾民。"
+            },
+            {
+                id: 6, hanzi: "按时", pinyin: "ànshí",
+                definitions: {
+                    th: { meaning: "ตรงเวลา", sentence_meaning: "ขอให้ทุกคนส่งการบ้านให้ตรงเวลา" },
+                    en: { meaning: "On time", sentence_meaning: "Please hand in your homework on time." },
+                    cn: { meaning: "按时", sentence_meaning: "请大家按时交作业。" },
+                    la: { meaning: "ກົງເວລາ", sentence_meaning: "ຂໍໃຫ້ທຸກຄົນສົ່ງວຽກບ້ານໃຫ້ກົງເວລາ." }
+                },
+                sentence: "请大家按时交作业。"
+            },
+            {
+                id: 7, hanzi: "暗", pinyin: "àn",
+                definitions: {
+                    th: { meaning: "มืด", sentence_meaning: "ในห้องมืดเกินไปแล้ว เปิดไฟเถอะ" },
+                    en: { meaning: "Dark", sentence_meaning: "It's too dark in the room, turn on the light." },
+                    cn: { meaning: "暗", sentence_meaning: "房间里太暗了，开灯吧。" },
+                    la: { meaning: "ມືດ", sentence_meaning: "ໃນຫ້ອງມືດໂພດແລ້ວ, ເປີດໄຟແດ່." }
+                },
+                sentence: "房间里太暗了，开灯吧。"
+            },
+            {
+                id: 8, hanzi: "暗示", pinyin: "ànshì",
+                definitions: {
+                    th: { meaning: "บอกใบ้", sentence_meaning: "เขาบอกใบ้ให้ฉันไม่ต้องพูดอะไร" },
+                    en: { meaning: "Hint", sentence_meaning: "He hinted for me not to speak." },
+                    cn: { meaning: "暗示", sentence_meaning: "他暗示我不要说话。" },
+                    la: { meaning: "ບອກໃບ້", sentence_meaning: "ລາວບອກໃບ້ໃຫ້ຂ້ອຍບໍ່ຕ້ອງເວົ້າຫຍັງ." }
+                },
+                sentence: "他暗示我不要说话。"
+            },
+            {
+                id: 9, hanzi: "包子", pinyin: "bāozi",
+                definitions: {
+                    th: { meaning: "ซาลาเปา", sentence_meaning: "ฉันอยากกินซาลาเปาไส้เนื้อ" },
+                    en: { meaning: "Steamed Bun", sentence_meaning: "I want to eat meat buns." },
+                    cn: { meaning: "包子", sentence_meaning: "我想吃肉包子。" },
+                    la: { meaning: "ຊາລາເປົາ", sentence_meaning: "ຂ້ອຍຢາກກິນຊາລາເປົາຊີ້ນ." }
+                },
+                sentence: "我想吃肉包子。"
+            },
+            {
+                id: 10, hanzi: "保护", pinyin: "bǎohù",
+                definitions: {
+                    th: { meaning: "ปกป้อง", sentence_meaning: "เราต้องช่วยกันรักษาสิ่งแวดล้อม" },
+                    en: { meaning: "Protect", sentence_meaning: "We must protect the environment." },
+                    cn: { meaning: "保护", sentence_meaning: "我们要保护环境。" },
+                    la: { meaning: "ປົກປ້ອງ", sentence_meaning: "ພວກເຮົາຕ້ອງຊ່ວຍກັນຮັກສາສິ່ງແວດລ້ອມ." }
+                },
+                sentence: "我们要保护环境。"
+            },
+            {
+                id: 11, hanzi: "保证", pinyin: "bǎozhèng",
+                definitions: {
+                    th: { meaning: "รับรอง", sentence_meaning: "ฉันรับรองว่าวันหลังจะไม่มาสายอีก" },
+                    en: { meaning: "Guarantee", sentence_meaning: "I guarantee I won't be late again." },
+                    cn: { meaning: "保证", sentence_meaning: "我保证以后不再迟到。" },
+                    la: { meaning: "ຮັບປະກັນ", sentence_meaning: "ຂ້ອຍຮັບປະກັນວ່າມື້ໜ້າຈະບໍ່ມາຊ້າອີກ." }
+                },
+                sentence: "我保证以后不再迟到。"
+            },
+            {
+                id: 12, hanzi: "抱歉", pinyin: "bàoqiàn",
+                definitions: {
+                    th: { meaning: "ขอโทษ", sentence_meaning: "ขอโทษจริงๆ ที่ให้รอนาน" },
+                    en: { meaning: "Sorry", sentence_meaning: "So sorry to keep you waiting." },
+                    cn: { meaning: "抱歉", sentence_meaning: "非常抱歉，让你久等了。" },
+                    la: { meaning: "ຂໍໂທດ", sentence_meaning: "ຂໍໂທດແທ້ໆ ທີ່ໃຫ້ລໍຖ້າດົນ." }
+                },
+                sentence: "非常抱歉，让你久等了。"
+            },
+            {
+                id: 13, hanzi: "报道", pinyin: "bàodào",
+                definitions: {
+                    th: { meaning: "รายงาน(ข่าว)", sentence_meaning: "รายงานข่าวชิ้นนี้เขียนได้ดีมาก" },
+                    en: { meaning: "Report", sentence_meaning: "This report is written very well." },
+                    cn: { meaning: "报道", sentence_meaning: "这篇报道写得很好。" },
+                    la: { meaning: "ລາຍງານ(ຂ່າວ)", sentence_meaning: "ບົດລາຍງານນີ້ຂຽນໄດ້ດີຫຼາຍ." }
+                },
+                sentence: "这篇报道写得很好。"
+            },
+            {
+                id: 14, hanzi: "报名", pinyin: "bàomíng",
+                definitions: {
+                    th: { meaning: "สมัคร", sentence_meaning: "คุณจะลงสมัครแข่งขันไหม?" },
+                    en: { meaning: "Sign up", sentence_meaning: "Are you signing up for the competition?" },
+                    cn: { meaning: "报名", sentence_meaning: "你要报名参加比赛吗？" },
+                    la: { meaning: "ລົງທະບຽນ", sentence_meaning: "ເຈົ້າຈະລົງສະໝັກແຂ່ງຂັນບໍ?" }
+                },
+                sentence: "你要报名参加比赛吗？"
+            },
+            {
+                id: 15, hanzi: "倍", pinyin: "bèi",
+                definitions: {
+                    th: { meaning: "เท่า(จำนวน)", sentence_meaning: "ผลผลิตปีนี้เพิ่มขึ้นสองเท่า" },
+                    en: { meaning: "Times (multiplier)", sentence_meaning: "Production doubled this year." },
+                    cn: { meaning: "倍", sentence_meaning: "今年的产量增加了两倍。" },
+                    la: { meaning: "ເທົ່າ", sentence_meaning: "ຜົນຜະລິດປີນີ້ເພີ່ມຂຶ້ນສອງເທົ່າ." }
+                },
+                sentence: "今年的产量增加了两倍。"
+            },
+            {
+                id: 19, hanzi: "毕业", pinyin: "bìyè",
+                definitions: {
+                    th: { meaning: "จบการศึกษา", sentence_meaning: "ฉันกำลังจะจบมหาวิทยาลัยปีหน้านี้แล้ว" },
+                    en: { meaning: "Graduate", sentence_meaning: "I am graduating from university next year." },
+                    cn: { meaning: "毕业", sentence_meaning: "我明年就要大学毕业了。" },
+                    la: { meaning: "ຈົບການສຶກສາ", sentence_meaning: "ຂ້ອຍກຳລັງຈະຈົບມະຫາວິທະຍາໄລປີໜ້ານີ້ແລ້ວ." }
+                },
+                sentence: "我明年就要大学毕业了。"
+            },
+            {
+                id: 35, hanzi: "猜", pinyin: "cāi",
+                definitions: {
+                    th: { meaning: "เดา", sentence_meaning: "คุณลองเดาดูสิ ว่าในกล่องคืออะไร?" },
+                    en: { meaning: "Guess", sentence_meaning: "Take a guess, what's in the box?" },
+                    cn: { meaning: "猜", sentence_meaning: "你猜猜看，盒子里是什么？" },
+                    la: { meaning: "ເດົາ", sentence_meaning: "ເຈົ້າລອງເດົາເບິ່ງດຸ ວ່າໃນກ່ອງແມ່ນຫຍັງ?" }
+                },
+                sentence: "你猜猜看，盒子里是什么？"
+            },
+            {
+                id: 907, hanzi: "直播", pinyin: "zhíbō",
+                definitions: {
+                    th: { meaning: "ถ่ายทอดสด", sentence_meaning: "การไลฟ์สดกำลังเป็นที่นิยมมาก" },
+                    en: { meaning: "Live Stream", sentence_meaning: "Live streaming is very popular." },
+                    cn: { meaning: "直播", sentence_meaning: "直播非常流行。" },
+                    la: { meaning: "ຖ່າຍທອດສົດ", sentence_meaning: "ການໄລຟ໌ສົດກຳລັງເປັນທີ່ນິຍົມຫຼາຍ." }
+                },
+                sentence: "直播非常流行。"
+            },
+            {
+                id: 910, hanzi: "值得", pinyin: "zhídé",
+                definitions: {
+                    th: { meaning: "คุ้มค่า", sentence_meaning: "หนังสือเล่มนี้คุ้มค่าที่จะซื้อ" },
+                    en: { meaning: "Worth it", sentence_meaning: "This book is worth buying." },
+                    cn: { meaning: "值得", sentence_meaning: "这本书值得买。" },
+                    la: { meaning: "ຄຸ້ມຄ່າ", sentence_meaning: "ປຶ້ມຫົວນີ້ຄຸ້ມຄ່າທີ່ຈະຊື້." }
+                },
+                sentence: "这本书值得买。"
+            }
         ];
 
-        const CATEGORIES = [
-            { id: 'All', name: 'ทั้งหมด', icon: Icons.Store },
-            { id: 'Coffee', name: 'กาแฟ', icon: Icons.Coffee },
-            { id: 'Tea', name: 'ชา', icon: Icons.Zap },
-            { id: 'Bakery', name: 'เบเกอรี่', icon: Icons.Utensils },
-            { id: 'Mart', name: 'มินิมาร์ท', icon: Icons.Package },
-        ];
+        // --- 3. SOUND EFFECT SYSTEM ---
+        class SoundManager {
+            constructor() { this.ctx = null; }
+            init() {
+                if(!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                if(this.ctx.state === 'suspended') this.ctx.resume();
+            }
+            playTone(freq, type, duration) {
+                this.init(); if(!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = type; osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                gain.gain.setValueAtTime(0.02, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.00001, this.ctx.currentTime + duration);
+                osc.connect(gain); gain.connect(this.ctx.destination);
+                osc.start(); osc.stop(this.ctx.currentTime + duration);
+            }
+            playClick() { this.playTone(600, 'sine', 0.05); }
+            playCorrect() { this.playTone(800, 'sine', 0.1); setTimeout(() => this.playTone(1200, 'sine', 0.1), 100); }
+            playWrong() { this.playTone(200, 'triangle', 0.2); }
+            playWin() { [500, 700, 900].forEach((f, i) => setTimeout(() => this.playTone(f, 'sine', 0.1), i * 100)); }
+        }
 
-        // --- COMPONENTS ---
+        // --- 4. CLOUD SYNC & AUTH ---
+        class CloudSyncManager {
+            constructor() {
+                this.timer = null;
+                this.enabled = true;
+                this.pending = false;
+            }
 
-        const ImageUploader = ({ label, currentImage, onImageChange }) => {
-            const fileInputRef = useRef(null);
-            const handleFileChange = (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    if (file.size > 500000) { alert("ไฟล์มีขนาดใหญ่เกินไป (Max 500KB)"); return; }
-                    const reader = new FileReader();
-                    reader.onloadend = () => { onImageChange(reader.result); };
-                    reader.readAsDataURL(file);
+            save(user, immediate = false) {
+                if(!user) return;
+                user.updatedAt = Date.now(); 
+                localStorage.setItem(STORAGE_USER_DATA, JSON.stringify(user));
+                
+                if(this.enabled && user.uid) {
+                    clearTimeout(this.timer);
+                    this.pending = true;
+                    
+                    if(immediate) {
+                        this.pushToCloud(user);
+                    } else {
+                        this.timer = setTimeout(() => {
+                            this.pushToCloud(user);
+                        }, 500); // Reduced to 0.5s for faster sync
+                    }
                 }
-            };
-            return (
-                <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-slate-600">{label}</label>
-                    <div onClick={() => fileInputRef.current.click()} className="relative group cursor-pointer border-2 border-dashed border-slate-300 rounded-2xl p-4 flex flex-col items-center justify-center transition-all hover:border-blue-500 hover:bg-blue-50 h-40 overflow-hidden bg-slate-50">
-                        {currentImage ? (
-                            <img src={currentImage} alt="Uploaded" className="w-full h-full object-contain z-10" />
-                        ) : (
-                            <div className="text-center text-slate-400 group-hover:text-blue-500">
-                                <Icons.UploadCloud size={32} className="mx-auto mb-2" />
-                                <span className="text-xs">คลิกเพื่ออัปโหลด</span>
-                            </div>
-                        )}
-                        <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileChange} />
-                    </div>
-                </div>
-            );
-        };
+            }
 
-        const ProductCard = ({ product, onAdd, currentStock }) => {
-            const isOutOfStock = currentStock <= 0;
-            return (
-                <div onClick={() => !isOutOfStock && onAdd(product)} className={`relative bg-white rounded-3xl p-4 shadow-sm border border-slate-100 transition-all duration-300 group flex flex-col h-full overflow-hidden ${isOutOfStock ? 'opacity-60 cursor-not-allowed grayscale' : 'hover:shadow-xl hover:border-blue-200 hover:-translate-y-1 cursor-pointer'}`}>
-                    {isOutOfStock && <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/60 backdrop-blur-sm"><span className="bg-red-500 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg">Sold Out</span></div>}
-                    <div className={`h-36 rounded-2xl flex items-center justify-center text-6xl mb-4 shadow-inner bg-gradient-to-br ${product.color} relative overflow-hidden group-hover:scale-[1.02] transition-transform duration-500`}>
-                        <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div><span className="drop-shadow-lg filter">{product.image}</span>
-                    </div>
-                    <div className="space-y-1 mt-auto">
-                        <h3 className="font-bold text-slate-800 line-clamp-1 text-base">{product.name}</h3>
-                        <div className="flex justify-between items-center"><span className="text-[10px] uppercase font-bold tracking-wider text-slate-400 bg-slate-50 px-2 py-1 rounded-lg border border-slate-100">{product.category}</span><span className="text-xs font-semibold text-slate-400">Stock: {currentStock}</span></div>
-                        <div className="pt-3 flex justify-between items-center"><span className="text-xl font-black text-slate-800">{formatCurrency(product.price)}</span></div>
-                    </div>
-                </div>
-            );
-        };
+            async pushToCloud(user) {
+                try {
+                    const userRef = doc(fbDb, 'artifacts', appId, 'users', user.uid, 'app_data', 'profile');
+                    await setDoc(userRef, user, { merge: true });
+                    this.pending = false;
+                    console.log("Cloud synced");
+                } catch(e) {
+                    console.error("Cloud sync failed (offline?)", e);
+                }
+            }
+            
+            handleIncomingData(docSnap, appInstance) {
+                if (!docSnap.exists()) return;
+                const cloudData = docSnap.data();
+                const localDataString = localStorage.getItem(STORAGE_USER_DATA);
+                let merged = cloudData;
+                if (localDataString) {
+                    const localData = JSON.parse(localDataString);
+                    // Ensure cloud has priority unless local is explicitly newer and different
+                    if (localData.updatedAt && cloudData.updatedAt && localData.updatedAt > cloudData.updatedAt) {
+                        this.pushToCloud(localData);
+                        return; 
+                    }
+                }
+                localStorage.setItem(STORAGE_USER_DATA, JSON.stringify(merged));
+                appInstance.loadUser(merged);
+            }
+        }
 
-        const AuthScreen = ({ onLogin }) => {
-            const [isLogin, setIsLogin] = useState(true);
-            const [formData, setFormData] = useState({ email: '', password: '', shopName: '', confirmPass: '' });
-            const [error, setError] = useState('');
+        class AuthManager {
+            constructor() { 
+                this.currentUser = null; 
+                this.userDocUnsubscribe = null;
+                this.lang = 'th'; 
+                this.isRegisterMode = false;
+            }
 
-            const handleSubmit = (e) => {
-                e.preventDefault();
-                setError('');
-                if (isLogin && formData.email === MASTER_ADMIN.email && formData.password === MASTER_ADMIN.password) {
-                    onLogin({ role: 'admin', email: MASTER_ADMIN.email, shopName: 'Master Admin Shop', status: 'active', expiryDate: '9999-12-31' });
+            setLang(l) { 
+                this.lang = l; 
+                this.applyLang(); 
+                if (!this.currentUser) localStorage.setItem(STORAGE_PREFIX + 'global_lang', this.lang);
+                
+                if(window.app && window.app.user) {
+                    window.app.renderDashboard(); 
+                }
+            }
+
+            applyLang() {
+                const t = i18nData[this.lang];
+                if (!t) return;
+
+                document.querySelectorAll('[data-i18n]').forEach(el => {
+                    const key = el.dataset.i18n;
+                    if (t[key]) el.innerText = t[key];
+                });
+
+                const loginBtn = document.getElementById('btn-text-auth');
+                if (loginBtn) loginBtn.innerText = this.isRegisterMode ? t.register_btn : t.login_btn;
+                
+                const toggleText = document.getElementById('auth-toggle-text');
+                if (toggleText) toggleText.innerText = this.isRegisterMode ? t.have_account : t.no_account;
+                
+                const toggleBtn = document.getElementById('auth-toggle-btn');
+                if (toggleBtn) toggleBtn.innerText = this.isRegisterMode ? t.login_btn : t.register_btn;
+
+                const emailInput = document.getElementById('login-email');
+                if (emailInput) emailInput.placeholder = t.email_ph || "Email...";
+                
+                const passInput = document.getElementById('login-password');
+                if (passInput) passInput.placeholder = t.pass_ph || "Password...";
+            }
+
+            toggleMode() {
+                this.isRegisterMode = !this.isRegisterMode;
+                const regName = document.getElementById('register-name');
+                if (this.isRegisterMode) {
+                    regName.classList.remove('hidden-visually');
+                } else {
+                    regName.classList.add('hidden-visually');
+                }
+                this.applyLang();
+                document.getElementById('auth-error').classList.add('hidden-visually');
+            }
+
+            loadFromLocal() {
+                const localStr = localStorage.getItem(STORAGE_USER_DATA);
+                if (localStr) {
+                    try {
+                        const localUser = JSON.parse(localStr);
+                        if(localUser) {
+                            this.currentUser = localUser;
+                            app.loadUser(localUser);
+                            app.startLoadingSequence(true); 
+                            document.getElementById('auth-modal').classList.add('hidden');
+                            document.getElementById('app-container').classList.remove('hidden');
+                        }
+                    } catch(e) { console.error("Local load error", e); }
+                }
+            }
+
+            async handleAuth() {
+                const email = document.getElementById('login-email').value.trim();
+                const password = document.getElementById('login-password').value.trim();
+                const errorDiv = document.getElementById('auth-error');
+                
+                errorDiv.classList.add('hidden-visually');
+                if (!email || !password) {
+                    errorDiv.innerText = "Please enter email and password";
+                    errorDiv.classList.remove('hidden-visually');
                     return;
                 }
-                const usersDb = JSON.parse(localStorage.getItem('bn_pos_users_db') || '[]');
-                if (isLogin) {
-                    const foundUser = usersDb.find(u => u.email === formData.email && u.password === formData.password);
-                    if (foundUser) { onLogin({ ...foundUser, role: 'user' }); } else { setError('อีเมลหรือรหัสผ่านไม่ถูกต้อง'); }
-                } else {
-                    if (formData.password !== formData.confirmPass) { setError('รหัสผ่านไม่ตรงกัน'); return; }
-                    if (usersDb.find(u => u.email === formData.email)) { setError('อีเมลนี้ถูกใช้งานแล้ว'); return; }
-                    if (!formData.shopName) { setError('กรุณาระบุชื่อร้าน'); return; }
-                    const newUser = { email: formData.email, password: formData.password, shopName: formData.shopName, status: 'pending', expiryDate: null, joinedAt: new Date().toISOString() };
-                    usersDb.push(newUser);
-                    localStorage.setItem('bn_pos_users_db', JSON.stringify(usersDb));
-                    onLogin({ ...newUser, role: 'user' });
-                }
-            };
 
-            return (
-                <div className="fixed inset-0 bg-[#0F172A] flex items-center justify-center z-50 overflow-hidden font-sans">
-                    <div className="bg-white/10 backdrop-blur-xl border border-white/20 p-8 rounded-3xl shadow-2xl w-full max-w-md relative z-10 text-white">
-                        <div className="text-center mb-8"><h2 className="text-3xl font-bold tracking-tight">BN POS <span className="text-blue-400">SaaS</span></h2><p className="text-slate-300 text-sm mt-2">ระบบจัดการหน้าร้านมืออาชีพ</p></div>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            {!isLogin && <input type="text" required className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-white" value={formData.shopName} onChange={e => setFormData({...formData, shopName: e.target.value})} placeholder="ชื่อร้านของคุณ" />}
-                            <input type="email" required className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-white" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="email@example.com" />
-                            <input type="password" required className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-white" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} placeholder="••••••••" />
-                            {!isLogin && <input type="password" required className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-white" value={formData.confirmPass} onChange={e => setFormData({...formData, confirmPass: e.target.value})} placeholder="ยืนยันรหัสผ่าน" />}
-                            {error && <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-xl text-red-200 text-sm flex items-center gap-2"><Icons.AlertCircle size={16}/> {error}</div>}
-                            <button type="submit" className="w-full py-4 bg-blue-600 text-white font-bold rounded-xl hover:shadow-lg transition-all mt-4">{isLogin ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก'}</button>
-                        </form>
-                        <div className="mt-6 text-center"><button onClick={() => {setIsLogin(!isLogin); setError(''); setFormData({email:'', password:'', shopName:'', confirmPass:''})}} className="text-slate-400 hover:text-white text-sm transition-colors">{isLogin ? 'ยังไม่มีบัญชี? สมัครสมาชิก' : 'มีบัญชีแล้ว? เข้าสู่ระบบ'}</button></div>
-                    </div>
-                </div>
-            );
-        };
+                sound.init();
+                app.startLoadingSequence(false); 
 
-        const SubscriptionWall = ({ user, onLogout }) => {
-            const isPending = user.status === 'pending';
-            return (
-                <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-sans">
-                    <div className="max-w-md w-full bg-white rounded-3xl shadow-xl p-8 text-center border border-slate-100">
-                        <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 ${isPending ? 'bg-orange-100 text-orange-500' : 'bg-red-100 text-red-500'}`}>{isPending ? <Icons.Clock size={40} /> : <Icons.ShieldCheck size={40} />}</div>
-                        <h2 className="text-2xl font-black text-slate-800 mb-2">{isPending ? 'รอการอนุมัติ' : 'สมาชิกหมดอายุ'}</h2>
-                        <p className="text-slate-500 mb-8">{isPending ? 'กรุณารอผู้ดูแลระบบอนุมัติบัญชีของคุณ' : 'กรุณาติดต่อผู้ดูแลระบบเพื่อต่ออายุ'}</p>
-                        <div className="bg-slate-50 p-4 rounded-xl mb-8 border border-slate-100 text-left"><p className="text-slate-700 font-medium">Line ID: @bnpos_support</p></div>
-                        <button onClick={onLogout} className="w-full py-3 bg-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-300 transition-colors">ออกจากระบบ</button>
-                    </div>
-                </div>
-            );
-        };
-
-        const AdminPanel = () => {
-            const [users, setUsers] = useState(() => JSON.parse(localStorage.getItem('bn_pos_users_db') || '[]'));
-            const updateUserStatus = (email, status, daysToAdd = 0) => {
-                const updatedUsers = users.map(user => {
-                    if (user.email === email) {
-                        let newExpiry = user.expiryDate ? new Date(user.expiryDate) : new Date();
-                        if (daysToAdd > 0) { if (!user.expiryDate || new Date(user.expiryDate) < new Date()) newExpiry = new Date(); newExpiry.setDate(newExpiry.getDate() + daysToAdd); }
-                        return { ...user, status: status, expiryDate: status === 'active' ? newExpiry.toISOString() : user.expiryDate };
+                try {
+                    if (this.isRegisterMode) {
+                        const name = document.getElementById('register-name').value.trim() || "Student";
+                        const result = await createUserWithEmailAndPassword(fbAuth, email, password);
+                        await updateProfile(result.user, { displayName: name });
+                        
+                        // Force save new user data immediately
+                        const newUser = {
+                            name: name,
+                            xp: 0,
+                            streak: 0,
+                            lastStudyDate: "",
+                            progress: {},
+                            settings: { lang: this.lang },
+                            uid: result.user.uid,
+                            email: result.user.email,
+                            updatedAt: Date.now()
+                        };
+                        this.currentUser = newUser;
+                        cloudSync.save(newUser, true);
+                    } else {
+                        await signInWithEmailAndPassword(fbAuth, email, password);
                     }
-                    return user;
-                });
-                setUsers(updatedUsers);
-                localStorage.setItem('bn_pos_users_db', JSON.stringify(updatedUsers));
-            };
-            const deleteUser = (email) => { if(confirm('ลบบัญชีนี้?')) { const updated = users.filter(u => u.email !== email); setUsers(updated); localStorage.setItem('bn_pos_users_db', JSON.stringify(updated)); }};
+                } catch (error) {
+                    let msg = error.message;
+                    if (error.code === 'auth/wrong-password') msg = "รหัสผ่านไม่ถูกต้อง";
+                    else if (error.code === 'auth/user-not-found') msg = "ไม่พบผู้ใช้งานนี้";
+                    app.stopLoading();
+                    errorDiv.innerText = msg;
+                    errorDiv.classList.remove('hidden-visually');
+                }
+            }
 
-            return (
-                <div className="p-8 h-full flex flex-col bg-slate-50/50 overflow-y-auto">
-                    <h2 className="text-4xl font-black text-slate-800 mb-8 flex items-center gap-2"><Icons.ShieldCheck className="text-blue-600"/> Admin Control</h2>
-                    <div className="bg-white rounded-[2rem] shadow-sm border border-slate-200 overflow-hidden">
-                        <table className="w-full text-left">
-                            <thead className="bg-slate-50 text-slate-500 text-sm font-bold"><tr><th className="p-6">ร้านค้า</th><th className="p-6">สถานะ</th><th className="p-6">หมดอายุ</th><th className="p-6 text-center">จัดการ</th></tr></thead>
-                            <tbody className="divide-y divide-slate-100">
-                                {users.map(u => (
-                                    <tr key={u.email} className="hover:bg-slate-50">
-                                        <td className="p-6"><b>{u.shopName}</b><br/><span className="text-xs text-slate-500">{u.email}</span></td>
-                                        <td className="p-6"><span className={`px-2 py-1 rounded text-xs font-bold ${u.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>{u.status}</span></td>
-                                        <td className="p-6 text-sm">{u.expiryDate ? new Date(u.expiryDate).toLocaleDateString() : '-'}</td>
-                                        <td className="p-6 flex justify-center gap-2">
-                                            <button onClick={()=>updateUserStatus(u.email,'active',30)} className="p-2 bg-blue-100 text-blue-600 rounded"><Icons.Calendar size={16}/></button>
-                                            <button onClick={()=>updateUserStatus(u.email,'suspended')} className="p-2 bg-orange-100 text-orange-600 rounded"><Icons.UserX size={16}/></button>
-                                            <button onClick={()=>deleteUser(u.email)} className="p-2 bg-red-100 text-red-600 rounded"><Icons.Trash2 size={16}/></button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            );
-        };
+            async logout() { 
+                // Show loading UI
+                const loadingScreen = document.getElementById('game-loading-screen');
+                const barFill = document.getElementById('loading-bar-fill');
+                const percentText = document.getElementById('loading-percent');
+                const statusText = document.getElementById('loading-status-text');
+                
+                if(loadingScreen) {
+                    loadingScreen.classList.remove('hidden');
+                    loadingScreen.style.opacity = '1';
+                    if(statusText) statusText.innerText = "กำลังบันทึกข้อมูลล่าสุด... (Saving Data)";
+                    
+                    // Simulate progress while saving
+                    let p = 0;
+                    const interval = setInterval(() => {
+                        p += 5;
+                        if(p > 90) p = 90; // Hold at 90 until done
+                        if(barFill) barFill.style.width = `${p}%`;
+                        if(percentText) percentText.innerText = `${p}%`;
+                    }, 50);
+                    
+                    // Force sync with timeout race
+                    if (this.currentUser) {
+                        const syncPromise = cloudSync.pushToCloud(this.currentUser);
+                        const timeoutPromise = new Promise(resolve => setTimeout(resolve, 3000));
+                        await Promise.race([syncPromise, timeoutPromise]);
+                    }
+                    
+                    // Done saving
+                    clearInterval(interval);
+                    if(barFill) barFill.style.width = '100%';
+                    if(percentText) percentText.innerText = '100%';
+                    if(statusText) statusText.innerText = "กำลังออกจากระบบ... (Logging out)";
+                }
 
-        const Sidebar = ({ activeTab, setActiveTab, onLogout, shopLogo, isAdmin }) => (
-            <div className="w-24 bg-white/80 backdrop-blur-xl border-r border-slate-200 flex flex-col items-center py-8 gap-6 h-full shrink-0">
-                <div className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg overflow-hidden bg-white border border-slate-100">
-                    {shopLogo ? <img src={shopLogo} alt="Logo" className="w-full h-full object-cover" /> : <Icons.Store className="text-blue-600" size={28} />}
-                </div>
-                <nav className="flex-1 flex flex-col gap-4 w-full px-3 mt-4">
-                    {[{ id: 'pos', icon: Icons.Home, label: 'ขาย' }, { id: 'orders', icon: Icons.History, label: 'บิล' }, { id: 'inventory', icon: Icons.Package, label: 'สต็อก' }, { id: 'dashboard', icon: Icons.LayoutDashboard, label: 'สรุป' }, { id: 'settings', icon: Icons.Settings, label: 'ตั้งค่า' }]
-                    .concat(isAdmin ? [{ id: 'admin', icon: Icons.ShieldCheck, label: 'Admin' }] : [])
-                    .map((item) => (
-                        <button key={item.id} onClick={() => setActiveTab(item.id)} className={`flex flex-col items-center justify-center p-3 rounded-2xl transition-all duration-300 group relative ${activeTab === item.id ? 'bg-blue-600 text-white shadow-xl translate-y-[-2px]' : 'text-slate-400 hover:bg-slate-100'}`}>
-                            {item.icon({ size: 24, strokeWidth: activeTab === item.id ? 2.5 : 2 })}
-                            <span className="text-[10px] mt-1 font-medium">{item.label}</span>
-                        </button>
-                    ))}
-                </nav>
-                <button onClick={onLogout} className="p-4 text-slate-400 hover:text-red-500 rounded-2xl"><Icons.LogOut size={24} /></button>
-            </div>
-        );
-
-        // --- MAIN APP ---
-        const App = () => {
-            const [currentUser, setCurrentUser] = useState(null);
-            const [activeTab, setActiveTab] = useState('pos');
+                if (this.userDocUnsubscribe) this.userDocUnsubscribe();
+                
+                setTimeout(() => {
+                    signOut(fbAuth).then(() => {
+                       localStorage.removeItem(STORAGE_USER_DATA);
+                       location.reload(); 
+                    });
+                }, 500); // Short delay to see 100%
+            }
             
-            // Data
-            const [products, setProducts] = useState(() => JSON.parse(localStorage.getItem(`bn_pos_${currentUser?.email}_products`) || JSON.stringify(INITIAL_PRODUCTS)));
-            const [history, setHistory] = useState(() => JSON.parse(localStorage.getItem(`bn_pos_${currentUser?.email}_history`) || '[]'));
-            const [settings, setSettings] = useState(() => JSON.parse(localStorage.getItem(`bn_pos_${currentUser?.email}_settings`) || JSON.stringify({ shopName: currentUser?.shopName || 'My Shop', logo: '' })));
+            saveSettings(data) {
+                if (!this.currentUser || !this.currentUser.uid) return;
+                const mergedUser = { ...this.currentUser, ...data };
+                if(data.settings) mergedUser.settings = { ...this.currentUser.settings, ...data.settings };
+                this.currentUser = mergedUser;
+                cloudSync.save(mergedUser, true); // Immediate save
+                if(data.name) document.getElementById('user-display-name').innerText = data.name;
+            }
 
-            useEffect(() => { if(currentUser?.email) localStorage.setItem(`bn_pos_${currentUser.email}_products`, JSON.stringify(products)); }, [products, currentUser]);
-            useEffect(() => { if(currentUser?.email) localStorage.setItem(`bn_pos_${currentUser.email}_history`, JSON.stringify(history)); }, [history, currentUser]);
-            useEffect(() => { if(currentUser?.email) localStorage.setItem(`bn_pos_${currentUser.email}_settings`, JSON.stringify(settings)); }, [settings, currentUser]);
+            changeLangInside(l) { 
+                this.setLang(l); 
+                this.saveSettings({ settings: { lang: l } }); 
+                if (!this.currentUser) return;
+                this.currentUser.settings = { ...this.currentUser.settings, lang: l };
+                cloudSync.save(this.currentUser, true); // Immediate save
+            }
+        }
 
-            const [cart, setCart] = useState([]);
-            const [showPayment, setShowPayment] = useState(false);
-            const [lastOrder, setLastOrder] = useState(null);
+        // --- 5. MAIN APP LOGIC ---
+        class App {
+            constructor() {
+                this.user = null; 
+                this.sessionQueue = []; 
+                this.currentCardIndex = 0;
+                this.mode = 'flashcard'; 
+                // Fix: Initialize with dummy object to prevent crash if setup fails
+                this.writingCanvas = { clear: () => {} }; 
+                this.canvasInitialized = false; // Add initialization flag
+                this.synthVoice = null; 
+                this.isGuideRevealed = false;
+                
+                this.loadingInterval = null;
+                this.isLoadingVisible = false;
+            }
 
-            const addToCart = (p) => setCart(prev => { const ex = prev.find(i => i.id === p.id); return ex ? prev.map(i => i.id === p.id ? {...i, qty: i.qty+1} : i) : [...prev, {...p, qty:1}]; });
-            const updateQty = (id, d) => setCart(prev => prev.map(i => i.id === id ? {...i, qty: Math.max(1, i.qty+d)} : i));
-            const handlePayment = (method) => {
-                const total = cart.reduce((a,c)=>a+c.price*c.qty,0);
-                const newOrder = { id: `#BN-${Math.floor(Math.random()*10000)}`, total, items: cart, date: new Date().toLocaleString(), method, status: 'completed' };
-                setHistory([newOrder, ...history]);
-                setProducts(prev => prev.map(p => { const inCart = cart.find(c => c.id === p.id); return inCart ? { ...p, stock: p.stock - inCart.qty } : p; }));
-                setLastOrder(newOrder); setCart([]); setShowPayment(false);
-            };
+            getLocalized(word) {
+                if (!word) return { meaning: "", sentence_meaning: "" };
+                const lang = auth.lang || 'th';
+                
+                if (word.definitions && word.definitions[lang]) {
+                    return word.definitions[lang];
+                }
+                
+                if (word.definitions && word.definitions['en']) return word.definitions['en'];
+                
+                return { meaning: word.meaning, sentence_meaning: word.sentence_meaning };
+            }
 
-            const InventoryView = () => {
-                const [isAddMode, setIsAddMode] = useState(false);
-                const [newProduct, setNewProduct] = useState({ name: '', price: '', stock: 10, category: 'Mart' });
-                return (
-                    <div className="p-8 h-full flex flex-col bg-slate-50/50">
-                        <div className="flex justify-between mb-8"><h2 className="text-4xl font-black text-slate-800">Inventory</h2><button onClick={()=>setIsAddMode(true)} className="px-6 py-2 bg-blue-600 text-white rounded-xl font-bold">เพิ่มสินค้า</button></div>
-                        {isAddMode && <div className="mb-6 p-6 bg-white rounded-2xl shadow"><input className="border p-2 rounded mr-2" placeholder="ชื่อ" value={newProduct.name} onChange={e=>setNewProduct({...newProduct,name:e.target.value})}/><input className="border p-2 rounded mr-2" type="number" placeholder="ราคา" value={newProduct.price} onChange={e=>setNewProduct({...newProduct,price:e.target.value})}/><button onClick={()=>{setProducts([...products, {...newProduct, id:Date.now(), image:'📦', color:'from-gray-200 to-gray-100'}]); setIsAddMode(false);}} className="bg-blue-600 text-white px-4 py-2 rounded">บันทึก</button></div>}
-                        <div className="flex-1 overflow-y-auto bg-white rounded-2xl p-4">{products.map(p=><div key={p.id} className="flex justify-between border-b p-3"><span>{p.name}</span><span>{p.stock} ชิ้น</span></div>)}</div>
-                    </div>
-                );
-            };
+            startLoadingSequence(isFast = false) {
+                if (this.isLoadingVisible) return;
+                this.isLoadingVisible = true;
+                const loadingScreen = document.getElementById('game-loading-screen');
+                const barFill = document.getElementById('loading-bar-fill');
+                const percentText = document.getElementById('loading-percent');
+                
+                loadingScreen.classList.remove('hidden');
+                document.getElementById('auth-modal').classList.add('hidden'); 
+                
+                let progress = 0;
+                const increment = isFast ? 5 : 1; 
+                const speed = isFast ? 20 : 50;   
+                
+                clearInterval(this.loadingInterval);
+                this.loadingInterval = setInterval(() => {
+                    if (progress > 80 && !isFast && !this.user) progress += 0.2; 
+                    else progress += increment;
+                    
+                    if (progress >= 100) {
+                        progress = 100;
+                        clearInterval(this.loadingInterval);
+                        setTimeout(() => this.stopLoading(), 300);
+                    }
+                    barFill.style.width = `${Math.min(100, progress)}%`;
+                    percentText.innerText = `${Math.round(Math.min(100, progress))}%`;
+                }, speed);
+            }
+            
+            stopLoading() {
+                const loadingScreen = document.getElementById('game-loading-screen');
+                loadingScreen.style.opacity = '0';
+                setTimeout(() => {
+                    loadingScreen.classList.add('hidden');
+                    loadingScreen.style.opacity = '1'; 
+                    this.isLoadingVisible = false;
+                    document.getElementById('app-container').classList.remove('hidden');
+                }, 500);
+            }
 
-            const SettingsView = () => (
-                <div className="p-8 h-full bg-slate-50/50">
-                    <h2 className="text-4xl font-black text-slate-800 mb-8">Settings</h2>
-                    <div className="bg-white p-8 rounded-2xl shadow"><label className="block mb-2 font-bold">ชื่อร้าน</label><input className="border p-3 rounded-xl w-full mb-4" value={settings.shopName} onChange={e=>setSettings({...settings, shopName:e.target.value})}/><ImageUploader label="โลโก้ร้าน" currentImage={settings.logo} onImageChange={img=>setSettings({...settings, logo:img})}/></div>
-                </div>
-            );
+            init() {
+                // this.setupCanvas(); // Removed immediate setup
+                this.initVoice();
+                const globalLang = localStorage.getItem(STORAGE_PREFIX + 'global_lang');
+                if(globalLang) auth.setLang(globalLang);
+                else auth.setLang('th'); 
 
-            if (!currentUser) return <AuthScreen onLogin={setCurrentUser} />;
-            if (currentUser.status !== 'active' && currentUser.role !== 'admin') return <SubscriptionWall user={currentUser} onLogout={() => setCurrentUser(null)} />;
+                auth.loadFromLocal();
 
-            return (
-                <div className="flex h-screen bg-[#F8FAFC] font-sans text-slate-900 overflow-hidden select-none">
-                    <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} onLogout={() => setCurrentUser(null)} shopLogo={settings.logo} isAdmin={currentUser.role === 'admin'} />
-                    <div className="flex-1 flex overflow-hidden relative">
-                        {activeTab === 'pos' ? (
-                            <>
-                                <div className="flex-1 flex flex-col min-w-0 z-10">
-                                    <header className="px-8 py-6 flex justify-between items-center"><div><h1 className="text-3xl font-black text-slate-800">{settings.shopName}</h1></div></header>
-                                    <div className="px-8 pb-20 overflow-y-auto h-full"><div className="grid grid-cols-4 gap-6">{products.map(p => <ProductCard key={p.id} product={p} onAdd={addToCart} currentStock={p.stock} />)}</div></div>
-                                </div>
-                                <div className="w-[400px] bg-white border-l border-slate-200 flex flex-col z-20 shadow-xl">
-                                    <div className="flex-1 p-6 overflow-y-auto">{cart.map(i => (<div key={i.id} className="flex justify-between mb-4 bg-slate-50 p-3 rounded-xl"><div><div className="font-bold">{i.name}</div><div className="text-sm">x{i.qty}</div></div><div className="font-bold">{i.price * i.qty}</div></div>))}</div>
-                                    <div className="p-6 border-t bg-white"><div className="flex justify-between text-2xl font-black mb-4"><span>Total</span><span>{formatCurrency(cart.reduce((a,c)=>a+c.price*c.qty,0))}</span></div><button onClick={() => setShowPayment(true)} disabled={cart.length===0} className="w-full py-4 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700">Charge</button></div>
-                                </div>
-                            </>
-                        ) : activeTab === 'inventory' ? <InventoryView/> : activeTab === 'settings' ? <SettingsView/> : activeTab === 'admin' ? <AdminPanel/> : <div className="p-8"><h2 className="text-4xl font-bold">History</h2><div className="bg-white p-4 rounded-xl mt-4">{history.map(h=><div className="flex justify-between border-b p-3" key={h.id}><span>{h.id}</span><span>{formatCurrency(h.total)}</span></div>)}</div></div>}
-                    </div>
-                    {showPayment && <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"><div className="bg-white p-8 rounded-2xl w-96"><h2 className="text-2xl font-bold mb-4">Payment</h2><div className="grid grid-cols-2 gap-4"><button onClick={()=>handlePayment('Cash')} className="p-4 border rounded hover:bg-gray-50">Cash</button><button onClick={()=>handlePayment('QR')} className="p-4 border rounded hover:bg-gray-50">QR</button></div><button onClick={()=>setShowPayment(false)} className="w-full mt-4 py-2 bg-gray-200 rounded">Cancel</button></div></div>}
-                </div>
-            );
-        };
+                onAuthStateChanged(fbAuth, async (firebaseUser) => {
+                    if (firebaseUser) {
+                        if (!this.user) this.startLoadingSequence(false); 
+                        const userRef = doc(fbDb, 'artifacts', appId, 'users', firebaseUser.uid, 'app_data', 'profile');
+                        auth.userDocUnsubscribe = onSnapshot(userRef, (docSnap) => {
+                            if (docSnap.exists()) {
+                                cloudSync.handleIncomingData(docSnap, this);
+                                const barFill = document.getElementById('loading-bar-fill');
+                                if (barFill && this.isLoadingVisible) barFill.style.width = '100%';
+                            } else {
+                                const initialData = {
+                                    name: firebaseUser.displayName || "New Student",
+                                    xp: 0,
+                                    streak: 0,
+                                    lastStudyDate: "",
+                                    progress: {},
+                                    settings: { lang: auth.lang },
+                                    uid: firebaseUser.uid,
+                                    email: firebaseUser.email,
+                                    updatedAt: Date.now()
+                                };
+                                cloudSync.save(initialData, true); // Immediate Save
+                                this.loadUser(initialData);
+                            }
+                        });
+                        document.getElementById('auth-modal').classList.add('hidden');
+                    } else {
+                        document.getElementById('auth-modal').classList.remove('hidden');
+                        document.getElementById('app-container').classList.add('hidden');
+                        document.getElementById('game-loading-screen').classList.add('hidden'); 
+                        document.getElementById('login-form-container').classList.remove('hidden-visually');
+                        document.getElementById('auth-loading').classList.add('hidden-visually');
+                    }
+                });
+            }
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+            loadUser(userData) {
+                this.user = userData;
+                auth.currentUser = userData;
+                if(userData.settings && userData.settings.lang) auth.setLang(userData.settings.lang);
+                
+                document.getElementById('user-display-name').innerText = userData.name;
+                document.getElementById('profile-name-display').innerText = userData.name;
+                document.getElementById('profile-email-display').innerText = userData.email || "";
+                document.getElementById('setting-name').value = userData.name;
+                
+                this.updateStats(false); 
+                this.renderDashboard(); 
+                this.navigate('dashboard');
+            }
+
+            calculateLevel(xp) {
+                if(!xp) return { level: 1, nextXp: 100, currentLevelXp: 0 };
+                const level = Math.floor(xp / 100) + 1;
+                const nextXp = level * 100;
+                const currentLevelXp = xp % 100;
+                return { level, nextXp, currentLevelXp, needed: 100 };
+            }
+
+            getRankName(level) {
+                const rankKey = level <= 1 ? "rank_1" : 
+                                level <= 3 ? "rank_2" : 
+                                level <= 5 ? "rank_3" :
+                                level <= 10 ? "rank_4" :
+                                level <= 20 ? "rank_5" : "rank_6";
+                return i18nData[auth.lang]?.[rankKey] || i18nData['th'][rankKey];
+            }
+
+            updateStats(shouldSave = true) {
+                if (!this.user) return;
+                const learned = Object.keys(this.user.progress || {}).length;
+                const mastered = Object.values(this.user.progress || {}).filter(l => l >= 3).length;
+                const accuracy = learned > 0 ? Math.round((mastered / learned) * 100) : 0;
+                const streak = this.user.streak || 0;
+                
+                document.getElementById('stat-learned').innerText = learned;
+                document.getElementById('stat-mastered').innerText = mastered;
+                document.getElementById('stat-accuracy').innerText = `${accuracy}%`;
+                document.getElementById('stat-xp').innerText = this.user.xp || 0;
+                document.getElementById('streak-counter').innerText = streak;
+                
+                if (shouldSave) {
+                    this.user.streak = streak;
+                    this.user.lastStudyDate = this.user.lastStudyDate;
+                    cloudSync.save(this.user);
+                }
+            }
+            
+            checkStreak() {
+                const today = new Date().toDateString();
+                const lastStudy = this.user.lastStudyDate || '';
+                
+                if (lastStudy !== today) {
+                    const yesterday = new Date();
+                    yesterday.setDate(yesterday.getDate() - 1);
+                    const yesterdayStr = yesterday.toDateString();
+                    if (lastStudy === yesterdayStr) this.user.streak = (this.user.streak || 0) + 1;
+                    else this.user.streak = 1;
+                    this.user.lastStudyDate = today;
+                    this.updateStats(true); 
+                }
+            }
+
+            updateProfile() {
+                const newName = document.getElementById('setting-name').value.trim();
+                if(!newName) return alert("Please enter a name");
+                const currentUser = fbAuth.currentUser;
+                if (!currentUser) return alert("Please login first");
+                this.user.name = newName;
+                document.getElementById('user-display-name').innerText = newName;
+                cloudSync.save(this.user, true); // Immediate Save
+                alert(i18nData[auth.lang]?.save || "Saved!");
+            }
+
+            navigate(target) {
+                sound.playClick();
+                document.querySelectorAll('.nav-btn').forEach(btn => {
+                    const isTarget = btn.dataset.target === target;
+                    btn.classList.toggle('text-china-red', isTarget);
+                    btn.classList.toggle('text-gray-500', !isTarget);
+                });
+                document.querySelectorAll('.nav-btn-desktop').forEach(btn => {
+                    const isTarget = btn.dataset.target === target;
+                    btn.classList.toggle('bg-red-50', isTarget);
+                    btn.classList.toggle('text-china-red', isTarget);
+                    btn.classList.toggle('text-gray-700', !isTarget);
+                });
+                ['dashboard', 'learn', 'practice', 'profile'].forEach(v => {
+                    document.getElementById(`view-${v}`).classList.add('hidden');
+                });
+                document.getElementById(`view-${target}`).classList.remove('hidden');
+                if(target === 'learn') this.renderCourseMap();
+            }
+
+            renderDashboard() {
+                if (!this.user) return; 
+                const unlearned = hsk4Data.filter(w => !this.user.progress || !this.user.progress[w.id]);
+                const list = document.getElementById('daily-vocab-list');
+                list.innerHTML = '';
+                
+                unlearned.slice(0, 6).forEach(word => {
+                    const div = document.createElement('div');
+                    div.className = 'bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between hover:border-china-red transition cursor-pointer pulse-subtle';
+                    div.innerHTML = `
+                        <div>
+                            <div class="font-chinese text-2xl text-ink">${word.hanzi}</div>
+                            <div class="text-xs text-gray-500">${word.pinyin}</div>
+                        </div>
+                        <div class="w-8 h-8 rounded-full bg-red-50 text-china-red flex items-center justify-center">
+                            <i class="fas fa-play text-xs"></i>
+                        </div>
+                    `;
+                    div.onclick = () => { 
+                        sound.playClick(); 
+                        this.quickStudy(word.id); 
+                    };
+                    list.appendChild(div);
+                });
+
+                const xp = this.user.xp || 0;
+                const levelInfo = this.calculateLevel(xp);
+                const rankName = this.getRankName(levelInfo.level);
+                
+                document.getElementById('user-rank-name').innerText = rankName;
+                document.getElementById('user-level-display').innerText = `Lv. ${levelInfo.level}`;
+                
+                document.getElementById('progress-level-circle').innerText = levelInfo.level;
+                document.getElementById('xp-text-display').innerText = `${levelInfo.currentLevelXp} / ${levelInfo.needed} XP`;
+                document.getElementById('xp-progress-bar').style.width = `${(levelInfo.currentLevelXp / levelInfo.needed) * 100}%`;
+                
+                document.getElementById('profile-rank-display').innerText = rankName;
+                document.getElementById('profile-level-display').innerText = levelInfo.level;
+            }
+
+            renderCourseMap() {
+                const container = document.getElementById('course-roadmap'); 
+                container.innerHTML = '';
+                const learnedCount = Object.keys(this.user?.progress || {}).length;
+                const currentDay = Math.min(30, Math.floor(learnedCount / 20) + 1);
+                
+                for(let i = 1; i <= 30; i++) {
+                    const isLocked = i > currentDay;
+                    const isCurrent = i === currentDay;
+                    const isCompleted = i < currentDay;
+                    
+                    const div = document.createElement('div');
+                    div.className = `p-6 rounded-2xl border-2 flex flex-col justify-between h-32 relative overflow-hidden transition ${
+                        isLocked ? 'bg-gray-100 border-gray-200 text-gray-400' : 
+                        isCurrent ? 'bg-white border-china-red shadow-lg cursor-pointer hover:scale-105' :
+                        'bg-white border-green-100 shadow-sm cursor-pointer hover:scale-105'
+                    }`;
+                    
+                    div.innerHTML = `
+                        <span class="font-bold text-xl">Day ${i}</span>
+                        ${isLocked ? '<i class="fas fa-lock text-gray-400"></i>' : 
+                          isCurrent ? '<span class="px-3 py-1 bg-china-red text-white text-xs rounded-lg">ปัจจุบัน</span>' :
+                          '<span class="px-3 py-1 bg-green-100 text-green-700 text-xs rounded-lg">เสร็จแล้ว</span>'}
+                    `;
+                    
+                    if(!isLocked) {
+                        div.onclick = () => { 
+                            sound.playClick(); 
+                            this.startDailySession(); 
+                        };
+                    }
+                    container.appendChild(div);
+                }
+            }
+
+            startDailySession() {
+                if (!this.user) return; 
+                const progress = this.user.progress || {};
+                const unlearned = hsk4Data.filter(w => !progress[w.id]);
+                this.sessionQueue = unlearned.length > 0 ? 
+                    unlearned.slice(0, 10) : 
+                    hsk4Data.sort(() => 0.5 - Math.random()).slice(0, 10);
+                this.mode = 'flashcard'; 
+                this.startSessionUI();
+            }
+            
+            startPractice(m) {
+                if (!this.user) return; 
+                this.mode = m; 
+                
+                // ADDED: Lazy load canvas for writing mode
+                if (m === 'writing' && !this.canvasInitialized) {
+                    this.setupCanvas();
+                }
+
+                const progress = this.user.progress || {};
+                const learned = hsk4Data.filter(w => progress[w.id]);
+                const pool = learned.length > 0 ? learned : hsk4Data.slice(0, 5);
+                this.sessionQueue = pool.sort(() => 0.5 - Math.random()).slice(0, 10);
+                this.startSessionUI();
+            }
+            
+            quickStudy(id) {
+                this.sessionQueue = [hsk4Data.find(w => w.id === id)];
+                this.mode = 'flashcard'; 
+                this.startSessionUI();
+            }
+            
+            startSessionUI() {
+                if(this.sessionQueue.length === 0) {
+                    return alert(i18nData[auth.lang]?.start_today || "ไม่มีคำศัพท์ที่ต้องเรียน!");
+                }
+                this.currentCardIndex = 0;
+                
+                const overlay = document.getElementById('session-overlay');
+                if (overlay) overlay.classList.remove('hidden');
+                
+                ['comp-flashcard', 'comp-writing', 'comp-quiz'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.classList.add('hidden');
+                });
+                
+                const controls = document.getElementById('session-controls');
+                if (controls) controls.classList.add('hidden');
+                
+                const nextBtn = document.getElementById('session-next-btn');
+                if (nextBtn) nextBtn.classList.add('hidden');
+                
+                this.renderCard();
+            }
+
+            renderCard() {
+                const word = this.sessionQueue[this.currentCardIndex];
+                if(!word) return;
+                
+                // ADDED: Localized content fetch
+                const localContent = this.getLocalized(word);
+
+                const counter = document.getElementById('session-counter');
+                if (counter) counter.innerText = `${this.currentCardIndex + 1}/${this.sessionQueue.length}`;
+                
+                const progress = document.getElementById('session-progress');
+                if (progress) progress.style.width = `${((this.currentCardIndex)/this.sessionQueue.length)*100}%`;
+                
+                if(this.mode === 'writing' && this.writingCanvas) {
+                    this.writingCanvas.clear();
+                    this.isGuideRevealed = false;
+                }
+                
+                if(this.mode === 'flashcard') {
+                    const cardComp = document.getElementById('comp-flashcard');
+                    if (cardComp) {
+                        cardComp.classList.remove('hidden');
+                        cardComp.classList.remove('flipped'); 
+                    }
+                    
+                    const hanziEl = document.getElementById('fc-hanzi');
+                    if (hanziEl) hanziEl.innerText = word.hanzi;
+                    
+                    const pinyinEl = document.getElementById('fc-pinyin');
+                    if (pinyinEl) pinyinEl.innerText = word.pinyin;
+                    
+                    const hanziBg = document.getElementById('fc-hanzi-bg');
+                    if (hanziBg) hanziBg.innerText = word.hanzi;
+                    
+                    // MODIFIED: Use Localized Meaning
+                    const meaningEl = document.getElementById('fc-meaning');
+                    if (meaningEl) meaningEl.innerText = localContent.meaning;
+                    
+                    const sentenceBox = document.getElementById('fc-sentence-box');
+                    if(word.sentence) {
+                        if (sentenceBox) sentenceBox.classList.remove('hidden');
+                        const sentEl = document.getElementById('fc-sentence');
+                        if (sentEl) sentEl.innerText = word.sentence;
+                        // MODIFIED: Use Localized Sentence Meaning
+                        const sentMeanEl = document.getElementById('fc-sentence-meaning');
+                        if (sentMeanEl) sentMeanEl.innerText = localContent.sentence_meaning;
+                    } else {
+                        if (sentenceBox) sentenceBox.classList.add('hidden');
+                    }
+                    
+                    const controls = document.getElementById('session-controls');
+                    if (controls) controls.classList.remove('hidden');
+                    
+                    const nextBtn = document.getElementById('session-next-btn');
+                    if (nextBtn) nextBtn.classList.add('hidden');
+
+                } else if (this.mode === 'writing') {
+                    const writingComp = document.getElementById('comp-writing');
+                    if (writingComp) writingComp.classList.remove('hidden');
+                    // MODIFIED: Use Localized Meaning
+                    const wrMeanEl = document.getElementById('wr-meaning');
+                    if (wrMeanEl) wrMeanEl.innerText = localContent.meaning;
+                    
+                    const wrGuide = document.getElementById('wr-guide');
+                    if (wrGuide) {
+                        wrGuide.innerText = word.hanzi;
+                        wrGuide.style.opacity = '0';
+                        wrGuide.classList.remove('text-china-red'); 
+                    }
+                    
+                    const controls = document.getElementById('session-controls');
+                    if (controls) controls.classList.remove('hidden');
+                    
+                    const nextBtn = document.getElementById('session-next-btn');
+                    if (nextBtn) nextBtn.classList.add('hidden');
+                
+                } else if (this.mode === 'quiz') {
+                    const quizComp = document.getElementById('comp-quiz');
+                    if (quizComp) quizComp.classList.remove('hidden');
+                    
+                    const quizQ = document.getElementById('qz-question');
+                    if (quizQ) quizQ.innerText = word.hanzi;
+                    
+                    const container = document.getElementById('qz-options'); 
+                    if (container) {
+                        container.innerHTML = '';
+                        
+                        let choices = [word];
+                        while(choices.length < 4) { 
+                            const r = hsk4Data[Math.floor(Math.random() * hsk4Data.length)]; 
+                            if(!choices.find(c => c.id === r.id)) choices.push(r); 
+                        }
+                        choices.sort(() => 0.5 - Math.random());
+                        
+                        choices.forEach(c => {
+                            const btn = document.createElement('button');
+                            btn.className = 'w-full text-left p-4 rounded-xl border border-gray-200 hover:bg-red-50 hover:border-china-red transition font-thai text-lg btn-press';
+                            // MODIFIED: Use Localized Meaning for choices
+                            btn.innerText = this.getLocalized(c).meaning;
+                            
+                            btn.onclick = () => {
+                                if(btn.classList.contains('answered')) return;
+                                if(c.id === word.id) {
+                                    sound.playCorrect();
+                                    if('vibrate' in navigator) navigator.vibrate(50);
+                                    btn.classList.add('bg-green-100', 'border-green-500', 'text-green-700', 'answered');
+                                    setTimeout(() => this.handleAnswer('good'), 800);
+                                } else {
+                                    sound.playWrong();
+                                    if('vibrate' in navigator) navigator.vibrate(200);
+                                    btn.classList.add('bg-red-100', 'border-red-500', 'text-red-700', 'answered');
+                                }
+                            };
+                            container.appendChild(btn);
+                        });
+                    }
+                    
+                    const controls = document.getElementById('session-controls');
+                    if (controls) controls.classList.add('hidden');
+                    
+                    const nextBtn = document.getElementById('session-next-btn');
+                    if (nextBtn) nextBtn.classList.add('hidden');
+                }
+            }
+
+            flipCard() { 
+                sound.playClick(); 
+                const card = document.getElementById('comp-flashcard');
+                if (card) card.classList.toggle('flipped'); 
+            }
+
+            handleAnswer(quality) {
+                const word = this.sessionQueue[this.currentCardIndex];
+                if(!word) return;
+                if (!this.user.progress) this.user.progress = {};
+                let lvl = this.user.progress[word.id] || 0;
+                
+                if (quality === 'hard') {
+                    lvl = Math.max(0, lvl - 1);
+                    this.user.xp = (this.user.xp || 0) + 2;
+                } else if (quality === 'good') {
+                    lvl += 1;
+                    this.user.xp = (this.user.xp || 0) + 5;
+                } else if (quality === 'easy') {
+                    lvl += 2;
+                    this.user.xp = (this.user.xp || 0) + 10;
+                }
+                this.user.progress[word.id] = lvl; 
+                
+                const controls = document.getElementById('session-controls');
+                if (controls) controls.classList.add('hidden');
+                
+                const nextBtn = document.getElementById('session-next-btn');
+                if (nextBtn) nextBtn.classList.remove('hidden');
+            }
+
+            nextCard() {
+                sound.playClick();
+                this.currentCardIndex++;
+                if(this.currentCardIndex >= this.sessionQueue.length) { 
+                    sound.playWin();
+                    if('vibrate' in navigator) navigator.vibrate([100, 50, 100]);
+                    this.checkStreak(); 
+                    this.endSession();
+                } else { 
+                    this.renderCard(); 
+                }
+            }
+
+            endSession() {
+                const overlay = document.getElementById('session-overlay');
+                if (overlay) overlay.classList.add('hidden');
+                this.updateStats(true); 
+                this.renderDashboard();
+                this.triggerConfetti();
+            }
+            
+            triggerConfetti() {
+                if (typeof confetti === 'function') {
+                    var count = 200;
+                    var defaults = { origin: { y: 0.7 } };
+                    function fire(particleRatio, opts) {
+                        confetti(Object.assign({}, defaults, opts, {
+                            particleCount: Math.floor(count * particleRatio)
+                        }));
+                    }
+                    fire(0.25, { spread: 26, startVelocity: 55, });
+                    fire(0.2, { spread: 60, });
+                    fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
+                    fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
+                    fire(0.1, { spread: 120, startVelocity: 45, });
+                }
+            }
+
+            setupCanvas() {
+                const canvas = document.getElementById('hanzi-canvas'); 
+                if (!canvas) {
+                    // Fail silently or handle gracefully, will be retried when user enters writing mode
+                    return;
+                }
+                const ctx = canvas.getContext('2d');
+                let isDrawing = false;
+                let lastX = 0;
+                let lastY = 0;
+                ctx.lineWidth = 14; 
+                ctx.lineCap = 'round'; 
+                ctx.lineJoin = 'round'; 
+                ctx.strokeStyle = '#2c2c2c';
+                
+                const getPos = (e) => {
+                    const rect = canvas.getBoundingClientRect();
+                    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                    return { 
+                        x: (clientX - rect.left) * (canvas.width / rect.width), 
+                        y: (clientY - rect.top) * (canvas.height / rect.height) 
+                    };
+                };
+                
+                const startDrawing = (e) => { 
+                    e.preventDefault(); 
+                    isDrawing = true;
+                    const pos = getPos(e);
+                    lastX = pos.x;
+                    lastY = pos.y;
+                    ctx.beginPath();
+                    ctx.moveTo(lastX, lastY);
+                };
+                
+                const draw = (e) => { 
+                    e.preventDefault(); 
+                    if(!isDrawing) return; 
+                    const pos = getPos(e);
+                    ctx.lineTo(pos.x, pos.y);
+                    ctx.stroke();
+                    lastX = pos.x;
+                    lastY = pos.y;
+                };
+                
+                const stopDrawing = () => { 
+                    isDrawing = false;
+                    ctx.closePath();
+                };
+                
+                canvas.addEventListener('mousedown', startDrawing);
+                canvas.addEventListener('mousemove', draw);
+                canvas.addEventListener('mouseup', stopDrawing);
+                canvas.addEventListener('mouseout', stopDrawing);
+                canvas.addEventListener('touchstart', startDrawing, {passive: false});
+                canvas.addEventListener('touchmove', draw, {passive: false});
+                canvas.addEventListener('touchend', stopDrawing);
+                
+                this.writingCanvas = { 
+                    clear: () => {
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        ctx.beginPath();
+                    }
+                };
+                this.canvasInitialized = true;
+            }
+
+            revealWriting() {
+                sound.playClick();
+                const guide = document.getElementById('wr-guide');
+                if(!this.isGuideRevealed) { 
+                    if (guide) {
+                        guide.style.opacity = '0.4'; 
+                        guide.classList.add('text-china-red'); 
+                    }
+                    this.isGuideRevealed = true; 
+                } else { 
+                    if (guide) {
+                        guide.style.opacity = '0'; 
+                        guide.classList.remove('text-china-red');
+                    }
+                    this.isGuideRevealed = false; 
+                }
+            }
+
+            initVoice() {
+                const voices = window.speechSynthesis.getVoices();
+                if(voices.length > 0) {
+                    this.synthVoice = voices.find(v => v.lang === 'zh-CN' || v.lang === 'zh-TW');
+                }
+                window.speechSynthesis.onvoiceschanged = () => {
+                    const updatedVoices = window.speechSynthesis.getVoices();
+                    this.synthVoice = updatedVoices.find(v => v.lang === 'zh-CN' || v.lang === 'zh-TW');
+                };
+            }
+            
+            speak() {
+                try {
+                    const word = this.sessionQueue[this.currentCardIndex];
+                    if (!word || !('speechSynthesis' in window)) return;
+                    window.speechSynthesis.cancel();
+                    const utterance = new SpeechSynthesisUtterance(word.hanzi);
+                    utterance.lang = 'zh-CN';
+                    utterance.rate = 0.8;
+                    utterance.pitch = 1.0;
+                    if (this.synthVoice) utterance.voice = this.synthVoice;
+                    utterance.onerror = (event) => console.log("Speech synthesis error:", event);
+                    window.speechSynthesis.speak(utterance);
+                } catch (error) {
+                    console.log("Speech error:", error);
+                }
+            }
+        }
+
+        // --- INITIALIZE APP ---
+        const sound = new SoundManager();
+        const app = new App();
+        const auth = new AuthManager();
+        const cloudSync = new CloudSyncManager();
+
+        window.app = app;
+        window.auth = auth;
+        window.sound = sound;
+        window.cloudSync = cloudSync;
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            app.init();
+        });
+
     </script>
 </body>
 </html>
