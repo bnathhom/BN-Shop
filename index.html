@@ -4,14 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>HSK 4 Masterclass - Global Edition</title>
-    <meta property="og:title" content="HSK 4 Masterclass - Global Edition" />
-    <meta property="og:description" content="พิชิตคำศัพท์ HSK 4 ภายใน 30 วัน รองรับ ไทย ลาว อังกฤษ จีน" />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://bnathhom.github.io/HSK-4-Masterclass/" />
-    <meta property="og:image" content="https://bnathhom.github.io/HSK-4-Masterclass/cover.jpg" />
-
-    <meta name="twitter:card" content="summary_large_image" />
-  
+    
     <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -138,6 +131,18 @@
             animation: bounce 2s infinite;
         }
         
+        /* สร้างท่าทางการลอย */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); } /* ลอยขึ้น 8px */
+            100% { transform: translateY(0px); }
+}
+
+        /* สร้างคลาสสำหรับเรียกใช้ */
+        .floating-text {
+            animation: float 4s ease-in-out infinite; /* 4s คือความช้า (ยิ่งเลขเยอะยิ่งช้า) */
+            display: inline-block; /* สำคัญ! ต้องมีบรรทัดนี้เพื่อให้ขยับได้ */
+}
         /* Rank Badge Gradient */
         .rank-badge-bg {
             background: linear-gradient(135deg, #FFD700 0%, #FDB931 100%);
@@ -388,12 +393,12 @@
                         </div>
 
                         <div>
-                            <label class="block text-sm text-gray-500 mb-1" data-i18n="change_lang">เปลี่ยนภาษา</label>
+                            <label class="block text-sm text-gray-500 mb-1" data-i18n="change_lang">เปลี่ยนภาษา</label>  
                             <div class="grid grid-cols-4 gap-2">
-                                <button onclick="auth.changeLangInside('th')" class="p-2 border rounded hover:bg-gray-50">🇹🇭</button>
-                                <button onclick="auth.changeLangInside('en')" class="p-2 border rounded hover:bg-gray-50">🇬🇧</button>
-                                <button onclick="auth.changeLangInside('cn')" class="p-2 border rounded hover:bg-gray-50">🇨🇳</button>
-                                <button onclick="auth.changeLangInside('la')" class="p-2 border rounded hover:bg-gray-50">🇱🇦</button>
+                                <button onclick="auth.changeLangInside('th')" class="p-2 border rounded hover:bg-gray-50">🇹🇭 (ไทย)</button>
+                                <button onclick="auth.changeLangInside('en')" class="p-2 border rounded hover:bg-gray-50">en (English)</button>
+                                <button onclick="auth.changeLangInside('cn')" class="p-2 border rounded hover:bg-gray-50">🇨🇳 (中文)</button>
+                                <button onclick="auth.changeLangInside('la')" class="p-2 border rounded hover:bg-gray-50">🇱🇦 （ລາວ）</button>
                             </div>
                         </div>
 
@@ -429,7 +434,7 @@
                         <button onclick="event.stopPropagation(); app.speak()" class="absolute top-4 right-4 text-gray-400 hover:text-china-red btn-press w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center border border-gray-200">
                             <i class="fas fa-volume-up"></i>
                         </button>
-                        <div class="text-6xl md:text-8xl font-chinese text-ink mb-4" id="fc-hanzi"></div>
+                        <div class="text-6xl md:text-8xl font-chinese text-ink mb-4 floating-text" id="fc-hanzi"></div>
                         <div class="text-xl text-gray-500 font-serif" id="fc-pinyin"></div>
                     </div>
                     <!-- Back -->
@@ -10063,7 +10068,7 @@
                 const container = document.getElementById('course-roadmap'); 
                 container.innerHTML = '';
                 const learnedCount = Object.keys(this.user?.progress || {}).length;
-                const currentDay = Math.min(30, Math.floor(learnedCount / 20) + 1);
+                const currentDay = Math.min(30, Math.floor(learnedCount / 35) + 1);
                 
                 for(let i = 1; i <= 30; i++) {
                     const isLocked = i > currentDay;
@@ -10099,8 +10104,8 @@
                 const progress = this.user.progress || {};
                 const unlearned = hsk4Data.filter(w => !progress[w.id]);
                 this.sessionQueue = unlearned.length > 0 ? 
-                    unlearned.slice(0, 10) : 
-                    hsk4Data.sort(() => 0.5 - Math.random()).slice(0, 10);
+                    unlearned.slice(0, 35) : 
+                    hsk4Data.sort(() => 0.5 - Math.random()).slice(0, 35);
                 this.mode = 'flashcard'; 
                 this.startSessionUI();
             }
