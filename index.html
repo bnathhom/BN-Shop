@@ -9611,25 +9611,26 @@
                 }
             }
             
-            handleIncomingData(docSnap, appInstance) {
-             if (!docSnap.exists()) return;
-             const cloudData = docSnap.data();
-             const localDataString = localStorage.getItem(STORAGE_USER_DATA);
-             let merged = cloudData;
+           handleIncomingData(docSnap, appInstance) {
+        if (!docSnap.exists()) return;
+        const cloudData = docSnap.data();
+        const localDataString = localStorage.getItem(STORAGE_USER_DATA);
+        let merged = cloudData;
 
-             if (localDataString) {
-                 const localData = JSON.parse(localDataString);
-             
-                 // ตรวจสอบว่าข้อมูลในเครื่องใหม่กว่าบน Cloud หรือไม่
-                 if (localData.updatedAt && cloudData.updatedAt && localData.updatedAt > cloudData.updatedAt) {
-                     console.log("Local is newer, pushing to cloud...");
-                     this.pushToCloud(localData);
-                
-                     // [แก้] ใช้ข้อมูลจากเครื่อง (localData) แทน แต่ห้าม return ทิ้ง
-                     merged = localData; 
-                }
+        if (localDataString) {
+            const localData = JSON.parse(localDataString);
+            
+            // ตรวจสอบว่าข้อมูลในเครื่องใหม่กว่าบน Cloud หรือไม่
+            if (localData.updatedAt && cloudData.updatedAt && localData.updatedAt > cloudData.updatedAt) {
+                console.log("Local is newer, pushing to cloud...");
+                this.pushToCloud(localData);
+                merged = localData; // [แก้ไข] ใช้ข้อมูลจากเครื่องแทน และห้ามใส่ return
             }
+        }
 
+        localStorage.setItem(STORAGE_USER_DATA, JSON.stringify(merged));
+        appInstance.loadUser(merged);
+    }
         // บันทึกและโหลดข้อมูลเข้าแอปเพื่อให้ใช้งานได้ทันที
         localStorage.setItem(STORAGE_USER_DATA, JSON.stringify(merged));
         appInstance.loadUser(merged);
