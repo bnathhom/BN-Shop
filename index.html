@@ -134,13 +134,13 @@
         /* สร้างท่าทางการลอย */
         @keyframes float {
             0% { transform: translateY(0px); }
-            50% { transform: translateY(-8px); } /* ลอยขึ้น 8px */
+            50% { transform: translateY(-10px); } /* ลอยขึ้น 10px */
             100% { transform: translateY(0px); }
 }
 
         /* สร้างคลาสสำหรับเรียกใช้ */
         .floating-text {
-            animation: float 4s ease-in-out infinite; /* 4s คือความช้า (ยิ่งเลขเยอะยิ่งช้า) */
+            animation: float 2s ease-in-out infinite; /* 2s คือความช้า (ยิ่งเลขเยอะยิ่งช้า) */
             display: inline-block; /* สำคัญ! ต้องมีบรรทัดนี้เพื่อให้ขยับได้ */
 }
         /* Rank Badge Gradient */
@@ -396,7 +396,7 @@
                             <label class="block text-sm text-gray-500 mb-1" data-i18n="change_lang">เปลี่ยนภาษา</label>  
                             <div class="grid grid-cols-4 gap-2">
                                 <button onclick="auth.changeLangInside('th')" class="p-2 border rounded hover:bg-gray-50">🇹🇭 (ไทย)</button>
-                                <button onclick="auth.changeLangInside('en')" class="p-2 border rounded hover:bg-gray-50">🇬🇧 (English)</button>
+                                <button onclick="auth.changeLangInside('en')" class="p-2 border rounded hover:bg-gray-50">🇬🇧 (Eng)</button>
                                 <button onclick="auth.changeLangInside('cn')" class="p-2 border rounded hover:bg-gray-50">🇨🇳 (中文)</button>
                                 <button onclick="auth.changeLangInside('la')" class="p-2 border rounded hover:bg-gray-50">🇱🇦 （ລາວ）</button>
                             </div>
